@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel administrador · Karivé Joyas</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="kv-login" class="kv-login-screen">
+  <form id="kv-login-form" class="kv-login-card">
+    <div class="kv-login-brand">Karivé <span class="kv-gold">·</span> Joyas</div>
+    <div class="kv-login-sub">Panel administrador</div>
+    <input type="password" id="kv-login-pass" class="kv-login-input" placeholder="Contraseña" autocomplete="current-password" required />
+    <button type="submit" class="kv-login-btn">Entrar</button>
+    <div id="kv-login-error" class="kv-login-error" hidden>Contraseña incorrecta. Intenta de nuevo.</div>
+  </form>
+</div>
+
+<div class="kv-app" id="kv-admin-app" hidden>
+
+  <div class="kv-admin-topbar">
+    <span class="kv-brandmark">Karivé <span class="kv-gold">·</span> Joyas <span class="kv-admin-tag">— Panel administrador</span></span>
+    <div class="kv-admin-actions">
+      <a href="index.html" target="_blank" rel="noopener" class="kv-admin-link">Ver página pública ↗</a>
+      <button id="kv-logout" class="kv-reset-btn">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="kv-controls kv-controls--static">
+    <div class="kv-controls-row">
+      <div class="kv-search">
+        <span class="kv-search-icon">⌕</span>
+        <input id="kv-query" placeholder="Buscar por nombre o código…" autocomplete="off" />
+      </div>
+      <span class="kv-count" id="kv-count">0 de 0 aros</span>
+    </div>
+
+    <div class="kv-edit-tools">
+      <span class="kv-edit-tools-label">Estilo de tarjeta</span>
+      <div class="kv-tabs" id="kv-tabs">
+        <button class="kv-tab" data-style="marco">Marco</button>
+        <button class="kv-tab" data-style="minimal">Minimal</button>
+        <button class="kv-tab" data-style="oscura">Oscura</button>
+      </div>
+      <span class="kv-spacer"></span>
+      <button id="kv-add" class="kv-add-btn">+ Agregar producto</button>
+      <button id="kv-reset" class="kv-reset-btn">Restaurar ejemplos</button>
+      <span class="kv-edit-hint">✎ Toca cualquier texto o foto para editarlo. Los cambios se publican al instante en la página pública.</span>
+    </div>
+  </div>
+
+  <section class="kv-gallery-section">
+    <div class="kv-gallery-heading">
+      <span class="kv-eyebrow">Panel administrador</span>
+      <h2 class="kv-h2">Editar catálogo</h2>
+    </div>
+
+    <div class="kv-grid" id="kv-grid"></div>
+
+    <div class="kv-noresults" id="kv-noresults" hidden>
+      <div class="kv-noresults-mark">✦</div>
+      <span id="kv-noresults-text"></span>
+    </div>
+  </section>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="common.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

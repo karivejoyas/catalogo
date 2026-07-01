@@ -82,20 +82,6 @@
         <input id="kv-query" placeholder="Buscar por nombre o código…" autocomplete="off" />
       </div>
       <span class="kv-count" id="kv-count">50 de 50 aros</span>
-      <button id="kv-edit-toggle" class="kv-edit-btn">✎ Editar catálogo</button>
-    </div>
-
-    <div class="kv-edit-tools" id="kv-edit-tools" hidden>
-      <span class="kv-edit-tools-label">Estilo de tarjeta</span>
-      <div class="kv-tabs" id="kv-tabs">
-        <button class="kv-tab" data-style="marco">Marco</button>
-        <button class="kv-tab" data-style="minimal">Minimal</button>
-        <button class="kv-tab" data-style="oscura">Oscura</button>
-      </div>
-      <span class="kv-spacer"></span>
-      <button id="kv-add" class="kv-add-btn">+ Agregar producto</button>
-      <button id="kv-reset" class="kv-reset-btn">Restaurar ejemplos</button>
-      <span class="kv-edit-hint">✎ Toca cualquier texto o foto para editarlo. Los cambios se guardan en este dispositivo automáticamente.</span>
     </div>
   </div>
 
@@ -146,6 +132,10 @@
 
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="common.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

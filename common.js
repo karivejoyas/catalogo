@@ -79,6 +79,19 @@ function kvCompressPhoto(file, cb) {
   reader.readAsDataURL(file);
 }
 
+const KV_DEFAULT_HOWTO = [
+  { title: '1 · Elige tus favoritos', text: 'Recorre el catálogo y selecciona los aros que más te enamoren.' },
+  { title: '2 · Escríbenos', text: 'Mándanos el código o la foto del producto por Instagram @karive.joyas o WhatsApp +56 9 XXXX XXXX.' },
+  { title: '3 · Confirmamos tu pedido', text: 'Te avisamos el stock disponible y el total con el costo de envío.' },
+  { title: '4 · Realiza el pago', text: 'Puedes pagar por transferencia o link de pago; te enviamos los datos por mensaje.' },
+  { title: '5 · Enviamos con amor', text: 'Preparamos tu pedido con dedicación y te compartimos el seguimiento cuando esté en camino.' },
+  { title: '6 · ¡Luce tu Karivé!', text: 'Etiquétanos en tus historias para ver cómo te quedaron. Nos encanta verte brillar ✦' }
+];
+
+function kvHowtoStepHtml(step) {
+  return '<div><h3 class="kv-howto-step-title">' + escapeHtml(step.title) + '</h3><p class="kv-howto-step-text">' + escapeHtml(step.text) + '</p></div>';
+}
+
 const KV_DEFAULT_PRODUCTS = (() => {
   const tipos = [
     ['Argollas', 'argollas'], ['Aros colgantes', 'colgantes'], ['Topos', 'topos'],

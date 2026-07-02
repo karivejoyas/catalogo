@@ -23,8 +23,17 @@
     reset: document.getElementById('kv-reset'),
     grid: document.getElementById('kv-grid'),
     noResults: document.getElementById('kv-noresults'),
-    noResultsText: document.getElementById('kv-noresults-text')
+    noResultsText: document.getElementById('kv-noresults-text'),
+    igInput: document.getElementById('kv-ig-input'),
+    waInput: document.getElementById('kv-wa-input'),
+    contactSave: document.getElementById('kv-contact-save'),
+    contactSaved: document.getElementById('kv-contact-saved'),
+    howtoForm: document.getElementById('kv-howto-form'),
+    howtoSave: document.getElementById('kv-howto-save'),
+    howtoSaved: document.getElementById('kv-howto-saved')
   };
+
+  let howtoRendered = false;
 
   const itemsCol = kvDb.collection('catalog').doc('products').collection('items');
   const settingsRef = kvDb.collection('catalog').doc('settings');
@@ -65,6 +74,13 @@
     unsubSettings = settingsRef.onSnapshot((doc) => {
       const data = doc.data();
       state.cardStyle = (data && data.cardStyle) || 'marco';
+      if (document.activeElement !== el.igInput) el.igInput.value = (data && data.instagram) || '';
+      if (document.activeElement !== el.waInput) el.waInput.value = (data && data.whatsapp) || '';
+      const steps = (data && Array.isArray(data.howtoSteps) && data.howtoSteps.length === 6) ? data.howtoSteps : KV_DEFAULT_HOWTO;
+      if (!howtoRendered || !el.howtoForm.contains(document.activeElement)) {
+        renderHowtoForm(steps);
+        howtoRendered = true;
+      }
       render();
     }, (err) => console.error('Error leyendo configuración:', err));
   }
@@ -93,6 +109,38 @@
       settingsRef.set({ cardStyle: tab.dataset.style }, { merge: true })
         .catch(err => console.error('Error guardando estilo:', err));
     });
+  });
+
+  // ---- contacto ----
+  el.contactSave.addEventListener('click', () => {
+    settingsRef.set({ instagram: el.igInput.value.trim(), whatsapp: el.waInput.value.trim() }, { merge: true })
+      .then(() => {
+        el.contactSaved.hidden = false;
+        setTimeout(() => { el.contactSaved.hidden = true; }, 2000);
+      })
+      .catch(err => console.error('Error guardando contacto:', err));
+  });
+
+  // ---- ¿cómo comprar? ----
+  function renderHowtoForm(steps) {
+    el.howtoForm.innerHTML = steps.map((s, i) =>
+      '<div class="kv-howto-form-step">' +
+        '<input class="kv-howto-form-title" data-idx="' + i + '" data-role="howto-title" value="' + escapeHtml(s.title) + '" />' +
+        '<textarea class="kv-howto-form-text" data-idx="' + i + '" data-role="howto-text" rows="2">' + escapeHtml(s.text) + '</textarea>' +
+      '</div>'
+    ).join('');
+  }
+
+  el.howtoSave.addEventListener('click', () => {
+    const titles = el.howtoForm.querySelectorAll('[data-role="howto-title"]');
+    const texts = el.howtoForm.querySelectorAll('[data-role="howto-text"]');
+    const steps = Array.from(titles).map((t, i) => ({ title: t.value.trim(), text: texts[i].value.trim() }));
+    settingsRef.set({ howtoSteps: steps }, { merge: true })
+      .then(() => {
+        el.howtoSaved.hidden = false;
+        setTimeout(() => { el.howtoSaved.hidden = true; }, 2000);
+      })
+      .catch(err => console.error('Error guardando pasos:', err));
   });
 
   // ---- add / reset ----

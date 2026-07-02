@@ -11,11 +11,13 @@ a{color:inherit;}
 @keyframes kFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @keyframes kFloatBig{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-14px) rotate(.4deg)}}
 @keyframes kTwinkle{0%,100%{opacity:.2;transform:scale(.8)}50%{opacity:1;transform:scale(1.12)}}
-@keyframes kGlow{0%,100%{opacity:.45}50%{opacity:.85}}
 @keyframes kDrift{0%{transform:translate(0,0) scale(1)}33%{transform:translate(28px,-22px) scale(1.06)}66%{transform:translate(-22px,16px) scale(.96)}100%{transform:translate(0,0) scale(1)}}
 @keyframes kDrift2{0%{transform:translate(0,0) scale(1)}50%{transform:translate(-30px,-18px) scale(1.08)}100%{transform:translate(0,0) scale(1)}}
-@keyframes kShimmer{0%{transform:translateX(-600%) skewX(-18deg)}100%{transform:translateX(800%) skewX(-18deg)}}
 @keyframes kPulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
+@keyframes kOrbit1{0%,100%{translate:0 0}25%{translate:10px -8px}50%{translate:-4px 10px}75%{translate:-10px -4px}}
+@keyframes kOrbit2{0%,100%{translate:0 0}30%{translate:-12px 6px}60%{translate:8px 9px}85%{translate:6px -9px}}
+@keyframes kSwayL{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes kSwayR{0%,100%{transform:rotate(4deg)}50%{transform:rotate(-4deg)}}
 @keyframes kBob{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
 input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.35);}
 @media (prefers-reduced-motion: reduce){*{animation:none!important}}
@@ -50,11 +52,13 @@ input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.35);}
 .kv-badge-text{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#E7DBEF;}
 
 .kv-hero-center{position:relative;z-index:3;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 24px;gap:22px;}
-.kv-logo-wrap{position:relative;}
-.kv-logo-glow{position:absolute;inset:-10% -4%;background:radial-gradient(ellipse, rgba(255,246,225,0.55) 0%, rgba(255,238,205,0.24) 46%, rgba(255,238,205,0) 74%);border-radius:50%;filter:blur(2px);mix-blend-mode:screen;animation:kGlow 5s ease-in-out infinite;}
-.kv-logo-frame{position:relative;overflow:hidden;border-radius:24px;animation:kFloatBig 7s ease-in-out infinite;}
-.kv-logo-img{display:block;width:min(560px,84vw);height:auto;position:relative;z-index:1;}
-.kv-logo-shimmer{position:absolute;top:0;bottom:0;left:0;width:14%;background:linear-gradient(100deg, transparent 38%, rgba(255,242,214,0.42) 50%, transparent 62%);z-index:2;mix-blend-mode:soft-light;animation:kShimmer 6.5s ease-in-out infinite 1.2s;pointer-events:none;}
+.kv-corner-logo{display:flex;align-items:center;}
+.kv-corner-logo-img{display:block;height:38px;width:auto;animation:kFloat 7s ease-in-out infinite;}
+.kv-hero-ornament{display:flex;align-items:flex-end;justify-content:center;gap:22px;margin-bottom:4px;}
+.kv-ornament-svg{width:44px;height:auto;filter:drop-shadow(0 6px 14px rgba(0,0,0,0.35));transform-origin:50% 8%;}
+.kv-ornament-left{animation:kSwayL 6s ease-in-out infinite;}
+.kv-ornament-right{animation:kSwayR 6.6s ease-in-out infinite .3s;}
+.kv-ornament-sparkle{color:var(--kv-accent-color);font-size:15px;margin-bottom:44px;animation:kTwinkle 3.4s ease-in-out infinite;}
 .kv-h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(26px,4.6vw,46px);line-height:1.08;margin:0;color:#F6EEFA;}
 .kv-h1 em{font-style:italic;color:var(--kv-accent-color);}
 
@@ -217,3 +221,13 @@ input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.35);}
 .kv-admin-actions{display:flex;align-items:center;gap:12px;}
 .kv-admin-link{font-family:'Jost',sans-serif;font-size:13px;color:#E3C572;text-decoration:none;}
 .kv-controls--static{position:static;background:transparent;backdrop-filter:none;border-bottom:none;margin-top:18px;}
+
+.kv-contact-form{max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:14px;}
+.kv-contact-field{display:flex;flex-direction:column;gap:6px;}
+.kv-contact-label{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#8f7aa0;}
+.kv-contact-saved{font-family:'Jost',sans-serif;font-size:12.5px;color:#7fd39a;text-align:center;}
+
+.kv-howto-form{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+.kv-howto-form-step{display:flex;flex-direction:column;gap:6px;padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(201,162,75,0.28);border-radius:12px;}
+.kv-howto-form-title{width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1px solid rgba(201,162,75,0.4);border-radius:8px;padding:9px 12px;color:#E3C572;font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;outline:none;}
+.kv-howto-form-text{width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1px solid rgba(201,162,75,0.4);border-radius:8px;padding:9px 12px;color:#F1E7F6;font-family:'Jost',sans-serif;font-size:13.5px;line-height:1.5;outline:none;resize:vertical;min-height:52px;}

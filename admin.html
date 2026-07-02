@@ -69,6 +69,41 @@
     </div>
   </section>
 
+  <!-- ===================== CONTACTO (¿Cómo comprar? + pie) ===================== -->
+  <section class="kv-gallery-section">
+    <div class="kv-gallery-heading">
+      <span class="kv-eyebrow">Panel administrador</span>
+      <h2 class="kv-h2">Datos de contacto</h2>
+    </div>
+    <p class="kv-edit-hint" style="text-align:center;margin-bottom:18px;">Estos datos aparecen en la sección "¿Cómo comprar?" y en el pie de la página pública.</p>
+    <div class="kv-contact-form">
+      <label class="kv-contact-field">
+        <span class="kv-contact-label">Instagram</span>
+        <input id="kv-ig-input" class="kv-login-input" placeholder="@tu_usuario" />
+      </label>
+      <label class="kv-contact-field">
+        <span class="kv-contact-label">WhatsApp</span>
+        <input id="kv-wa-input" class="kv-login-input" placeholder="+56 9 XXXX XXXX" />
+      </label>
+      <button id="kv-contact-save" class="kv-add-btn">Guardar datos de contacto</button>
+      <span id="kv-contact-saved" class="kv-contact-saved" hidden>✓ Guardado</span>
+    </div>
+  </section>
+
+  <!-- ===================== ¿CÓMO COMPRAR? (pasos editables) ===================== -->
+  <section class="kv-gallery-section">
+    <div class="kv-gallery-heading">
+      <span class="kv-eyebrow">Panel administrador</span>
+      <h2 class="kv-h2">¿Cómo comprar?</h2>
+    </div>
+    <p class="kv-edit-hint" style="text-align:center;margin-bottom:18px;">Edita el título y el texto de cada uno de los 6 pasos que ven tus clientas.</p>
+    <div class="kv-howto-form" id="kv-howto-form"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <button id="kv-howto-save" class="kv-add-btn">Guardar pasos</button>
+      <span id="kv-howto-saved" class="kv-contact-saved" hidden>✓ Guardado</span>
+    </div>
+  </section>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>

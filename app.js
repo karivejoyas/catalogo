@@ -88,5 +88,13 @@
   kvDb.collection('catalog').doc('settings').onSnapshot((doc) => {
     const data = doc.data();
     if (data && data.cardStyle) { state.cardStyle = data.cardStyle; render(); }
+    if (data && data.instagram) {
+      document.getElementById('kv-ig-handle-footer').textContent = data.instagram;
+    }
+    if (data && data.whatsapp) {
+      document.getElementById('kv-wa-number-footer').textContent = data.whatsapp;
+    }
+    const steps = (data && Array.isArray(data.howtoSteps) && data.howtoSteps.length === 6) ? data.howtoSteps : KV_DEFAULT_HOWTO;
+    document.getElementById('kv-howto-steps').innerHTML = steps.map(kvHowtoStepHtml).join('');
   }, (err) => console.error('Error leyendo la configuración:', err));
 })();

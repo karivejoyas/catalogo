@@ -2,73 +2,38 @@
 <html lang="es-CL">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Catálogo Karivé · Joyas</title>
-<meta name="description" content="Catálogo de productos Karivé Joyas: aros de flores, charms de arcilla polimérica y argollas de cristal. Hipoalergénicos, hechos con amor. Envíos a todo Chile.">
+<meta name="description" content="Catálogo de productos Karivé Joyas: aros de flores, charms, argollas de cristal y más. Hipoalergénicos, hechos con amor. Envíos a todo Chile.">
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="catalogo.css" />
 </head>
-<body>
+<body class="fb-body">
 
-<!-- ===================== PORTADA ===================== -->
-<section class="cat-portada" style="background-image:url('assets/modelo-portada.jpg');">
-  <div class="cat-portada-velo"></div>
-  <div class="cat-portada-contenido">
-    <div class="cat-logo-circulo"><img src="assets/logo-karive-crop.png" alt="Karivé Joyas" /></div>
-    <h1 class="cat-titulo-portada">Catálogo</h1>
-    <div class="cat-sub-portada">· De productos ·</div>
-    <div class="cat-corazon">♥</div>
-    <p class="cat-tagline">Accesorios hechos a mano, con amor</p>
-    <p class="cat-siguenos">Síguenos en <span class="cat-dorado">♥</span> <span id="cat-ig-portada">@karive.joyas</span></p>
+<div class="fb-app">
+
+  <div class="fb-topbar">
+    <a href="#" class="fb-logo" id="fb-logo"><img src="assets/logo-karive-crop.png" alt="Karivé Joyas" /></a>
+    <nav class="fb-nav" id="fb-nav"></nav>
   </div>
-  <a href="#info" class="cat-flecha">↓</a>
-</section>
 
-<!-- ===================== INFO ===================== -->
-<section class="cat-info" id="info">
-  <div class="cat-info-tarjeta">
-    <h2 class="cat-info-titulo">Accesorios que iluminan,<br>hechos con amor <span class="cat-dorado">✦</span></h2>
-    <ul class="cat-info-lista">
-      <li>Todas nuestras piezas tienen base de <strong>acero inoxidable hipoalergénico</strong>.</li>
-      <li>¿Eres alérgica/o? Tenemos opción de <strong>plata 925</strong>, solo pregúntanos ✨</li>
-      <li>Hacemos <strong>envíos a todo Chile</strong>.</li>
-      <li>Si sueñas con un diseño especial, <strong>lo creamos juntas/os</strong> — envíanos una fotito de referencia y te damos el presupuesto.</li>
-    </ul>
-    <div class="cat-info-contacto">
-      <span>♥ <span id="cat-ig-info">@karive.joyas</span></span>
-      <span>✆ <span id="cat-wa-info">+56 9 XXXX XXXX</span></span>
+  <div class="fb-stage">
+    <button class="fb-arrow fb-prev" id="fb-prev" aria-label="Anterior">‹</button>
+    <div class="fb-page-wrap">
+      <div class="fb-page" id="fb-page"></div>
     </div>
-    <div class="cat-corazon">♥</div>
+    <button class="fb-arrow fb-next" id="fb-next" aria-label="Siguiente">›</button>
   </div>
-</section>
 
-<!-- ===================== BUSCADOR ===================== -->
-<div class="cat-buscador-barra" id="coleccion">
-  <div class="cat-buscador-fila">
-    <div class="cat-buscador">
-      <span class="cat-buscador-icono">⌕</span>
-      <input id="cat-query" placeholder="Buscar por nombre o código…" autocomplete="off" />
-    </div>
-    <span class="cat-contador" id="cat-contador"></span>
+  <div class="fb-footer">
+    <button class="fb-arrow-mini" id="fb-prev2" aria-label="Anterior">‹</button>
+    <span class="fb-counter" id="fb-counter">1 / 1</span>
+    <button class="fb-arrow-mini" id="fb-next2" aria-label="Siguiente">›</button>
   </div>
+
 </div>
-
-<!-- ===================== SECCIONES (se generan solas) ===================== -->
-<main id="cat-secciones"></main>
-
-<div class="cat-sinresultados" id="cat-sinresultados" hidden>
-  <div class="cat-sinresultados-marca">✦</div>
-  <span id="cat-sinresultados-texto"></span>
-</div>
-
-<!-- ===================== PIE ===================== -->
-<footer class="cat-pie">
-  <div class="cat-pie-marca">Karivé <span class="cat-dorado">·</span> Joyas</div>
-  <div class="cat-pie-contacto">Instagram <span id="cat-ig-pie">@karive.joyas</span> · WhatsApp <span id="cat-wa-pie">+56 9 XXXX XXXX</span></div>
-  <div class="cat-pie-copy">© 2026 Karivé Joyas · Envíos a todo Chile</div>
-</footer>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>

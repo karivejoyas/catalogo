@@ -32,33 +32,112 @@
     </div>
   </div>
 
-  <div class="cat-buscador-barra">
-    <div class="cat-buscador-fila">
-      <div class="cat-buscador">
-        <span class="cat-buscador-icono">⌕</span>
-        <input id="adm-query" placeholder="Buscar por nombre o código…" autocomplete="off" />
-      </div>
-      <span class="cat-contador" id="adm-contador"></span>
-      <button id="adm-reset" class="adm-btn-borde">Restaurar catálogo inicial</button>
-    </div>
+  <!-- pestañas -->
+  <div class="adm-tabs" id="adm-tabs">
+    <button class="adm-tab is-active" data-tab="productos">Productos</button>
+    <button class="adm-tab" data-tab="diseno">Diseño y colores</button>
+    <button class="adm-tab" data-tab="portada">Portada e info</button>
+    <button class="adm-tab" data-tab="contacto">Contacto</button>
   </div>
 
-  <section class="adm-seccion">
-    <h2 class="adm-seccion-titulo">Datos de contacto</h2>
-    <p class="adm-seccion-sub">Aparecen en la portada, la sección de información y el pie del catálogo.</p>
-    <div class="adm-contacto">
-      <label class="adm-etiqueta">Instagram</label>
-      <input id="adm-ig" class="adm-input" placeholder="@tu_usuario" />
-      <label class="adm-etiqueta">WhatsApp</label>
-      <input id="adm-wa" class="adm-input" placeholder="+56 9 XXXX XXXX" />
-      <button id="adm-guardar-contacto" class="adm-btn-solido">Guardar contacto</button>
-      <span id="adm-contacto-ok" class="adm-guardado" hidden>✓ Guardado</span>
+  <!-- ===== PRODUCTOS ===== -->
+  <div class="adm-panel" data-panel="productos">
+    <div class="adm-seccion">
+      <div class="adm-barra-sup">
+        <span class="cat-contador" id="adm-contador"></span>
+        <button id="adm-reset" class="adm-btn-borde">Restaurar catálogo inicial</button>
+      </div>
     </div>
-  </section>
+    <div id="adm-categorias"></div>
+    <div style="height:60px;"></div>
+  </div>
 
-  <div id="adm-categorias"></div>
+  <!-- ===== DISEÑO Y COLORES ===== -->
+  <div class="adm-panel" data-panel="diseno" hidden>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Colores del catálogo</h2>
+      <p class="adm-seccion-sub">Cambia los colores de la marca. Se aplican al instante en el catálogo público.</p>
+      <div class="adm-colores">
+        <label class="adm-color"><span>Morado (etiquetas)</span><input type="color" id="adm-c-morado" /></label>
+        <label class="adm-color"><span>Morado profundo</span><input type="color" id="adm-c-moradoProf" /></label>
+        <label class="adm-color"><span>Dorado (precios y acentos)</span><input type="color" id="adm-c-dorado" /></label>
+        <label class="adm-color"><span>Lila (fondo de páginas)</span><input type="color" id="adm-c-lila" /></label>
+      </div>
+      <div class="adm-guardar-fila">
+        <button id="adm-guardar-colores" class="adm-btn-solido">Guardar colores</button>
+        <button id="adm-reset-colores" class="adm-btn-borde">Volver a los colores originales</button>
+        <span id="adm-colores-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      </div>
+    </section>
 
-  <div style="height:60px;"></div>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Colecciones</h2>
+      <p class="adm-seccion-sub">Edita el nombre, la descripción y la foto de portada de cada colección.</p>
+      <div id="adm-cats-editor"></div>
+    </section>
+    <div style="height:60px;"></div>
+  </div>
+
+  <!-- ===== PORTADA E INFO ===== -->
+  <div class="adm-panel" data-panel="portada" hidden>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Portada</h2>
+      <p class="adm-seccion-sub">La primera página del catálogo.</p>
+      <div class="adm-editor-fila">
+        <div class="adm-editor-foto" id="adm-cover-preview"></div>
+        <div class="adm-editor-campos">
+          <label class="adm-etiqueta">Foto de fondo</label>
+          <label class="adm-btn-solido adm-btn-file">Cambiar foto<input type="file" accept="image/*" id="adm-cover-file" hidden /></label>
+          <label class="adm-etiqueta">Frase bajo el título</label>
+          <input id="adm-cover-tagline" class="adm-input" placeholder="Accesorios hechos a mano, con amor" />
+        </div>
+      </div>
+      <div class="adm-guardar-fila">
+        <button id="adm-guardar-portada" class="adm-btn-solido">Guardar portada</button>
+        <span id="adm-portada-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      </div>
+    </section>
+
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Página de información</h2>
+      <p class="adm-seccion-sub">Los datos que aparecen en la segunda página.</p>
+      <div class="adm-contacto">
+        <label class="adm-etiqueta">Título</label>
+        <input id="adm-info-titulo" class="adm-input" />
+        <label class="adm-etiqueta">Punto 1</label>
+        <textarea id="adm-info-b1" class="adm-input" rows="2"></textarea>
+        <label class="adm-etiqueta">Punto 2</label>
+        <textarea id="adm-info-b2" class="adm-input" rows="2"></textarea>
+        <label class="adm-etiqueta">Punto 3</label>
+        <textarea id="adm-info-b3" class="adm-input" rows="2"></textarea>
+        <label class="adm-etiqueta">Punto 4</label>
+        <textarea id="adm-info-b4" class="adm-input" rows="2"></textarea>
+        <div class="adm-guardar-fila">
+          <button id="adm-guardar-info" class="adm-btn-solido">Guardar información</button>
+          <span id="adm-info-ok" class="adm-guardado" hidden>✓ Guardado</span>
+        </div>
+      </div>
+    </section>
+    <div style="height:60px;"></div>
+  </div>
+
+  <!-- ===== CONTACTO ===== -->
+  <div class="adm-panel" data-panel="contacto" hidden>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Datos de contacto</h2>
+      <p class="adm-seccion-sub">Aparecen en la portada, la página de información y donde se muestre el contacto.</p>
+      <div class="adm-contacto">
+        <label class="adm-etiqueta">Instagram</label>
+        <input id="adm-ig" class="adm-input" placeholder="@tu_usuario" />
+        <label class="adm-etiqueta">WhatsApp</label>
+        <input id="adm-wa" class="adm-input" placeholder="+56 9 XXXX XXXX" />
+        <button id="adm-guardar-contacto" class="adm-btn-solido">Guardar contacto</button>
+        <span id="adm-contacto-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      </div>
+    </section>
+    <div style="height:60px;"></div>
+  </div>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>

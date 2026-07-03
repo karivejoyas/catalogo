@@ -4,8 +4,37 @@ const KV_CATEGORIAS = [
   { id: 'flores',   nombre: 'Flores',              sub: 'Aros de flores hechos a mano, livianos e hipoalergénicos', imagen: 'assets/productos/floron-rojo.jpg', prefijo: 'FL' },
   { id: 'charms',   nombre: 'Charms',              sub: 'Argollita de acero con tu charm favorito colgando', imagen: 'assets/productos/charms-flor-azul-oro.jpg', prefijo: 'CH' },
   { id: 'argollas', nombre: 'Argollas de cristal', sub: 'Acero inoxidable hipoalergénico, dorado o plateado, con cristales', imagen: 'assets/modelo-argollas.jpg', prefijo: 'AG' },
-  { id: 'topos',    nombre: 'Topos',               sub: 'Aros pequeños tipo botón, ideales para el día a día', imagen: 'assets/productos/topos-corazon-dorado.jpg', prefijo: 'TP' }
+  { id: 'topos',    nombre: 'Topos',               sub: 'Aros pequeños tipo botón, ideales para el día a día', imagen: 'assets/productos/topos-corazon-dorado.jpg', prefijo: 'TP' },
+  { id: 'otros',    nombre: 'Otros',               sub: 'Otros accesorios de la colección', imagen: 'assets/productos/floron-blanco-perla.jpg', prefijo: 'OT' }
 ];
+
+/* defaults editables desde el panel admin (se guardan en settings) */
+const KV_THEME_DEFAULT = { morado: '#5B2A82', moradoProf: '#3A1D4E', dorado: '#E3C572', lila: '#CFC4DF' };
+const KV_COVER_DEFAULT = { image: 'assets/modelo-portada.jpg', tagline: 'Accesorios hechos a mano, con amor' };
+const KV_INFO_DEFAULT = {
+  titulo: 'Accesorios que iluminan, hechos con amor',
+  b1: 'Todas nuestras piezas tienen base de acero inoxidable hipoalergénico.',
+  b2: '¿Eres alérgica/o? Tenemos opción de plata 925, solo pregúntanos ✨',
+  b3: 'Hacemos envíos a todo Chile.',
+  b4: 'Si sueñas con un diseño especial, lo creamos juntas/os — envíanos una fotito de referencia y te damos el presupuesto.'
+};
+
+/* devuelve la categoría con las modificaciones guardadas en settings.cats aplicadas encima */
+function kvCat(id, settings) {
+  const base = KV_CATEGORIAS.find(c => c.id === id) || {};
+  const ov = (settings && settings.cats && settings.cats[id]) || {};
+  return Object.assign({}, base, ov);
+}
+
+/* aplica los colores guardados a las variables CSS */
+function kvApplyTheme(t) {
+  t = t || {};
+  const r = document.documentElement.style;
+  if (t.morado)     r.setProperty('--kv-morado', t.morado);
+  if (t.moradoProf) r.setProperty('--kv-morado-prof', t.moradoProf);
+  if (t.dorado)     r.setProperty('--kv-dorado-cl', t.dorado);
+  if (t.lila)       r.setProperty('--kv-lila-fondo', t.lila);
+}
 
 function KV_PRODUCTOS_INICIALES() {
   const p = (code, name, detail, price, photo, category, order) =>
@@ -133,13 +162,13 @@ function kvCardEditHtml(p) {
   );
 }
 
-function kvCompressPhoto(file, cb) {
+function kvCompressPhoto(file, cb, max) {
   if (!file) return;
+  max = max || 700;
   const reader = new FileReader();
   reader.onload = (ev) => {
     const img = new Image();
     img.onload = () => {
-      const max = 700;
       let w = img.width, h = img.height;
       const scale = Math.min(1, max / Math.max(w, h));
       w = Math.round(w * scale); h = Math.round(h * scale);

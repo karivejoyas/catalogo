@@ -195,11 +195,24 @@
     if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) go(idx + (dx < 0 ? 1 : -1), dx < 0 ? 'next' : 'prev');
   }, { passive: true });
 
+  // precarga de imágenes: al cargar los datos, descarga todas las fotos en
+  // segundo plano para que aparezcan al instante al pasar las páginas.
+  const yaPrecargadas = new Set();
+  function precargar() {
+    const urls = new Set();
+    products.forEach(p => { if (p.photo) urls.add(p.photo); });
+    KV_CATEGORIAS.forEach(c => { const cat = kvCat(c.id, settings); if (cat.imagen) urls.add(cat.imagen); });
+    const cover = Object.assign({}, KV_COVER_DEFAULT, settings.cover || {});
+    if (cover.image) urls.add(cover.image);
+    urls.forEach(u => { if (!yaPrecargadas.has(u)) { yaPrecargadas.add(u); const im = new Image(); im.src = u; } });
+  }
+
   function rebuild() {
     kvApplyTheme(Object.assign({}, KV_THEME_DEFAULT, settings.theme || {}));
     buildSlides();
     buildNav();
     pintar();
+    precargar();
   }
 
   // ---------- datos en vivo ----------

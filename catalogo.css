@@ -32,12 +32,12 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-nav a:hover,.fb-nav a.is-active{color:var(--kv-dorado-cl);}
 
 .fb-stage{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(4px,1.5vw,20px);padding:6px clamp(6px,2vw,20px);}
-.fb-page-wrap{height:100%;display:flex;align-items:center;justify-content:center;perspective:2200px;}
-.fb-page{width:min(94vw,50vh);aspect-ratio:64/100;max-height:100%;border-radius:16px;overflow:hidden;position:relative;background:var(--kv-lila-fondo);box-shadow:0 22px 64px rgba(0,0,0,0.55);transition:transform .3s cubic-bezier(0.33,0,0.2,1), opacity .3s ease;will-change:transform, opacity;}
-.fb-out-next{opacity:0;transform:translateX(-30px) rotateY(-16deg) scale(.965);}
-.fb-out-prev{opacity:0;transform:translateX(30px) rotateY(16deg) scale(.965);}
-.fb-in-next{opacity:0;transform:translateX(30px) rotateY(16deg) scale(.965);}
-.fb-in-prev{opacity:0;transform:translateX(-30px) rotateY(-16deg) scale(.965);}
+.fb-page-wrap{height:100%;display:flex;align-items:center;justify-content:center;}
+.fb-page{width:min(94vw,50vh);aspect-ratio:64/100;max-height:100%;border-radius:16px;overflow:hidden;position:relative;background:var(--kv-lila-fondo);box-shadow:0 22px 64px rgba(0,0,0,0.55);transition:transform .3s cubic-bezier(0.33,0,0.2,1), opacity .3s ease;}
+.fb-out-next{opacity:0;transform:translateX(-32px) scale(.965);}
+.fb-out-prev{opacity:0;transform:translateX(32px) scale(.965);}
+.fb-in-next{opacity:0;transform:translateX(32px) scale(.965);}
+.fb-in-prev{opacity:0;transform:translateX(-32px) scale(.965);}
 
 .fb-arrow{flex:0 0 auto;font-family:'Jost',sans-serif;font-size:clamp(34px,4.5vw,48px);line-height:1;color:var(--kv-dorado-cl);background:none;border:none;cursor:pointer;padding:0 4px;opacity:.75;transition:opacity .2s, transform .2s, text-shadow .2s;}
 .fb-arrow:hover{opacity:1;transform:scale(1.18);text-shadow:0 0 18px rgba(227,197,114,0.6);}
@@ -114,13 +114,13 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-menu-btn.abierto{background:rgba(227,197,114,0.16);}
 
 /* páginas: ¿cómo comprar? y despedida */
-.fb-howto{height:100%;overflow:hidden;background:radial-gradient(130% 110% at 50% 0%, #35184f 0%, var(--kv-morado-osc) 78%);padding:clamp(16px,3vh,30px) clamp(16px,5vw,32px);display:flex;flex-direction:column;align-items:center;justify-content:space-between;text-align:center;}
-.fb-howto .fb-info-divisor{margin-bottom:2px;}
-.fb-howto .fb-info-titulo{margin:2px 0 4px;font-size:clamp(19px,3vh,27px);}
-.fb-howto .fb-info-contacto{margin-top:6px;font-size:12px;}
-.fb-pasos{display:flex;flex-direction:column;gap:clamp(6px,1.4vh,13px);margin:0;width:100%;}
-.fb-paso h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(14px,2.1vh,19px);color:var(--kv-dorado-cl);margin:0 0 1px;line-height:1.1;}
-.fb-paso p{font-weight:300;font-size:clamp(10.5px,1.55vh,12.5px);line-height:1.36;color:var(--kv-lavanda);margin:0;}
+.fb-howto{height:100%;overflow:hidden;background:radial-gradient(130% 110% at 50% 0%, #35184f 0%, var(--kv-morado-osc) 78%);padding:clamp(18px,3.4vh,34px) clamp(16px,5vw,32px);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:clamp(6px,1.3vh,12px);text-align:center;}
+.fb-howto .fb-info-divisor{margin:0;flex:0 0 auto;}
+.fb-howto .fb-info-titulo{margin:0;font-size:clamp(21px,3.2vh,29px);flex:0 0 auto;}
+.fb-howto .fb-info-contacto{margin:0;font-size:12.5px;flex:0 0 auto;}
+.fb-pasos{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-evenly;gap:clamp(6px,1.2vh,12px);margin:0;width:100%;min-height:0;}
+.fb-paso h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(14.5px,2.2vh,20px);color:var(--kv-dorado-cl);margin:0 0 2px;line-height:1.12;}
+.fb-paso p{font-weight:300;font-size:clamp(11px,1.6vh,13px);line-height:1.38;color:var(--kv-lavanda);margin:0;}
 .fb-bye{height:100%;background:radial-gradient(130% 110% at 50% 0%, #35184f 0%, var(--kv-morado-osc) 78%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 26px;}
 .fb-bye .fb-logo-circulo{margin-bottom:8px;}
 .fb-bye-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(30px,6vh,52px);line-height:1.05;color:var(--kv-crema);margin:14px 0 0;}

@@ -208,6 +208,29 @@
     settingsRef.set({ info }, { merge: true }).then(() => guardado('adm-info-ok')).catch(err => console.error(err));
   });
 
+  // ---------- ¿CÓMO COMPRAR? ----------
+  (function buildHowtoInputs() {
+    let html = '';
+    for (let i = 1; i <= 6; i++) {
+      html += '<div class="adm-paso-fila">' +
+        '<input class="adm-input" id="adm-howto-p' + i + 't" placeholder="Título del paso ' + i + '" />' +
+        '<textarea class="adm-input" id="adm-howto-p' + i + 'd" rows="2" placeholder="Descripción del paso ' + i + '"></textarea>' +
+      '</div>';
+    }
+    $('adm-howto-pasos').innerHTML = html;
+  })();
+  $('adm-guardar-howto').addEventListener('click', () => {
+    const howto = { titulo: $('adm-howto-titulo').value };
+    for (let i = 1; i <= 6; i++) { howto['p' + i + 't'] = $('adm-howto-p' + i + 't').value; howto['p' + i + 'd'] = $('adm-howto-p' + i + 'd').value; }
+    settingsRef.set({ howto }, { merge: true }).then(() => guardado('adm-howto-ok')).catch(err => console.error(err));
+  });
+
+  // ---------- DESPEDIDA ----------
+  $('adm-guardar-bye').addEventListener('click', () => {
+    const despedida = { titulo: $('adm-bye-titulo').value, mensaje: $('adm-bye-msg').value };
+    settingsRef.set({ despedida }, { merge: true }).then(() => guardado('adm-bye-ok')).catch(err => console.error(err));
+  });
+
   // ---------- poblar campos desde settings ----------
   function poblarCampos() {
     if (activo() !== $('adm-ig')) $('adm-ig').value = settings.instagram || '';
@@ -222,5 +245,15 @@
 
     const info = Object.assign({}, KV_INFO_DEFAULT, settings.info || {});
     ['titulo', 'b1', 'b2', 'b3', 'b4'].forEach(k => { const inp = $('adm-info-' + k); if (inp && activo() !== inp) inp.value = info[k] || ''; });
+
+    const howto = Object.assign({}, KV_HOWTO_DEFAULT, settings.howto || {});
+    if (activo() !== $('adm-howto-titulo')) $('adm-howto-titulo').value = howto.titulo || '';
+    for (let i = 1; i <= 6; i++) {
+      ['t', 'd'].forEach(s => { const inp = $('adm-howto-p' + i + s); if (inp && activo() !== inp) inp.value = howto['p' + i + s] || ''; });
+    }
+
+    const bye = Object.assign({}, KV_DESPEDIDA_DEFAULT, settings.despedida || {});
+    if (activo() !== $('adm-bye-titulo')) $('adm-bye-titulo').value = bye.titulo || '';
+    if (activo() !== $('adm-bye-msg')) $('adm-bye-msg').value = bye.mensaje || '';
   }
 })();

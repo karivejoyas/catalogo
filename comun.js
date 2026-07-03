@@ -19,6 +19,20 @@ const KV_INFO_DEFAULT = {
   b4: 'Si sueñas con un diseño especial, lo creamos juntas/os — envíanos una fotito de referencia y te damos el presupuesto.'
 };
 
+const KV_HOWTO_DEFAULT = {
+  titulo: '¿Cómo comprar?',
+  p1t: '1 · Elige tus favoritos', p1d: 'Recorre el catálogo y guarda los códigos de los que más te gusten.',
+  p2t: '2 · Escríbenos',          p2d: 'Mándanos los códigos por Instagram o WhatsApp.',
+  p3t: '3 · Confirmamos tu pedido',p3d: 'Te avisamos el stock y el total con el envío.',
+  p4t: '4 · Realiza el pago',     p4d: 'Por transferencia o link de pago; te enviamos los datos.',
+  p5t: '5 · Enviamos con amor',   p5d: 'Preparamos tu pedido a mano y te compartimos el seguimiento.',
+  p6t: '6 · ¡Luce tu Karivé!',    p6d: 'Etiquétanos en tus historias. Nos encanta verte brillar ✦'
+};
+const KV_DESPEDIDA_DEFAULT = {
+  titulo: '¡Gracias por tu visita!',
+  mensaje: 'Esperamos que hayas encontrado tu joya favorita. Escríbenos cuando quieras — nos encanta verte brillar ✦'
+};
+
 /* devuelve la categoría con las modificaciones guardadas en settings.cats aplicadas encima */
 function kvCat(id, settings) {
   const base = KV_CATEGORIAS.find(c => c.id === id) || {};

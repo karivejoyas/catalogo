@@ -32,10 +32,10 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-nav a:hover,.fb-nav a.is-active{color:var(--kv-dorado-cl);}
 
 .fb-stage{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(4px,1.5vw,20px);padding:6px clamp(6px,2vw,20px);}
-.fb-page-wrap{height:100%;display:flex;align-items:center;justify-content:center;}
-.fb-page{width:min(94vw,50vh);aspect-ratio:64/100;max-height:100%;border-radius:16px;overflow:hidden;position:relative;background:var(--kv-lila-fondo);box-shadow:0 22px 64px rgba(0,0,0,0.55);}
-.fb-anim{animation:fbIn .38s cubic-bezier(0.16,1,0.3,1);}
-@keyframes fbIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.fb-page-wrap{height:100%;display:flex;align-items:center;justify-content:center;perspective:2200px;}
+.fb-page{width:min(94vw,50vh);aspect-ratio:64/100;max-height:100%;border-radius:16px;overflow:hidden;position:relative;background:var(--kv-lila-fondo);box-shadow:0 22px 64px rgba(0,0,0,0.55);transform-origin:left center;transition:transform .21s ease-in, box-shadow .21s ease-in;backface-visibility:hidden;will-change:transform;}
+.fb-turn-next{transform:rotateY(-96deg);box-shadow:-30px 22px 70px rgba(0,0,0,0.6);}
+.fb-turn-prev{transform:rotateY(96deg);box-shadow:30px 22px 70px rgba(0,0,0,0.6);}
 
 .fb-arrow{flex:0 0 auto;font-family:'Jost',sans-serif;font-size:clamp(34px,4.5vw,48px);line-height:1;color:var(--kv-dorado-cl);background:none;border:none;cursor:pointer;padding:0 4px;opacity:.75;transition:opacity .2s, transform .2s, text-shadow .2s;}
 .fb-arrow:hover{opacity:1;transform:scale(1.18);text-shadow:0 0 18px rgba(227,197,114,0.6);}
@@ -94,19 +94,43 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .cat-card-codigo{font-size:9.5px;font-weight:400;letter-spacing:0.16em;text-transform:uppercase;color:var(--kv-lavanda);}
 .cat-card-precio{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:var(--kv-dorado-cl);}
 
-/* tarjeta dentro del grid 2x2 del flipbook: ocupa toda su celda */
+/* tarjeta dentro del grid 2x2 del flipbook: ocupa toda su celda.
+   La etiqueta morada tiene altura fija para que quede a la misma altura
+   en todas las tarjetas (la foto ocupa el resto). */
 .fb-grid .cat-card{height:100%;}
 .fb-grid .cat-card-foto{aspect-ratio:auto;flex:1;min-height:0;}
-.fb-grid .cat-card-etiqueta{padding:7px 8px 8px;}
-.fb-grid .cat-card-nombre{font-size:clamp(10px,2.3vw,12.5px);}
-.fb-grid .cat-card-detalle{font-size:clamp(8.5px,1.9vw,10.5px);}
+.fb-grid .cat-card-etiqueta{flex:0 0 auto;height:clamp(70px,13vh,98px);padding:6px 8px;justify-content:center;}
+.fb-grid .cat-card-nombre{font-size:clamp(10px,2.3vw,12.5px);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.fb-grid .cat-card-detalle{font-size:clamp(8.5px,1.9vw,10.5px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .fb-grid .cat-card-codigo{font-size:9px;}
 .fb-grid .cat-card-precio{font-size:clamp(14px,3.2vw,18px);}
 
+/* menú de colecciones (hamburguesa en móvil) */
+.fb-nav-wrap{position:relative;display:flex;align-items:center;}
+.fb-menu-btn{display:none;align-items:center;gap:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(201,162,75,0.45);border-radius:999px;padding:7px 14px;color:var(--kv-dorado-cl);font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;cursor:pointer;}
+.fb-menu-btn .fb-hamb{font-size:15px;line-height:1;}
+.fb-menu-btn.abierto{background:rgba(227,197,114,0.16);}
+
+/* páginas: ¿cómo comprar? y despedida */
+.fb-howto{height:100%;overflow-y:auto;background:radial-gradient(130% 110% at 50% 0%, #35184f 0%, var(--kv-morado-osc) 78%);padding:clamp(22px,4vh,42px) clamp(18px,5vw,36px);display:flex;flex-direction:column;align-items:center;text-align:center;}
+.fb-pasos{display:flex;flex-direction:column;gap:clamp(10px,2vh,18px);margin:10px 0;width:100%;}
+.fb-paso h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(16px,2.5vh,21px);color:var(--kv-dorado-cl);margin:0 0 2px;}
+.fb-paso p{font-weight:300;font-size:clamp(11.5px,1.7vh,13.5px);line-height:1.5;color:var(--kv-lavanda);margin:0;}
+.fb-bye{height:100%;background:radial-gradient(130% 110% at 50% 0%, #35184f 0%, var(--kv-morado-osc) 78%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 26px;}
+.fb-bye .fb-logo-circulo{margin-bottom:8px;}
+.fb-bye-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(30px,6vh,52px);line-height:1.05;color:var(--kv-crema);margin:14px 0 0;}
+.fb-bye-msg{font-weight:300;font-size:clamp(13px,1.9vh,15.5px);line-height:1.6;color:var(--kv-lavanda);max-width:82%;margin:16px 0 0;}
+.fb-bye-contacto{font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--kv-lavanda);margin:14px 0 0;}
+.fb-bye-marca{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--kv-crema);margin:20px 0 0;}
+
 @media (max-width: 640px){
   .fb-arrow{display:none;}
-  .fb-nav{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;max-width:62vw;}
   .fb-topbar{gap:8px;}
+  .fb-menu-btn{display:inline-flex;}
+  .fb-nav{display:none;position:absolute;top:calc(100% + 8px);right:0;flex-direction:column;gap:0;background:#241238;border:1px solid rgba(201,162,75,0.4);border-radius:12px;padding:6px;min-width:210px;z-index:50;box-shadow:0 18px 44px rgba(0,0,0,0.55);}
+  .fb-nav.abierto{display:flex;}
+  .fb-nav a{padding:11px 14px;border-radius:8px;letter-spacing:0.1em;}
+  .fb-nav a:hover,.fb-nav a.is-active{background:rgba(227,197,114,0.14);}
 }
 
 /* ============================================================
@@ -175,3 +199,4 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .adm-editor-foto{width:150px;height:150px;flex:0 0 auto;border-radius:14px;background-size:cover;background-position:center;background-color:#2a1540;border:1px solid rgba(201,162,75,0.3);}
 .adm-editor-campos{flex:1;min-width:240px;display:flex;flex-direction:column;gap:8px;}
 .adm-btn-file{display:inline-block;text-align:center;cursor:pointer;margin-top:4px;}
+.adm-paso-fila{display:flex;flex-direction:column;gap:6px;margin:10px 0;padding-bottom:10px;border-bottom:1px solid rgba(201,162,75,0.14);}

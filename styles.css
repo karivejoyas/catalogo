@@ -53,7 +53,7 @@ input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.35);}
 
 .kv-hero-center{position:relative;z-index:3;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 24px;gap:22px;}
 .kv-corner-logo{display:flex;align-items:center;}
-.kv-corner-logo-img{display:block;height:38px;width:auto;animation:kFloat 7s ease-in-out infinite;}
+.kv-corner-logo-img{display:block;height:42px;width:auto;filter:drop-shadow(0 0 8px rgba(255,255,255,0.35)) brightness(1.25);animation:kFloat 7s ease-in-out infinite;}
 .kv-hero-ornament{display:flex;align-items:flex-end;justify-content:center;gap:22px;margin-bottom:4px;}
 .kv-ornament-svg{width:44px;height:auto;filter:drop-shadow(0 6px 14px rgba(0,0,0,0.35));transform-origin:50% 8%;}
 .kv-ornament-left{animation:kSwayL 6s ease-in-out infinite;}

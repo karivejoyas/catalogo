@@ -1,40 +1,69 @@
 'use strict';
 
 const KV_CATEGORIAS = [
-  { id: 'flores',   nombre: 'Flores',             sub: 'Aros de flores hechos a mano, livianos e hipoalergénicos', imagen: 'assets/productos/flores-eleccion.jpg', prefijo: 'FL' },
-  { id: 'arcilla',  nombre: 'Charms de arcilla',  sub: 'Piezas de arcilla polimérica llenas de color', imagen: 'assets/productos/margaritas-blancas.jpg', prefijo: 'CH' },
-  { id: 'argollas', nombre: 'Argollas de cristal', sub: 'Acero inoxidable hipoalergénico, dorado o plateado', imagen: 'assets/modelo-argollas.jpg', prefijo: 'AG' }
+  { id: 'flores',   nombre: 'Flores',              sub: 'Aros de flores hechos a mano, livianos e hipoalergénicos', imagen: 'assets/productos/floron-rojo.jpg', prefijo: 'FL' },
+  { id: 'charms',   nombre: 'Charms',              sub: 'Argollita de acero con tu charm favorito colgando', imagen: 'assets/productos/charms-flor-azul-oro.jpg', prefijo: 'CH' },
+  { id: 'argollas', nombre: 'Argollas de cristal', sub: 'Acero inoxidable hipoalergénico, dorado o plateado, con cristales', imagen: 'assets/modelo-argollas.jpg', prefijo: 'AG' },
+  { id: 'topos',    nombre: 'Topos',               sub: 'Aros pequeños tipo botón, ideales para el día a día', imagen: 'assets/productos/topos-corazon-dorado.jpg', prefijo: 'TP' }
 ];
 
 function KV_PRODUCTOS_INICIALES() {
   const p = (code, name, detail, price, photo, category, order) =>
     ({ code, name, detail, price, photo: 'assets/productos/' + photo + '.jpg', category, order });
   return [
-    p('FL-001', 'Florón dorado',          'Aprox. 5cm de diámetro', 12990, 'flor-dorada', 'flores', 1),
-    p('FL-002', 'Flor cristal',           'Aprox. 5cm de diámetro', 11990, 'flor-cristal', 'flores', 2),
-    p('FL-003', 'Flor amarilla & negra',  'Aprox. 5cm de diámetro', 11990, 'flor-amarilla-negra', 'flores', 3),
-    p('FL-004', 'Flor blanca & negra',    'Aprox. 5cm de diámetro', 11990, 'flor-blanca-negra', 'flores', 4),
-    p('FL-005', 'Flores amarillas',       'Aprox. 4cm de diámetro', 9990,  'flor-amarilla', 'flores', 5),
-    p('FL-006', 'Flor traslúcida',        'Aprox. 4cm de diámetro', 9990,  'flor-traslucida', 'flores', 6),
-    p('FL-007', 'Flores color a elección','Elige tu color favorito', 9990, 'flores-eleccion', 'flores', 7),
-    p('FL-008', 'Argollitas flor blanca', 'Argolla dorada con flor', 8990, 'argollita-flor-blanca', 'flores', 8),
-    p('FL-009', 'Topos margarita',        'Aprox. 2cm de diámetro', 7990,  'topos-margarita', 'flores', 9),
-    p('CH-010', 'Charms donuts azul',     'Arcilla polimérica', 9500, 'donuts-azul', 'arcilla', 10),
-    p('CH-011', 'Charms donuts marino',   'Arcilla polimérica', 9500, 'donuts-marino', 'arcilla', 11),
-    p('CH-012', 'Charms margaritas blancas', 'Arcilla polimérica', 9500, 'margaritas-blancas', 'arcilla', 12),
-    p('CH-013', 'Charms margaritas doradas', 'Arcilla polimérica', 9500, 'margaritas-doradas', 'arcilla', 13),
-    p('CH-014', 'Margarita gris XL',      'Arcilla polimérica', 10500, 'margarita-gris', 'arcilla', 14),
-    p('CH-015', 'Charms donas blancas',   'Arcilla polimérica', 9500, 'donas-blancas', 'arcilla', 15),
-    p('CH-016', 'Corazones dorados',      'Arcilla polimérica', 9500, 'corazones-dorados', 'arcilla', 16),
-    p('CH-017', 'Corazones celestes',     'Arcilla polimérica', 9500, 'corazones-celestes', 'arcilla', 17),
-    p('CH-018', 'Botones celestes',       'Arcilla polimérica', 8500, 'botones-celestes', 'arcilla', 18),
-    p('AG-019', 'Argollas cristal azul',       'Acero dorado · cristales', 10990, 'argollas-azul', 'argollas', 19),
-    p('AG-020', 'Argollas cristal negro',      'Acero dorado · cristales', 10990, 'argollas-negro', 'argollas', 20),
-    p('AG-021', 'Argollas cristal lila',       'Acero dorado · cristales', 10990, 'argollas-lila', 'argollas', 21),
-    p('AG-022', 'Argollas cristal transparente','Acero dorado · cristales', 10990, 'argollas-cristal', 'argollas', 22),
-    p('AG-023', 'Argollas cristal rojo',       'Acero dorado · cristales', 10990, 'argollas-rojo', 'argollas', 23),
-    p('AG-024', 'Argollas cristal verde',      'Acero dorado · cristales', 10990, 'argollas-verde', 'argollas', 24),
-    p('AG-025', 'Argollas cristal turquesa',   'Acero dorado · cristales', 10990, 'argollas-turquesa', 'argollas', 25)
+    // ---- FLORES ----
+    p('FL-001', 'Florón rojo',            'Aprox. 5cm de diámetro', 13990, 'floron-rojo', 'flores', 1),
+    p('FL-002', 'Florón morado',          'Aprox. 5cm de diámetro', 13990, 'floron-morado', 'flores', 2),
+    p('FL-003', 'Florón azul',            'Aprox. 5cm de diámetro', 13990, 'floron-azul', 'flores', 3),
+    p('FL-004', 'Florón naranjo',         'Aprox. 5cm de diámetro', 13990, 'floron-naranjo', 'flores', 4),
+    p('FL-005', 'Florón negro',           'Aprox. 5cm de diámetro', 13990, 'floron-negro', 'flores', 5),
+    p('FL-006', 'Florón cobre',           'Aprox. 5cm de diámetro', 13990, 'floron-cobre', 'flores', 6),
+    p('FL-007', 'Florón blanco',          'Aprox. 5cm de diámetro', 13990, 'floron-blanco', 'flores', 7),
+    p('FL-008', 'Florón blanco perla',    'Aprox. 5cm de diámetro', 13990, 'floron-blanco-perla', 'flores', 8),
+    p('FL-009', 'Flores cristal',         'Aprox. 4cm de diámetro', 11990, 'flores-cristal', 'flores', 9),
+    p('FL-010', 'Flores plateadas',       'Aprox. 4cm de diámetro', 11990, 'flores-plateadas', 'flores', 10),
+    p('FL-011', 'Flores amarillo & negro','Aprox. 4cm de diámetro', 11990, 'flores-amarillo-negro', 'flores', 11),
+    p('FL-012', 'Flores blanco & negro',  'Aprox. 4cm de diámetro', 11990, 'flores-blanco-negro-stand', 'flores', 12),
+    p('FL-013', 'Flores amarillas',       'Aprox. 4cm de diámetro', 10990, 'flores-amarillas', 'flores', 13),
+    p('FL-014', 'Mini flores amarillas',  'Aprox. 3cm de diámetro', 9990,  'flores-amarillas-mini', 'flores', 14),
+    p('FL-015', 'Flores amarillas & blancas','Elige tu color', 10990, 'flores-amarillas-blancas', 'flores', 15),
+    p('FL-016', 'Margaritas blancas',     'Aprox. 3cm de diámetro', 9990,  'margaritas-blancas', 'flores', 16),
+    p('FL-017', 'Margaritas blancas texturadas','Aprox. 3.5cm de diámetro', 10990, 'margaritas-blancas-texturadas', 'flores', 17),
+    p('FL-018', 'Margaritas grises',      'Aprox. 5cm de diámetro', 11990, 'margaritas-grises', 'flores', 18),
+    p('FL-019', 'Margaritas blancas colgantes','Aprox. 4cm de largo', 10990, 'margaritas-blancas-colg', 'flores', 19),
+    p('FL-020', 'Margaritas blancas topo','Aprox. 2.5cm de diámetro', 8990, 'margaritas-blancas-topo', 'flores', 20),
+    p('FL-021', 'Margaritas rojas',       'Aprox. 2.5cm de diámetro', 8990, 'margaritas-rojas', 'flores', 21),
+    p('FL-022', 'Margaritas colgantes',   'Aprox. 4cm de largo', 10990, 'margaritas-blancas-colg2', 'flores', 22),
+    // ---- CHARMS (argollita + charm) ----
+    p('CH-023', 'Charms flor azul (oro)',    'Argolla dorada · flor azul', 9500, 'charms-flor-azul-oro', 'charms', 23),
+    p('CH-024', 'Charms flor azul (negro)',  'Argolla negra · flor azul', 9500, 'charms-flor-azul-negro', 'charms', 24),
+    p('CH-025', 'Charms flor blanca (oro)',  'Argolla dorada · flor blanca', 9500, 'charms-flor-blanca-oro', 'charms', 25),
+    p('CH-026', 'Charms flor blanca (plata)','Argolla plateada · flor blanca', 9500, 'charms-flor-blanca-plata', 'charms', 26),
+    p('CH-027', 'Charms donut azul',         'Argolla · donut de arcilla', 9500, 'charms-donut-azul', 'charms', 27),
+    p('CH-028', 'Charms donut marino',       'Argolla · donut de arcilla', 9500, 'charms-donut-marino', 'charms', 28),
+    p('CH-029', 'Charms donut blanco',       'Argolla · donut de arcilla', 9500, 'charms-donut-blanco', 'charms', 29),
+    // ---- ARGOLLAS DE CRISTAL ----
+    p('AG-030', 'Argollas cristal amarillo',   'Acero dorado · cristales', 10990, 'argollas-amarillo', 'argollas', 30),
+    p('AG-031', 'Argollas cristal azul',       'Acero dorado · cristales', 10990, 'argollas-azul', 'argollas', 31),
+    p('AG-032', 'Argollas cristal azul rey',   'Acero dorado · cristales', 10990, 'argollas-azul-rey', 'argollas', 32),
+    p('AG-033', 'Argollas cristal verde',      'Acero dorado · cristales', 10990, 'argollas-verde', 'argollas', 33),
+    p('AG-034', 'Argollas cristal verde oliva','Acero dorado · cristales', 10990, 'argollas-verde-oliva', 'argollas', 34),
+    p('AG-035', 'Argollas cristal rojo',       'Acero dorado · cristales', 10990, 'argollas-rojo', 'argollas', 35),
+    p('AG-036', 'Argollas cristal rojo intenso','Acero dorado · cristales', 10990, 'argollas-rojo2', 'argollas', 36),
+    p('AG-037', 'Argollas cristal turquesa',   'Acero dorado · cristales', 10990, 'argollas-turquesa', 'argollas', 37),
+    p('AG-038', 'Argollas cristal turquesa II', 'Acero dorado · cristales', 10990, 'argollas-turquesa2', 'argollas', 38),
+    p('AG-039', 'Argollas cristal lila',       'Acero dorado · cristales', 10990, 'argollas-lila', 'argollas', 39),
+    p('AG-040', 'Argollas cristal negro',      'Acero dorado · cristales', 10990, 'argollas-negro', 'argollas', 40),
+    p('AG-041', 'Argollas cristal multicolor', 'Acero dorado · cristales', 11990, 'argollas-multicolor', 'argollas', 41),
+    p('AG-042', 'Argollas cristal transparente','Acero dorado · cristales', 10990, 'argollas-transparente', 'argollas', 42),
+    p('AG-043', 'Argollas cristal transparente II','Acero dorado · cristales', 10990, 'argollas-transparente2', 'argollas', 43),
+    p('AG-044', 'Argollas cristal pavé',       'Acero · pavé de cristales', 12990, 'argollas-pave', 'argollas', 44),
+    p('AG-045', 'Argollas abanico negro',      'Acero dorado · cristales', 12990, 'argollas-negro-abanico', 'argollas', 45),
+    p('AG-046', 'Argollas mandala dorado',     'Tejido a mano · dorado', 13990, 'argollas-mandala-dorado', 'argollas', 46),
+    // ---- TOPOS ----
+    p('TP-047', 'Topos corazón dorado',   'Aprox. 1.5cm', 7990, 'topos-corazon-dorado', 'topos', 47),
+    p('TP-048', 'Topos corazón celeste',  'Aprox. 1.5cm', 7990, 'topos-corazon-celeste', 'topos', 48),
+    p('TP-049', 'Topos botón celeste',    'Aprox. 1.2cm', 6990, 'topos-boton-celeste', 'topos', 49)
   ];
 }
 
@@ -94,6 +123,9 @@ function kvCardEditHtml(p) {
         '<div class="ed-fila">' +
           '<span class="ed-peso">$</span>' +
           '<input class="ed-input ed-precio" data-role="price" data-id="' + p.id + '" value="' + p.price + '" inputmode="numeric" />' +
+        '</div>' +
+        '<div class="ed-coleccion">' +
+          '<label class="ed-coleccion-label">📁 Colección:</label>' +
           '<select class="ed-input ed-categoria" data-role="category" data-id="' + p.id + '">' + opciones + '</select>' +
         '</div>' +
       '</div>' +

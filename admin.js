@@ -3,212 +3,151 @@
 
   const ADMIN_EMAIL = 'karive.joyas@gmail.com';
 
-  const state = {
-    products: [],
-    cardStyle: 'marco',
-    query: ''
-  };
-
-  const el = {
-    loginScreen: document.getElementById('kv-login'),
-    loginForm: document.getElementById('kv-login-form'),
-    loginPass: document.getElementById('kv-login-pass'),
-    loginError: document.getElementById('kv-login-error'),
-    app: document.getElementById('kv-admin-app'),
-    logout: document.getElementById('kv-logout'),
-    query: document.getElementById('kv-query'),
-    count: document.getElementById('kv-count'),
-    tabs: Array.from(document.querySelectorAll('.kv-tab')),
-    add: document.getElementById('kv-add'),
-    reset: document.getElementById('kv-reset'),
-    grid: document.getElementById('kv-grid'),
-    noResults: document.getElementById('kv-noresults'),
-    noResultsText: document.getElementById('kv-noresults-text'),
-    igInput: document.getElementById('kv-ig-input'),
-    waInput: document.getElementById('kv-wa-input'),
-    contactSave: document.getElementById('kv-contact-save'),
-    contactSaved: document.getElementById('kv-contact-saved'),
-    howtoForm: document.getElementById('kv-howto-form'),
-    howtoSave: document.getElementById('kv-howto-save'),
-    howtoSaved: document.getElementById('kv-howto-saved')
-  };
-
-  let howtoRendered = false;
+  const state = { products: [], query: '' };
+  const $ = (id) => document.getElementById(id);
 
   const itemsCol = kvDb.collection('catalog').doc('products').collection('items');
   const settingsRef = kvDb.collection('catalog').doc('settings');
-  let unsubItems = null;
-  let unsubSettings = null;
+  let unsubItems = null, unsubSettings = null;
 
   // ---- login ----
-  el.loginForm.addEventListener('submit', (e) => {
+  $('adm-login-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    el.loginError.hidden = true;
-    const pass = el.loginPass.value;
-    kvAuth.signInWithEmailAndPassword(ADMIN_EMAIL, pass)
-      .then(() => { el.loginPass.value = ''; })
-      .catch(() => { el.loginError.hidden = false; });
+    $('adm-login-error').hidden = true;
+    kvAuth.signInWithEmailAndPassword(ADMIN_EMAIL, $('adm-pass').value)
+      .then(() => { $('adm-pass').value = ''; })
+      .catch(() => { $('adm-login-error').hidden = false; });
   });
-
-  el.logout.addEventListener('click', () => kvAuth.signOut());
+  $('adm-salir').addEventListener('click', () => kvAuth.signOut());
 
   kvAuth.onAuthStateChanged((user) => {
     if (user) {
-      el.loginScreen.hidden = true;
-      el.app.hidden = false;
-      startListening();
+      $('adm-login').hidden = true;
+      $('adm-app').hidden = false;
+      escuchar();
     } else {
-      el.app.hidden = true;
-      el.loginScreen.hidden = false;
-      stopListening();
+      $('adm-app').hidden = true;
+      $('adm-login').hidden = false;
+      dejarDeEscuchar();
     }
   });
 
-  function startListening() {
+  function escuchar() {
     if (unsubItems) return;
     unsubItems = itemsCol.orderBy('order').onSnapshot((snap) => {
       state.products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (state.products.length === 0) seedDefaults();
+      if (state.products.length === 0) sembrar();
       render();
     }, (err) => console.error('Error leyendo productos:', err));
     unsubSettings = settingsRef.onSnapshot((doc) => {
-      const data = doc.data();
-      state.cardStyle = (data && data.cardStyle) || 'marco';
-      if (document.activeElement !== el.igInput) el.igInput.value = (data && data.instagram) || '';
-      if (document.activeElement !== el.waInput) el.waInput.value = (data && data.whatsapp) || '';
-      const steps = (data && Array.isArray(data.howtoSteps) && data.howtoSteps.length === 6) ? data.howtoSteps : KV_DEFAULT_HOWTO;
-      if (!howtoRendered || !el.howtoForm.contains(document.activeElement)) {
-        renderHowtoForm(steps);
-        howtoRendered = true;
-      }
-      render();
+      const data = doc.data() || {};
+      if (document.activeElement !== $('adm-ig')) $('adm-ig').value = data.instagram || '';
+      if (document.activeElement !== $('adm-wa')) $('adm-wa').value = data.whatsapp || '';
     }, (err) => console.error('Error leyendo configuración:', err));
   }
 
-  function stopListening() {
+  function dejarDeEscuchar() {
     if (unsubItems) { unsubItems(); unsubItems = null; }
     if (unsubSettings) { unsubSettings(); unsubSettings = null; }
     state.products = [];
   }
 
-  function seedDefaults() {
+  function sembrar() {
     const batch = kvDb.batch();
-    KV_DEFAULT_PRODUCTS().forEach(p => {
-      const { id, ...data } = p;
-      batch.set(itemsCol.doc(id), data);
+    KV_PRODUCTOS_INICIALES().forEach((p, i) => {
+      batch.set(itemsCol.doc('p' + String(i + 1).padStart(3, '0')), p);
     });
     batch.commit().catch(err => console.error('Error sembrando catálogo:', err));
   }
 
-  // ---- search ----
-  el.query.addEventListener('input', (e) => { state.query = e.target.value; render(); });
+  // ---- buscador / contacto / reset ----
+  $('adm-query').addEventListener('input', (e) => { state.query = e.target.value; render(); });
 
-  // ---- card style tabs ----
-  el.tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      settingsRef.set({ cardStyle: tab.dataset.style }, { merge: true })
-        .catch(err => console.error('Error guardando estilo:', err));
-    });
-  });
-
-  // ---- contacto ----
-  el.contactSave.addEventListener('click', () => {
-    settingsRef.set({ instagram: el.igInput.value.trim(), whatsapp: el.waInput.value.trim() }, { merge: true })
+  $('adm-guardar-contacto').addEventListener('click', () => {
+    settingsRef.set({ instagram: $('adm-ig').value.trim(), whatsapp: $('adm-wa').value.trim() }, { merge: true })
       .then(() => {
-        el.contactSaved.hidden = false;
-        setTimeout(() => { el.contactSaved.hidden = true; }, 2000);
+        $('adm-contacto-ok').hidden = false;
+        setTimeout(() => { $('adm-contacto-ok').hidden = true; }, 2000);
       })
       .catch(err => console.error('Error guardando contacto:', err));
   });
 
-  // ---- ¿cómo comprar? ----
-  function renderHowtoForm(steps) {
-    el.howtoForm.innerHTML = steps.map((s, i) =>
-      '<div class="kv-howto-form-step">' +
-        '<input class="kv-howto-form-title" data-idx="' + i + '" data-role="howto-title" value="' + escapeHtml(s.title) + '" />' +
-        '<textarea class="kv-howto-form-text" data-idx="' + i + '" data-role="howto-text" rows="2">' + escapeHtml(s.text) + '</textarea>' +
-      '</div>'
-    ).join('');
-  }
-
-  el.howtoSave.addEventListener('click', () => {
-    const titles = el.howtoForm.querySelectorAll('[data-role="howto-title"]');
-    const texts = el.howtoForm.querySelectorAll('[data-role="howto-text"]');
-    const steps = Array.from(titles).map((t, i) => ({ title: t.value.trim(), text: texts[i].value.trim() }));
-    settingsRef.set({ howtoSteps: steps }, { merge: true })
-      .then(() => {
-        el.howtoSaved.hidden = false;
-        setTimeout(() => { el.howtoSaved.hidden = true; }, 2000);
-      })
-      .catch(err => console.error('Error guardando pasos:', err));
-  });
-
-  // ---- add / reset ----
-  el.add.addEventListener('click', () => {
-    itemsCol.add({
-      code: 'AR-' + String(state.products.length + 1).padStart(3, '0'),
-      name: 'Nuevo aro', desc: 'Escribe aquí la descripción', price: 0, photo: null,
-      order: -Date.now()
-    }).catch(err => console.error('Error agregando producto:', err));
-  });
-
-  el.reset.addEventListener('click', () => {
-    if (!window.confirm('Esto reemplazará todo tu catálogo por los 50 ejemplos. ¿Continuar?')) return;
+  $('adm-reset').addEventListener('click', () => {
+    if (!window.confirm('Esto reemplazará todo tu catálogo por los productos iniciales (tus 25 aros con sus fotos). ¿Continuar?')) return;
     itemsCol.get().then((snap) => {
       const batch = kvDb.batch();
       snap.docs.forEach(d => batch.delete(d.ref));
-      KV_DEFAULT_PRODUCTS().forEach(p => {
-        const { id, ...data } = p;
-        batch.set(itemsCol.doc(id), data);
+      KV_PRODUCTOS_INICIALES().forEach((p, i) => {
+        batch.set(itemsCol.doc('p' + String(i + 1).padStart(3, '0')), p);
       });
       return batch.commit();
     }).catch(err => console.error('Error restaurando catálogo:', err));
   });
 
-  function updateField(id, field, value) {
-    itemsCol.doc(id).update({ [field]: value }).catch(err => console.error('Error guardando cambio:', err));
+  // ---- mutaciones ----
+  function actualizar(id, campo, valor) {
+    itemsCol.doc(id).update({ [campo]: valor }).catch(err => console.error('Error guardando cambio:', err));
   }
 
-  function deleteProduct(id) {
+  function eliminar(id) {
     if (!window.confirm('¿Eliminar este producto del catálogo?')) return;
-    itemsCol.doc(id).delete().catch(err => console.error('Error eliminando producto:', err));
+    itemsCol.doc(id).delete().catch(err => console.error('Error eliminando:', err));
   }
 
-  function uploadPhoto(id, file) {
-    kvCompressPhoto(file, (data) => updateField(id, 'photo', data));
+  function agregar(categoria) {
+    const cat = KV_CATEGORIAS.find(c => c.id === categoria);
+    const maxOrder = state.products.reduce((m, p) => Math.max(m, p.order || 0), 0);
+    itemsCol.add({
+      code: (cat ? cat.prefijo : 'PR') + '-' + String(state.products.length + 1).padStart(3, '0'),
+      name: 'Nuevo producto', detail: '', price: 0, photo: null,
+      category: categoria, order: maxOrder + 1
+    }).catch(err => console.error('Error agregando:', err));
   }
 
-  function bindCardEvents() {
-    el.grid.querySelectorAll('[data-role="name"]').forEach(n => n.addEventListener('change', e => updateField(e.target.dataset.id, 'name', e.target.value)));
-    el.grid.querySelectorAll('[data-role="desc"]').forEach(n => n.addEventListener('change', e => updateField(e.target.dataset.id, 'desc', e.target.value)));
-    el.grid.querySelectorAll('[data-role="code"]').forEach(n => n.addEventListener('change', e => updateField(e.target.dataset.id, 'code', e.target.value)));
-    el.grid.querySelectorAll('[data-role="price"]').forEach(n => n.addEventListener('change', e => {
-      const num = parseInt(String(e.target.value).replace(/[^0-9]/g, ''), 10);
-      updateField(e.target.dataset.id, 'price', isNaN(num) ? 0 : num);
-    }));
-    el.grid.querySelectorAll('[data-role="delete"]').forEach(n => n.addEventListener('click', e => deleteProduct(e.target.dataset.id)));
-    el.grid.querySelectorAll('[data-role="remove-photo"]').forEach(n => n.addEventListener('click', e => updateField(e.target.dataset.id, 'photo', null)));
-    el.grid.querySelectorAll('[data-role="upload"]').forEach(n => n.addEventListener('change', e => {
-      const file = e.target.files && e.target.files[0];
-      uploadPhoto(e.target.dataset.id, file);
-      e.target.value = '';
-    }));
-  }
-
+  // ---- render ----
   function render() {
-    el.tabs.forEach(tab => tab.classList.toggle('is-active', tab.dataset.style === state.cardStyle));
-
     const q = state.query.trim().toLowerCase();
-    const filtered = q
-      ? state.products.filter(p => (p.name + ' ' + p.code + ' ' + p.desc).toLowerCase().includes(q))
+    const filtrados = q
+      ? state.products.filter(p => (p.name + ' ' + p.code + ' ' + (p.detail || '')).toLowerCase().includes(q))
       : state.products;
 
-    el.count.textContent = filtered.length + ' de ' + state.products.length + ' aros';
-    el.grid.innerHTML = filtered.map(p => kvCardHtml(p, state.cardStyle, true)).join('');
-    bindCardEvents();
+    $('adm-contador').textContent = filtrados.length + ' de ' + state.products.length + ' productos';
 
-    const noResults = filtered.length === 0;
-    el.noResults.hidden = !noResults;
-    if (noResults) el.noResultsText.textContent = 'No encontramos aros para “' + state.query + '”. Prueba con otra palabra.';
+    let html = '';
+    KV_CATEGORIAS.forEach(cat => {
+      const items = filtrados.filter(p => p.category === cat.id);
+      html +=
+        '<section class="adm-seccion">' +
+          '<h2 class="adm-seccion-titulo">' + cat.nombre + ' <span class="adm-tag">(' + items.length + ')</span></h2>' +
+          '<p class="adm-seccion-sub">' + cat.sub + ' · <button type="button" class="adm-btn-solido" data-role="add" data-cat="' + cat.id + '" style="padding:5px 14px;font-size:12px;">+ Agregar producto</button></p>' +
+          '<div class="adm-grilla">' + items.map(kvCardEditHtml).join('') + '</div>' +
+        '</section>';
+    });
+    const huerfanos = filtrados.filter(p => !KV_CATEGORIAS.some(c => c.id === p.category));
+    if (huerfanos.length) {
+      html += '<section class="adm-seccion"><h2 class="adm-seccion-titulo">Sin categoría</h2><div class="adm-grilla">' + huerfanos.map(kvCardEditHtml).join('') + '</div></section>';
+    }
+    $('adm-categorias').innerHTML = html;
+    conectarEventos();
+  }
+
+  function conectarEventos() {
+    const root = $('adm-categorias');
+    root.querySelectorAll('[data-role="add"]').forEach(n => n.addEventListener('click', e => agregar(e.target.dataset.cat)));
+    root.querySelectorAll('[data-role="code"]').forEach(n => n.addEventListener('change', e => actualizar(e.target.dataset.id, 'code', e.target.value)));
+    root.querySelectorAll('[data-role="name"]').forEach(n => n.addEventListener('change', e => actualizar(e.target.dataset.id, 'name', e.target.value)));
+    root.querySelectorAll('[data-role="detail"]').forEach(n => n.addEventListener('change', e => actualizar(e.target.dataset.id, 'detail', e.target.value)));
+    root.querySelectorAll('[data-role="price"]').forEach(n => n.addEventListener('change', e => {
+      const num = parseInt(String(e.target.value).replace(/[^0-9]/g, ''), 10);
+      actualizar(e.target.dataset.id, 'price', isNaN(num) ? 0 : num);
+    }));
+    root.querySelectorAll('[data-role="category"]').forEach(n => n.addEventListener('change', e => actualizar(e.target.dataset.id, 'category', e.target.value)));
+    root.querySelectorAll('[data-role="delete"]').forEach(n => n.addEventListener('click', e => eliminar(e.target.dataset.id)));
+    root.querySelectorAll('[data-role="remove-photo"]').forEach(n => n.addEventListener('click', e => actualizar(e.target.dataset.id, 'photo', null)));
+    root.querySelectorAll('[data-role="upload"]').forEach(n => n.addEventListener('change', e => {
+      const file = e.target.files && e.target.files[0];
+      if (file) kvCompressPhoto(file, (data) => actualizar(e.target.dataset.id, 'photo', data));
+      e.target.value = '';
+    }));
   }
 })();

@@ -7,110 +7,65 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="styles.css" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="catalogo.css" />
 </head>
 <body>
 
-<div id="kv-login" class="kv-login-screen">
-  <form id="kv-login-form" class="kv-login-card">
-    <div class="kv-login-brand">Karivé <span class="kv-gold">·</span> Joyas</div>
-    <div class="kv-login-sub">Panel administrador</div>
-    <input type="password" id="kv-login-pass" class="kv-login-input" placeholder="Contraseña" autocomplete="current-password" required />
-    <button type="submit" class="kv-login-btn">Entrar</button>
-    <div id="kv-login-error" class="kv-login-error" hidden>Contraseña incorrecta. Intenta de nuevo.</div>
+<div id="adm-login" class="adm-login">
+  <form id="adm-login-form" class="adm-login-tarjeta">
+    <div class="adm-login-marca">Karivé <span class="cat-dorado">·</span> Joyas</div>
+    <div class="adm-login-sub">Panel administrador</div>
+    <input type="password" id="adm-pass" class="adm-input" placeholder="Contraseña" autocomplete="current-password" required />
+    <button type="submit" class="adm-btn">Entrar</button>
+    <div id="adm-login-error" class="adm-error" hidden>Contraseña incorrecta. Intenta de nuevo.</div>
   </form>
 </div>
 
-<div class="kv-app" id="kv-admin-app" hidden>
+<div id="adm-app" hidden>
 
-  <div class="kv-admin-topbar">
-    <span class="kv-brandmark">Karivé <span class="kv-gold">·</span> Joyas <span class="kv-admin-tag">— Panel administrador</span></span>
-    <div class="kv-admin-actions">
-      <a href="catalogo.html" target="_blank" rel="noopener" class="kv-admin-link">Ver catálogo público ↗</a>
-      <button id="kv-logout" class="kv-reset-btn">Cerrar sesión</button>
+  <div class="adm-topbar">
+    <span class="adm-marca">Karivé · Joyas <span class="adm-tag">— Panel administrador</span></span>
+    <div class="adm-acciones">
+      <a href="index.html" target="_blank" rel="noopener" class="adm-enlace">Ver catálogo público ↗</a>
+      <button id="adm-salir" class="adm-btn-borde">Cerrar sesión</button>
     </div>
   </div>
 
-  <div class="kv-controls kv-controls--static">
-    <div class="kv-controls-row">
-      <div class="kv-search">
-        <span class="kv-search-icon">⌕</span>
-        <input id="kv-query" placeholder="Buscar por nombre o código…" autocomplete="off" />
+  <div class="cat-buscador-barra">
+    <div class="cat-buscador-fila">
+      <div class="cat-buscador">
+        <span class="cat-buscador-icono">⌕</span>
+        <input id="adm-query" placeholder="Buscar por nombre o código…" autocomplete="off" />
       </div>
-      <span class="kv-count" id="kv-count">0 de 0 aros</span>
-    </div>
-
-    <div class="kv-edit-tools">
-      <span class="kv-edit-tools-label">Estilo de tarjeta</span>
-      <div class="kv-tabs" id="kv-tabs">
-        <button class="kv-tab" data-style="marco">Marco</button>
-        <button class="kv-tab" data-style="minimal">Minimal</button>
-        <button class="kv-tab" data-style="oscura">Oscura</button>
-      </div>
-      <span class="kv-spacer"></span>
-      <button id="kv-add" class="kv-add-btn">+ Agregar producto</button>
-      <button id="kv-reset" class="kv-reset-btn">Restaurar ejemplos</button>
-      <span class="kv-edit-hint">✎ Toca cualquier texto o foto para editarlo. Los cambios se publican al instante en la página pública.</span>
+      <span class="cat-contador" id="adm-contador"></span>
+      <button id="adm-reset" class="adm-btn-borde">Restaurar catálogo inicial</button>
     </div>
   </div>
 
-  <section class="kv-gallery-section">
-    <div class="kv-gallery-heading">
-      <span class="kv-eyebrow">Panel administrador</span>
-      <h2 class="kv-h2">Editar catálogo</h2>
-    </div>
-
-    <div class="kv-grid" id="kv-grid"></div>
-
-    <div class="kv-noresults" id="kv-noresults" hidden>
-      <div class="kv-noresults-mark">✦</div>
-      <span id="kv-noresults-text"></span>
-    </div>
-  </section>
-
-  <!-- ===================== CONTACTO (¿Cómo comprar? + pie) ===================== -->
-  <section class="kv-gallery-section">
-    <div class="kv-gallery-heading">
-      <span class="kv-eyebrow">Panel administrador</span>
-      <h2 class="kv-h2">Datos de contacto</h2>
-    </div>
-    <p class="kv-edit-hint" style="text-align:center;margin-bottom:18px;">Estos datos aparecen en la sección "¿Cómo comprar?" y en el pie de la página pública.</p>
-    <div class="kv-contact-form">
-      <label class="kv-contact-field">
-        <span class="kv-contact-label">Instagram</span>
-        <input id="kv-ig-input" class="kv-login-input" placeholder="@tu_usuario" />
-      </label>
-      <label class="kv-contact-field">
-        <span class="kv-contact-label">WhatsApp</span>
-        <input id="kv-wa-input" class="kv-login-input" placeholder="+56 9 XXXX XXXX" />
-      </label>
-      <button id="kv-contact-save" class="kv-add-btn">Guardar datos de contacto</button>
-      <span id="kv-contact-saved" class="kv-contact-saved" hidden>✓ Guardado</span>
+  <section class="adm-seccion">
+    <h2 class="adm-seccion-titulo">Datos de contacto</h2>
+    <p class="adm-seccion-sub">Aparecen en la portada, la sección de información y el pie del catálogo.</p>
+    <div class="adm-contacto">
+      <label class="adm-etiqueta">Instagram</label>
+      <input id="adm-ig" class="adm-input" placeholder="@tu_usuario" />
+      <label class="adm-etiqueta">WhatsApp</label>
+      <input id="adm-wa" class="adm-input" placeholder="+56 9 XXXX XXXX" />
+      <button id="adm-guardar-contacto" class="adm-btn-solido">Guardar contacto</button>
+      <span id="adm-contacto-ok" class="adm-guardado" hidden>✓ Guardado</span>
     </div>
   </section>
 
-  <!-- ===================== ¿CÓMO COMPRAR? (pasos editables) ===================== -->
-  <section class="kv-gallery-section">
-    <div class="kv-gallery-heading">
-      <span class="kv-eyebrow">Panel administrador</span>
-      <h2 class="kv-h2">¿Cómo comprar?</h2>
-    </div>
-    <p class="kv-edit-hint" style="text-align:center;margin-bottom:18px;">Edita el título y el texto de cada uno de los 6 pasos que ven tus clientas.</p>
-    <div class="kv-howto-form" id="kv-howto-form"></div>
-    <div style="text-align:center;margin-top:16px;">
-      <button id="kv-howto-save" class="kv-add-btn">Guardar pasos</button>
-      <span id="kv-howto-saved" class="kv-contact-saved" hidden>✓ Guardado</span>
-    </div>
-  </section>
+  <div id="adm-categorias"></div>
 
+  <div style="height:60px;"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="firebase-config.js"></script>
-<script src="common.js"></script>
+<script src="comun.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

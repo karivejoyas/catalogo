@@ -33,11 +33,22 @@ const KV_DESPEDIDA_DEFAULT = {
   mensaje: 'Esperamos que hayas encontrado tu joya favorita. Escríbenos cuando quieras — nos encanta verte brillar ✦'
 };
 
-/* devuelve la categoría con las modificaciones guardadas en settings.cats aplicadas encima */
+/* lista de colecciones vigente: la guardada en settings.categorias, o los
+   valores por defecto (migrando ediciones antiguas de settings.cats). */
+function kvCategorias(settings) {
+  settings = settings || {};
+  if (Array.isArray(settings.categorias) && settings.categorias.length) {
+    return settings.categorias.map(c => Object.assign({}, c));
+  }
+  return KV_CATEGORIAS.map(base => {
+    const ov = (settings.cats && settings.cats[base.id]) || {};
+    return Object.assign({}, base, ov);
+  });
+}
+
+/* devuelve una colección por id */
 function kvCat(id, settings) {
-  const base = KV_CATEGORIAS.find(c => c.id === id) || {};
-  const ov = (settings && settings.cats && settings.cats[id]) || {};
-  return Object.assign({}, base, ov);
+  return kvCategorias(settings).find(c => c.id === id) || { id: id, nombre: 'Otros', sub: '', imagen: '', prefijo: 'PR' };
 }
 
 /* aplica los colores guardados a las variables CSS */
@@ -142,9 +153,10 @@ function kvCardHtml(p) {
 }
 
 /* tarjeta de edición (panel admin) */
-function kvCardEditHtml(p) {
-  const opciones = KV_CATEGORIAS.map(c =>
-    '<option value="' + c.id + '"' + (p.category === c.id ? ' selected' : '') + '>' + c.nombre + '</option>').join('');
+function kvCardEditHtml(p, cats) {
+  cats = cats || KV_CATEGORIAS;
+  const opciones = cats.map(c =>
+    '<option value="' + c.id + '"' + (p.category === c.id ? ' selected' : '') + '>' + escapeHtml(c.nombre) + '</option>').join('');
   return (
     '<div class="cat-card cat-card-edit" data-id="' + p.id + '">' +
       '<div class="cat-card-foto" style="' + kvFotoCss(p) + '">' +

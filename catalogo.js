@@ -15,17 +15,23 @@
   let pend1 = null, pend2 = null;
 
   // ---------- construir las páginas del flipbook ----------
+  function pushCategoria(cat, items) {
+    if (!items.length) return;
+    slides.push({ type: 'hero', cat });
+    for (let i = 0; i < items.length; i += 4) {
+      slides.push({ type: 'products', cat, items: items.slice(i, i + 4), pageNum: Math.floor(i / 4) + 1, pageTotal: Math.ceil(items.length / 4) });
+    }
+  }
+
   function buildSlides() {
     slides = [{ type: 'cover' }, { type: 'info' }];
-    KV_CATEGORIAS.forEach(catBase => {
-      const cat = kvCat(catBase.id, settings);
-      const items = products.filter(p => p.category === catBase.id);
-      if (items.length === 0) return;
-      slides.push({ type: 'hero', cat });
-      for (let i = 0; i < items.length; i += 4) {
-        slides.push({ type: 'products', cat, items: items.slice(i, i + 4), pageNum: Math.floor(i / 4) + 1, pageTotal: Math.ceil(items.length / 4) });
-      }
-    });
+    const cats = kvCategorias(settings);
+    cats.forEach(cat => pushCategoria(cat, products.filter(p => p.category === cat.id)));
+    // productos cuya colección fue eliminada: se muestran en "Otros"
+    const huerfanos = products.filter(p => !cats.some(c => c.id === p.category));
+    if (huerfanos.length) {
+      pushCategoria({ id: '__otros__', nombre: 'Otros', sub: 'Otros accesorios de la colección', imagen: huerfanos[0].photo || cats[0] && cats[0].imagen || '' }, huerfanos);
+    }
     slides.push({ type: 'howto' });
     slides.push({ type: 'bye' });
     idx = Math.max(0, Math.min(idx, slides.length - 1));
@@ -155,19 +161,16 @@
     }, 300);
   }
 
-  // ---------- menú de categorías ----------
+  // ---------- menú de categorías (se arma desde las páginas hero) ----------
   function buildNav() {
     let html = '';
-    KV_CATEGORIAS.forEach(catBase => {
-      if (products.filter(p => p.category === catBase.id).length === 0) return;
-      const cat = kvCat(catBase.id, settings);
-      html += '<a href="#" data-cat="' + catBase.id + '">' + escapeHtml(cat.nombre) + '</a>';
+    slides.forEach((s, i) => {
+      if (s.type === 'hero') html += '<a href="#" data-i="' + i + '" data-cat="' + s.cat.id + '">' + escapeHtml(s.cat.nombre) + '</a>';
     });
     nav.innerHTML = html;
     nav.querySelectorAll('a').forEach(a => a.addEventListener('click', (e) => {
       e.preventDefault();
-      const i = slides.findIndex(s => s.type === 'hero' && s.cat.id === a.dataset.cat);
-      if (i >= 0) go(i);
+      go(parseInt(a.dataset.i, 10));
     }));
   }
   function cerrarMenu() { nav.classList.remove('abierto'); menuBtn.classList.remove('abierto'); }
@@ -201,7 +204,7 @@
   function precargar() {
     const urls = new Set();
     products.forEach(p => { if (p.photo) urls.add(p.photo); });
-    KV_CATEGORIAS.forEach(c => { const cat = kvCat(c.id, settings); if (cat.imagen) urls.add(cat.imagen); });
+    kvCategorias(settings).forEach(cat => { if (cat.imagen) urls.add(cat.imagen); });
     const cover = Object.assign({}, KV_COVER_DEFAULT, settings.cover || {});
     if (cover.image) urls.add(cover.image);
     urls.forEach(u => { if (!yaPrecargadas.has(u)) { yaPrecargadas.add(u); const im = new Image(); im.src = u; } });

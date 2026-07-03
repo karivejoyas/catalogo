@@ -48,7 +48,8 @@
     unsubSettings = settingsRef.onSnapshot((doc) => {
       settings = doc.data() || {};
       poblarCampos();
-      renderCatsEditor();
+      renderCatsEditorGuarded();
+      renderProductosGuarded();
     }, (err) => console.error('Error leyendo configuración:', err));
   }
   function dejarDeEscuchar() {
@@ -71,10 +72,10 @@
     itemsCol.doc(id).delete().catch(err => console.error('Error eliminando:', err));
   }
   function agregar(categoria) {
-    const cat = KV_CATEGORIAS.find(c => c.id === categoria);
+    const cat = kvCategorias(settings).find(c => c.id === categoria);
     const maxOrder = products.reduce((m, p) => Math.max(m, p.order || 0), 0);
     itemsCol.add({
-      code: (cat ? cat.prefijo : 'PR') + '-' + String(products.length + 1).padStart(3, '0'),
+      code: (cat && cat.prefijo ? cat.prefijo : 'PR') + '-' + String(products.length + 1).padStart(3, '0'),
       name: 'Nuevo producto', detail: '', price: 0, photo: null, category: categoria, order: maxOrder + 1
     }).catch(err => console.error('Error agregando:', err));
   }
@@ -89,22 +90,30 @@
     }).catch(err => console.error('Error restaurando:', err));
   });
 
+  function renderProductosGuarded() {
+    const cont = $('adm-categorias');
+    if (cont && cont.contains(document.activeElement)) return; // no interrumpir una edición en curso
+    renderProductos();
+  }
+
   function renderProductos() {
+    const cats = kvCategorias(settings);
     $('adm-contador').textContent = products.length + ' productos';
     let html = '';
-    KV_CATEGORIAS.forEach(catBase => {
-      const cat = kvCat(catBase.id, settings);
-      const items = products.filter(p => p.category === catBase.id);
+    cats.forEach(cat => {
+      const items = products.filter(p => p.category === cat.id);
       html +=
         '<section class="adm-seccion">' +
           '<h2 class="adm-seccion-titulo">' + escapeHtml(cat.nombre) + ' <span class="adm-tag">(' + items.length + ')</span>' +
-            ' <button type="button" class="adm-btn-solido adm-btn-mini" data-role="add" data-cat="' + catBase.id + '">+ Agregar producto</button></h2>' +
-          '<div class="adm-grilla">' + items.map(kvCardEditHtml).join('') + '</div>' +
+            ' <button type="button" class="adm-btn-solido adm-btn-mini" data-role="add" data-cat="' + cat.id + '">+ Agregar producto</button></h2>' +
+          '<div class="adm-grilla">' + items.map(p => kvCardEditHtml(p, cats)).join('') + '</div>' +
         '</section>';
     });
-    const huerfanos = products.filter(p => !KV_CATEGORIAS.some(c => c.id === p.category));
+    const huerfanos = products.filter(p => !cats.some(c => c.id === p.category));
     if (huerfanos.length) {
-      html += '<section class="adm-seccion"><h2 class="adm-seccion-titulo">Sin categoría</h2><div class="adm-grilla">' + huerfanos.map(kvCardEditHtml).join('') + '</div></section>';
+      html += '<section class="adm-seccion"><h2 class="adm-seccion-titulo">Sin colección <span class="adm-tag">(' + huerfanos.length + ')</span></h2>' +
+        '<p class="adm-seccion-sub">Estos productos quedaron sin colección. Cámbiales la colección con el selector 📁 de cada uno.</p>' +
+        '<div class="adm-grilla">' + huerfanos.map(p => kvCardEditHtml(p, cats)).join('') + '</div></section>';
     }
     $('adm-categorias').innerHTML = html;
     conectarProductos();
@@ -153,40 +162,76 @@
     settingsRef.set({ theme: KV_THEME_DEFAULT }, { merge: true }).then(() => guardado('adm-colores-ok')).catch(err => console.error(err));
   });
 
-  // ---------- COLECCIONES (nombre / sub / foto) ----------
-  function renderCatsEditor() {
+  // ---------- COLECCIONES (agregar / renombrar / foto / eliminar) ----------
+  let catsCount = -1;
+  function renderCatsEditorGuarded() {
+    const cats = kvCategorias(settings);
+    const cont = $('adm-cats-editor');
+    const focoDentro = cont && cont.contains(document.activeElement);
+    if (focoDentro && cats.length === catsCount) return; // editando y sin cambio de cantidad: no reescribir
+    catsCount = cats.length;
+    renderCatsEditor(cats);
+  }
+
+  function guardarCategorias(cats) {
+    return settingsRef.set({ categorias: cats }, { merge: true }).catch(err => console.error('Error guardando colecciones:', err));
+  }
+
+  function renderCatsEditor(cats) {
     let html = '';
-    KV_CATEGORIAS.forEach(catBase => {
-      const cat = kvCat(catBase.id, settings);
+    cats.forEach((cat, idx) => {
       html +=
-        '<div class="adm-editor-fila adm-cat-fila" data-cat="' + catBase.id + '">' +
-          '<div class="adm-editor-foto" style="background-image:url(\'' + cat.imagen + '\')"></div>' +
+        '<div class="adm-editor-fila adm-cat-fila" data-idx="' + idx + '">' +
+          '<div class="adm-editor-foto" style="background-image:url(\'' + (cat.imagen || '') + '\')"></div>' +
           '<div class="adm-editor-campos">' +
             '<label class="adm-etiqueta">Nombre de la colección</label>' +
-            '<input class="adm-input" data-role="cat-nombre" data-cat="' + catBase.id + '" value="' + escapeHtml(cat.nombre) + '" />' +
+            '<input class="adm-input" data-role="cat-nombre" data-idx="' + idx + '" value="' + escapeHtml(cat.nombre || '') + '" />' +
             '<label class="adm-etiqueta">Descripción</label>' +
-            '<input class="adm-input" data-role="cat-sub" data-cat="' + catBase.id + '" value="' + escapeHtml(cat.sub || '') + '" />' +
-            '<label class="adm-btn-solido adm-btn-file">Cambiar foto de portada<input type="file" accept="image/*" data-role="cat-foto" data-cat="' + catBase.id + '" hidden /></label>' +
-            '<span class="adm-guardado" data-role="cat-ok" data-cat="' + catBase.id + '" hidden>✓ Guardado</span>' +
+            '<input class="adm-input" data-role="cat-sub" data-idx="' + idx + '" value="' + escapeHtml(cat.sub || '') + '" />' +
+            '<div class="adm-cat-acciones">' +
+              '<label class="adm-btn-solido adm-btn-file">Cambiar foto<input type="file" accept="image/*" data-role="cat-foto" data-idx="' + idx + '" hidden /></label>' +
+              '<button type="button" class="adm-btn-borde adm-btn-del-cat" data-role="cat-del" data-idx="' + idx + '">Eliminar colección</button>' +
+            '</div>' +
           '</div>' +
         '</div>';
     });
+    html += '<button type="button" id="adm-cat-add" class="adm-btn-solido adm-btn-add-cat">+ Agregar colección</button>';
     $('adm-cats-editor').innerHTML = html;
+    conectarCatsEditor();
+  }
+
+  function conectarCatsEditor() {
     const r = $('adm-cats-editor');
-    const saveCat = (id, campo, valor) => {
-      const cats = Object.assign({}, settings.cats || {});
-      cats[id] = Object.assign({}, cats[id] || {}, { [campo]: valor });
-      settingsRef.set({ cats }, { merge: true })
-        .then(() => { const ok = r.querySelector('[data-role="cat-ok"][data-cat="' + id + '"]'); if (ok) { ok.hidden = false; setTimeout(() => ok.hidden = true, 2000); } })
-        .catch(err => console.error(err));
-    };
-    r.querySelectorAll('[data-role="cat-nombre"]').forEach(n => n.addEventListener('change', e => saveCat(e.target.dataset.cat, 'nombre', e.target.value)));
-    r.querySelectorAll('[data-role="cat-sub"]').forEach(n => n.addEventListener('change', e => saveCat(e.target.dataset.cat, 'sub', e.target.value)));
+    r.querySelectorAll('[data-role="cat-nombre"]').forEach(n => n.addEventListener('change', e => {
+      const cats = kvCategorias(settings), i = +e.target.dataset.idx;
+      if (cats[i]) { cats[i].nombre = e.target.value; guardarCategorias(cats); }
+    }));
+    r.querySelectorAll('[data-role="cat-sub"]').forEach(n => n.addEventListener('change', e => {
+      const cats = kvCategorias(settings), i = +e.target.dataset.idx;
+      if (cats[i]) { cats[i].sub = e.target.value; guardarCategorias(cats); }
+    }));
     r.querySelectorAll('[data-role="cat-foto"]').forEach(n => n.addEventListener('change', e => {
-      const file = e.target.files && e.target.files[0];
-      if (file) kvCompressPhoto(file, (data) => saveCat(e.target.dataset.cat, 'imagen', data), 1000);
+      const i = +e.target.dataset.idx, file = e.target.files && e.target.files[0];
+      if (file) kvCompressPhoto(file, (data) => { const cats = kvCategorias(settings); if (cats[i]) { cats[i].imagen = data; guardarCategorias(cats); } }, 1000);
       e.target.value = '';
     }));
+    r.querySelectorAll('[data-role="cat-del"]').forEach(n => n.addEventListener('click', e => {
+      const i = +e.target.dataset.idx, cats = kvCategorias(settings);
+      if (!cats[i]) return;
+      const nProd = products.filter(p => p.category === cats[i].id).length;
+      const msg = nProd > 0
+        ? 'La colección "' + cats[i].nombre + '" tiene ' + nProd + ' producto(s). Si la eliminas, esos productos quedarán "sin colección" (podrás reasignarlos en la pestaña Productos). ¿Eliminar?'
+        : '¿Eliminar la colección "' + cats[i].nombre + '"?';
+      if (!window.confirm(msg)) return;
+      cats.splice(i, 1);
+      guardarCategorias(cats);
+    }));
+    const add = $('adm-cat-add');
+    if (add) add.addEventListener('click', () => {
+      const cats = kvCategorias(settings);
+      cats.push({ id: 'c' + Date.now().toString(36), nombre: 'Nueva colección', sub: '', imagen: '', prefijo: 'PR' });
+      guardarCategorias(cats);
+    });
   }
 
   // ---------- PORTADA ----------

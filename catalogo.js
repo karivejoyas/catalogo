@@ -215,6 +215,12 @@
     precargar();
   }
 
+  // pinta la portada de inmediato (con valores por defecto) para no esperar
+  // a que Firestore responda; luego se actualiza al llegar los datos.
+  slides = [{ type: 'cover' }];
+  idx = 0;
+  pintar();
+
   // ---------- datos en vivo ----------
   kvDb.collection('catalog').doc('products').collection('items').orderBy('order').onSnapshot((snap) => {
     products = snap.docs.map(d => ({ id: d.id, ...d.data() }));

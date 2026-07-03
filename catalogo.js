@@ -12,7 +12,7 @@
   let settings = {};
   let slides = [];
   let idx = 0;
-  let animando = false;
+  let pend1 = null, pend2 = null;
 
   // ---------- construir las páginas del flipbook ----------
   function buildSlides() {
@@ -129,7 +129,7 @@
     nav.querySelectorAll('a').forEach(a => a.classList.toggle('is-active', a.dataset.cat === curCat));
   }
 
-  // ---------- navegación con efecto de pasar página ----------
+  // ---------- navegación con transición suave de página ----------
   function go(n, dir) {
     n = Math.max(0, Math.min(slides.length - 1, n));
     if (n === idx) return;
@@ -137,15 +137,22 @@
     idx = n;
     cerrarMenu();
     if (reduce) { pintar(); return; }
-    animando = true;
-    page.classList.remove('fb-turn-next', 'fb-turn-prev');
+    clearTimeout(pend1); clearTimeout(pend2);
+    page.classList.remove('fb-out-next', 'fb-out-prev', 'fb-in-next', 'fb-in-prev');
+    page.style.transition = '';
+    const salida = d === 'next' ? 'fb-out-next' : 'fb-out-prev';
+    const entrada = d === 'next' ? 'fb-in-next' : 'fb-in-prev';
     void page.offsetWidth;
-    page.classList.add(d === 'next' ? 'fb-turn-next' : 'fb-turn-prev');
-    setTimeout(() => {
-      pintar();
-      page.classList.remove('fb-turn-next', 'fb-turn-prev');
-      setTimeout(() => { animando = false; }, 200);
-    }, 210);
+    page.classList.add(salida);                    // se desvanece hacia afuera
+    pend1 = setTimeout(() => {
+      pintar();                                     // cambia el contenido mientras está oculto
+      page.classList.remove(salida);
+      page.style.transition = 'none';               // salto instantáneo al estado de entrada
+      page.classList.add(entrada);
+      void page.offsetWidth;
+      page.style.transition = '';                   // y transiciona suavemente al reposo
+      page.classList.remove(entrada);
+    }, 300);
   }
 
   // ---------- menú de categorías ----------

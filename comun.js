@@ -156,8 +156,24 @@ function kvContactos(settings) {
     else { url = 'https://facebook.com/' + fb.replace(/^@/, ''); texto = fb.replace(/^@/, ''); }
     out.push({ tipo: 'facebook', texto: texto, url: url });
   }
-  if (wa) out.push({ tipo: 'whatsapp', texto: wa, url: 'https://wa.me/' + wa.replace(/[^0-9]/g, '') });
+  if (wa) {
+    let url = 'https://wa.me/' + wa.replace(/[^0-9]/g, '');
+    const msg = (settings.whatsappMsg || '').trim();
+    if (msg) url += '?text=' + encodeURIComponent(msg);
+    out.push({ tipo: 'whatsapp', texto: wa, url: url });
+  }
   return out;
+}
+
+const KV_WHATSAPP_MSG_DEFAULT = '¡Hola Karivé Joyas! ✨ Vi su catálogo y me encantó una pieza, ¿me podrían dar más información? 💛';
+
+/* fondo de las páginas de productos (color sólido o imagen con transparencia) */
+function kvFondoProd(settings) {
+  const f = (settings && settings.fondoProd) || {};
+  let base = '', imgUrl = null, imgOp = 0.35;
+  if (f.tipo === 'color' && f.color) base = 'background:' + f.color + ';';
+  if (f.tipo === 'imagen' && f.imagen) { imgUrl = f.imagen; imgOp = (f.opacidad != null ? f.opacidad : 35) / 100; }
+  return { base: base, imgUrl: imgUrl, imgOp: imgOp };
 }
 
 /* fila de contactos con ícono + enlace. `tipos` opcional filtra cuáles mostrar. */
@@ -226,9 +242,10 @@ function kvCardEditHtml(p, cats) {
   );
 }
 
-function kvCompressPhoto(file, cb, max) {
+function kvCompressPhoto(file, cb, max, quality) {
   if (!file) return;
   max = max || 700;
+  quality = quality || 0.82;
   const reader = new FileReader();
   reader.onload = (ev) => {
     const img = new Image();
@@ -238,9 +255,11 @@ function kvCompressPhoto(file, cb, max) {
       w = Math.round(w * scale); h = Math.round(h * scale);
       const c = document.createElement('canvas');
       c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      const ctx = c.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, w, h);
       let data;
-      try { data = c.toDataURL('image/jpeg', 0.82); } catch (err) { data = ev.target.result; }
+      try { data = c.toDataURL('image/jpeg', quality); } catch (err) { data = ev.target.result; }
       cb(data);
     };
     img.src = ev.target.result;

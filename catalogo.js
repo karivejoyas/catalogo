@@ -42,7 +42,9 @@
     if (s.type === 'cover') {
       const cover = Object.assign({}, KV_COVER_DEFAULT, settings.cover || {});
       return (
-        '<div class="fb-cover" style="background-image:url(\'' + cover.image + '\');">' +
+        '<div class="fb-cover">' +
+          '<div class="fb-cover-blur" style="background-image:url(\'' + cover.image + '\');"></div>' +
+          '<div class="fb-cover-img" style="background-image:url(\'' + cover.image + '\');"></div>' +
           '<div class="fb-cover-velo"></div>' +
           '<div class="fb-cover-inner">' +
             '<div class="fb-logo-circulo"><img src="assets/logo-karive-crop.png" alt="Karivé Joyas" /></div>' +
@@ -71,7 +73,9 @@
     }
     if (s.type === 'hero') {
       return (
-        '<div class="fb-hero" style="background-image:url(\'' + s.cat.imagen + '\');">' +
+        '<div class="fb-hero">' +
+          '<div class="fb-hero-blur" style="background-image:url(\'' + s.cat.imagen + '\');"></div>' +
+          '<div class="fb-hero-img" style="background-image:url(\'' + s.cat.imagen + '\');"></div>' +
           '<div class="fb-hero-velo"></div>' +
           '<div class="fb-hero-inner">' +
             '<div class="fb-hero-linea"></div>' +
@@ -114,10 +118,14 @@
     // products
     const cards = s.items.map(kvCardHtml).join('');
     const paginacion = s.pageTotal > 1 ? '<span class="fb-prod-pag">' + s.pageNum + ' / ' + s.pageTotal + '</span>' : '';
+    const fp = kvFondoProd(settings);
     return (
-      '<div class="fb-prod">' +
-        '<div class="fb-prod-head"><span class="fb-prod-eyebrow">Colección</span><h2 class="fb-prod-titulo">' + escapeHtml(s.cat.nombre) + '</h2>' + paginacion + '</div>' +
-        '<div class="fb-grid">' + cards + '</div>' +
+      '<div class="fb-prod" style="' + fp.base + '">' +
+        (fp.imgUrl ? '<div class="fb-prod-bg" style="background-image:url(\'' + fp.imgUrl + '\');opacity:' + fp.imgOp + ';"></div>' : '') +
+        '<div class="fb-prod-inner">' +
+          '<div class="fb-prod-head"><span class="fb-prod-eyebrow">Colección</span><h2 class="fb-prod-titulo">' + escapeHtml(s.cat.nombre) + '</h2>' + paginacion + '</div>' +
+          '<div class="fb-grid">' + cards + '</div>' +
+        '</div>' +
       '</div>'
     );
   }

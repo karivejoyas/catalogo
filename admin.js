@@ -134,14 +134,35 @@
     r.querySelectorAll('[data-role="remove-photo"]').forEach(n => n.addEventListener('click', e => actualizar(e.target.dataset.id, 'photo', null)));
     r.querySelectorAll('[data-role="upload"]').forEach(n => n.addEventListener('change', e => {
       const file = e.target.files && e.target.files[0];
-      if (file) kvCompressPhoto(file, (data) => actualizar(e.target.dataset.id, 'photo', data));
+      if (file) kvCompressPhoto(file, (data) => actualizar(e.target.dataset.id, 'photo', data), 1000, 0.88);
       e.target.value = '';
     }));
   }
 
+  // ---------- FONDO DE PRODUCTOS ----------
+  let fondoImgTmp = null;
+  function visibilidadFondo(tipo) {
+    tipo = tipo || (document.querySelector('input[name="adm-fondo-tipo"]:checked') || {}).value || 'gradiente';
+    $('adm-fondo-color').closest('.adm-color').style.display = tipo === 'color' ? '' : 'none';
+    $('adm-fondo-preview').closest('.adm-editor-fila').style.display = tipo === 'imagen' ? '' : 'none';
+  }
+  document.querySelectorAll('input[name="adm-fondo-tipo"]').forEach(r => r.addEventListener('change', () => visibilidadFondo()));
+  $('adm-fondo-op').addEventListener('input', e => { $('adm-fondo-op-val').textContent = e.target.value; });
+  $('adm-fondo-file').addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    if (file) kvCompressPhoto(file, (data) => { fondoImgTmp = data; $('adm-fondo-preview').style.backgroundImage = "url('" + data + "')"; }, 1400, 0.8);
+    e.target.value = '';
+  });
+  $('adm-guardar-fondo').addEventListener('click', () => {
+    const tipo = (document.querySelector('input[name="adm-fondo-tipo"]:checked') || {}).value || 'gradiente';
+    const fondoProd = { tipo: tipo, color: $('adm-fondo-color').value, opacidad: parseInt($('adm-fondo-op').value, 10) };
+    fondoProd.imagen = fondoImgTmp || (settings.fondoProd && settings.fondoProd.imagen) || null;
+    settingsRef.set({ fondoProd: fondoProd }, { merge: true }).then(() => { fondoImgTmp = null; guardado('adm-fondo-ok'); }).catch(err => console.error(err));
+  });
+
   // ---------- CONTACTO ----------
   $('adm-guardar-contacto').addEventListener('click', () => {
-    settingsRef.set({ instagram: $('adm-ig').value.trim(), facebook: $('adm-fb').value.trim(), whatsapp: $('adm-wa').value.trim() }, { merge: true })
+    settingsRef.set({ instagram: $('adm-ig').value.trim(), facebook: $('adm-fb').value.trim(), whatsapp: $('adm-wa').value.trim(), whatsappMsg: $('adm-wa-msg').value.trim() }, { merge: true })
       .then(() => guardado('adm-contacto-ok')).catch(err => console.error(err));
   });
 
@@ -281,6 +302,16 @@
     if (activo() !== $('adm-ig')) $('adm-ig').value = settings.instagram || '';
     if (activo() !== $('adm-fb')) $('adm-fb').value = settings.facebook || '';
     if (activo() !== $('adm-wa')) $('adm-wa').value = settings.whatsapp || '';
+    if (activo() !== $('adm-wa-msg')) $('adm-wa-msg').value = settings.whatsappMsg != null ? settings.whatsappMsg : KV_WHATSAPP_MSG_DEFAULT;
+
+    // fondo de productos
+    const f = settings.fondoProd || {};
+    const ftipo = f.tipo || 'gradiente';
+    document.querySelectorAll('input[name="adm-fondo-tipo"]').forEach(r => { if (activo() !== r) r.checked = (r.value === ftipo); });
+    if (activo() !== $('adm-fondo-color')) $('adm-fondo-color').value = f.color || '#2a1540';
+    if (activo() !== $('adm-fondo-op')) { const op = f.opacidad != null ? f.opacidad : 35; $('adm-fondo-op').value = op; $('adm-fondo-op-val').textContent = op; }
+    if (!fondoImgTmp) $('adm-fondo-preview').style.backgroundImage = f.imagen ? "url('" + f.imagen + "')" : 'none';
+    visibilidadFondo(ftipo);
 
     const theme = Object.assign({}, KV_THEME_DEFAULT, settings.theme || {});
     COLOR_KEYS.forEach(k => { const inp = colorInput(k); if (activo() !== inp) inp.value = theme[k]; });

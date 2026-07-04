@@ -71,6 +71,31 @@
     </section>
 
     <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Fondo detrás de los productos</h2>
+      <p class="adm-seccion-sub">Elige el fondo de las páginas de productos: el degradado original, un color sólido o una imagen con la transparencia que quieras.</p>
+      <div class="adm-fondo-tipos">
+        <label><input type="radio" name="adm-fondo-tipo" value="gradiente" /> Degradado original</label>
+        <label><input type="radio" name="adm-fondo-tipo" value="color" /> Color sólido</label>
+        <label><input type="radio" name="adm-fondo-tipo" value="imagen" /> Imagen de fondo</label>
+      </div>
+      <div class="adm-fondo-opciones">
+        <label class="adm-color"><span>Color de fondo</span><input type="color" id="adm-fondo-color" /></label>
+        <div class="adm-editor-fila" style="margin-top:12px;">
+          <div class="adm-editor-foto" id="adm-fondo-preview"></div>
+          <div class="adm-editor-campos">
+            <label class="adm-btn-solido adm-btn-file">Subir imagen de fondo<input type="file" accept="image/*" id="adm-fondo-file" hidden /></label>
+            <label class="adm-etiqueta">Transparencia de la imagen: <span id="adm-fondo-op-val">35</span>%</label>
+            <input type="range" id="adm-fondo-op" min="5" max="100" value="35" class="adm-range" />
+          </div>
+        </div>
+      </div>
+      <div class="adm-guardar-fila">
+        <button id="adm-guardar-fondo" class="adm-btn-solido">Guardar fondo</button>
+        <span id="adm-fondo-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      </div>
+    </section>
+
+    <section class="adm-seccion">
       <h2 class="adm-seccion-titulo">Colecciones</h2>
       <p class="adm-seccion-sub">Edita el nombre, la descripción y la foto de portada de cada colección.</p>
       <div id="adm-cats-editor"></div>
@@ -162,6 +187,8 @@
         <input id="adm-fb" class="adm-input" placeholder="tu.pagina  o  https://facebook.com/tu.pagina" />
         <label class="adm-etiqueta">WhatsApp (número con código país)</label>
         <input id="adm-wa" class="adm-input" placeholder="+56 9 XXXX XXXX" />
+        <label class="adm-etiqueta">Mensaje automático de WhatsApp</label>
+        <textarea id="adm-wa-msg" class="adm-input" rows="3" placeholder="El mensaje que se escribe solo al abrir el chat"></textarea>
         <button id="adm-guardar-contacto" class="adm-btn-solido">Guardar contacto</button>
         <span id="adm-contacto-ok" class="adm-guardado" hidden>✓ Guardado</span>
       </div>

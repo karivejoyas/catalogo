@@ -209,3 +209,38 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .adm-btn-del-cat{color:#e08a9a;border-color:rgba(224,138,154,0.45);}
 .adm-btn-del-cat:hover{background:rgba(224,138,154,0.12);}
 .adm-btn-add-cat{margin-top:6px;}
+
+/* ---------- contactos (Instagram / Facebook / WhatsApp) ---------- */
+.fb-contactos{display:flex;justify-content:center;align-items:center;gap:clamp(10px,3vw,20px);flex-wrap:wrap;margin-top:12px;}
+.fb-contacto{display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:var(--kv-crema);font-size:12.5px;letter-spacing:0.02em;transition:color .2s, transform .2s;}
+.fb-contacto:hover{color:var(--kv-dorado-cl);transform:translateY(-1px);}
+.fb-contacto-ico{display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:50%;background:rgba(227,197,114,0.16);color:var(--kv-dorado-cl);flex:0 0 auto;}
+.fb-contacto-ico svg{width:15px;height:15px;display:block;}
+.fb-contacto-txt{white-space:nowrap;}
+.fb-siguenos + .fb-contactos{margin-top:8px;}
+
+/* ---------- lupa en tarjetas (indica que se pueden ampliar) ---------- */
+.cat-card-click{cursor:pointer;transition:transform .2s ease, box-shadow .2s ease;}
+.cat-card-click:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(42,18,62,0.42);}
+.cat-card-zoom{position:absolute;top:7px;right:7px;width:26px;height:26px;border-radius:50%;background:rgba(24,9,38,0.5);color:#fff;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);pointer-events:none;transition:background .2s;}
+.cat-card-zoom svg{width:15px;height:15px;}
+.cat-card-click:hover .cat-card-zoom{background:var(--kv-morado);}
+
+/* ---------- lightbox (producto ampliado) ---------- */
+body.fb-lb-open{overflow:hidden;}
+.fb-lightbox{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+.fb-lightbox[hidden]{display:none;}
+.fb-lb-backdrop{position:absolute;inset:0;background:rgba(10,4,16,0.82);animation:fbFade .2s ease;}
+.fb-lb-card{position:relative;z-index:2;max-width:min(540px,92vw);max-height:92vh;width:100%;background:var(--kv-crema);border-radius:18px;overflow:auto;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fbPop .25s cubic-bezier(0.16,1,0.3,1);}
+@keyframes fbFade{from{opacity:0}to{opacity:1}}
+@keyframes fbPop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+.fb-lb-x{position:absolute;top:10px;right:10px;z-index:3;width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,0,0,0.5);color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.fb-lb-x:hover{background:rgba(0,0,0,0.72);}
+.fb-lb-foto{width:100%;aspect-ratio:1/1;background-size:cover;background-position:center;background-color:#EFEAF5;flex:0 0 auto;}
+.fb-lb-info{padding:18px 22px 22px;text-align:center;display:flex;flex-direction:column;gap:6px;}
+.fb-lb-codigo{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--kv-dorado);}
+.fb-lb-nombre{font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:600;color:var(--kv-morado-prof);margin:0;line-height:1.1;}
+.fb-lb-detalle{font-size:14px;font-weight:300;color:#6e5b7e;margin:0;}
+.fb-lb-precio{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;color:var(--kv-morado);margin-top:2px;}
+.fb-lb-cerrar{margin-top:12px;align-self:center;font-family:'Jost',sans-serif;font-size:13px;font-weight:500;color:var(--kv-morado-prof);background:transparent;border:1px solid rgba(90,42,130,0.4);border-radius:999px;padding:9px 24px;cursor:pointer;}
+.fb-lb-cerrar:hover{background:rgba(90,42,130,0.08);}

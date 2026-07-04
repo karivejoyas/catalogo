@@ -40,6 +40,22 @@
     <button class="fb-arrow-mini" id="fb-next2" aria-label="Siguiente">›</button>
   </div>
 
+  <!-- lightbox: producto ampliado -->
+  <div class="fb-lightbox" id="fb-lightbox" hidden>
+    <div class="fb-lb-backdrop" data-role="close"></div>
+    <div class="fb-lb-card" role="dialog" aria-modal="true">
+      <button class="fb-lb-x" data-role="close" aria-label="Cerrar">✕</button>
+      <div class="fb-lb-foto" id="fb-lb-foto"></div>
+      <div class="fb-lb-info">
+        <span class="fb-lb-codigo" id="fb-lb-codigo"></span>
+        <h3 class="fb-lb-nombre" id="fb-lb-nombre"></h3>
+        <p class="fb-lb-detalle" id="fb-lb-detalle"></p>
+        <div class="fb-lb-precio" id="fb-lb-precio"></div>
+        <button class="fb-lb-cerrar" data-role="close">Cerrar ✕</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>

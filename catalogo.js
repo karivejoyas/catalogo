@@ -37,13 +37,8 @@
     idx = Math.max(0, Math.min(idx, slides.length - 1));
   }
 
-  function contacto() {
-    return { ig: settings.instagram || '@karive.joyas', wa: settings.whatsapp || '+56 9 XXXX XXXX' };
-  }
-
   // ---------- render de cada tipo de página ----------
   function renderSlide(s) {
-    const c = contacto();
     if (s.type === 'cover') {
       const cover = Object.assign({}, KV_COVER_DEFAULT, settings.cover || {});
       return (
@@ -55,7 +50,8 @@
             '<div class="fb-sub">· De productos ·</div>' +
             '<div class="fb-corazon">♥</div>' +
             '<p class="fb-tagline">' + escapeHtml(cover.tagline) + '</p>' +
-            '<p class="fb-siguenos">Síguenos en <span class="cat-dorado">♥</span> ' + escapeHtml(c.ig) + '</p>' +
+            '<p class="fb-siguenos">Síguenos</p>' +
+            kvContactoRow(settings, ['instagram', 'facebook']) +
           '</div>' +
         '</div>'
       );
@@ -68,7 +64,7 @@
           '<div class="fb-info-divisor"><span></span>✦<span></span></div>' +
           '<h2 class="fb-info-titulo">' + escapeHtml(info.titulo) + '</h2>' +
           '<ul class="fb-info-lista">' + bullets + '</ul>' +
-          '<div class="fb-info-contacto"><span>♥ ' + escapeHtml(c.ig) + '</span><span>✆ ' + escapeHtml(c.wa) + '</span></div>' +
+          kvContactoRow(settings) +
           '<div class="fb-corazon">♥</div>' +
         '</div>'
       );
@@ -98,7 +94,7 @@
           '<div class="fb-info-divisor"><span></span>✦<span></span></div>' +
           '<h2 class="fb-info-titulo">' + escapeHtml(h.titulo) + '</h2>' +
           '<div class="fb-pasos">' + pasos + '</div>' +
-          '<div class="fb-info-contacto"><span>♥ ' + escapeHtml(c.ig) + '</span><span>✆ ' + escapeHtml(c.wa) + '</span></div>' +
+          kvContactoRow(settings) +
         '</div>'
       );
     }
@@ -110,7 +106,7 @@
           '<h2 class="fb-bye-titulo">' + escapeHtml(d.titulo) + '</h2>' +
           '<p class="fb-bye-msg">' + escapeHtml(d.mensaje) + '</p>' +
           '<div class="fb-corazon">♥</div>' +
-          '<p class="fb-bye-contacto">' + escapeHtml(c.ig) + ' · ' + escapeHtml(c.wa) + '</p>' +
+          kvContactoRow(settings) +
           '<p class="fb-bye-marca">Karivé <span class="cat-dorado">·</span> Joyas</p>' +
         '</div>'
       );
@@ -179,6 +175,39 @@
     if (!nav.contains(e.target) && !menuBtn.contains(e.target)) cerrarMenu();
   });
 
+  // ---------- lightbox (producto ampliado) ----------
+  const lb = $('fb-lightbox');
+  function abrirLightbox(p) {
+    if (!p) return;
+    $('fb-lb-foto').style.backgroundImage = p.photo ? "url('" + p.photo + "')" : KV_SIN_FOTO;
+    $('fb-lb-foto').classList.toggle('sin-foto', !p.photo);
+    $('fb-lb-codigo').textContent = p.code || '';
+    $('fb-lb-nombre').textContent = p.name || '';
+    $('fb-lb-detalle').textContent = p.detail || '';
+    $('fb-lb-detalle').style.display = p.detail ? '' : 'none';
+    $('fb-lb-precio').textContent = formatCLP(p.price);
+    lb.hidden = false;
+    document.body.classList.add('fb-lb-open');
+  }
+  function cerrarLightbox() { lb.hidden = true; document.body.classList.remove('fb-lb-open'); }
+  const lbAbierto = () => !lb.hidden;
+  lb.querySelectorAll('[data-role="close"]').forEach(n => n.addEventListener('click', cerrarLightbox));
+
+  // click / teclado sobre una tarjeta -> abrir lightbox
+  page.addEventListener('click', (e) => {
+    const card = e.target.closest('.cat-card-click');
+    if (!card) return;
+    const p = products.find(x => x.id === card.dataset.id);
+    abrirLightbox(p);
+  });
+  page.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest && e.target.closest('.cat-card-click');
+    if (!card) return;
+    e.preventDefault();
+    abrirLightbox(products.find(x => x.id === card.dataset.id));
+  });
+
   // ---------- controles ----------
   $('fb-prev').addEventListener('click', () => go(idx - 1, 'prev'));
   $('fb-next').addEventListener('click', () => go(idx + 1, 'next'));
@@ -186,6 +215,8 @@
   $('fb-next2').addEventListener('click', () => go(idx + 1, 'next'));
   $('fb-logo').addEventListener('click', (e) => { e.preventDefault(); go(0, 'prev'); });
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lbAbierto()) { cerrarLightbox(); return; }
+    if (lbAbierto()) return;                       // no navegar mientras el lightbox está abierto
     if (e.key === 'ArrowLeft') go(idx - 1, 'prev');
     else if (e.key === 'ArrowRight') go(idx + 1, 'next');
   });
@@ -194,6 +225,7 @@
   const stage = document.querySelector('.fb-stage');
   stage.addEventListener('touchstart', (e) => { tx = e.changedTouches[0].clientX; ty = e.changedTouches[0].clientY; }, { passive: true });
   stage.addEventListener('touchend', (e) => {
+    if (lbAbierto()) return;
     const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
     if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) go(idx + (dx < 0 ? 1 : -1), dx < 0 ? 'next' : 'prev');
   }, { passive: true });

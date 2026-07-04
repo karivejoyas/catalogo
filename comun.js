@@ -136,12 +136,50 @@ function kvFotoCss(p) {
   return 'background-image:' + (p.photo ? "url('" + p.photo + "')" : KV_SIN_FOTO) + ';';
 }
 
-/* tarjeta pública (estilo Amore: foto + barra de etiqueta) */
+/* ---------- contacto: Instagram / Facebook / WhatsApp ---------- */
+const KV_ICONOS = {
+  instagram: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.43.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.43.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.16-.43-.36-1.06-.41-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.43-.16 1.06-.36 2.23-.41C8.42 2.17 8.8 2.16 12 2.16M12 0C8.74 0 8.33.01 7.05.07c-1.27.06-2.15.26-2.91.56-.79.31-1.46.72-2.13 1.38C1.35 2.68.94 3.35.63 4.14c-.3.76-.5 1.64-.56 2.91C.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.31.79.72 1.46 1.38 2.13.67.66 1.34 1.07 2.13 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.31 1.46-.72 2.13-1.38.66-.67 1.07-1.34 1.38-2.13.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.31-.79-.72-1.46-1.38-2.13C21.32 1.35 20.65.94 19.86.63c-.76-.3-1.64-.5-2.91-.56C15.67.01 15.26 0 12 0zm0 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84zM12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4zm6.41-11.85a1.44 1.44 0 1 0 1.44 1.44 1.44 1.44 0 0 0-1.44-1.44z"/></svg>',
+  facebook: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.87v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>',
+  whatsapp: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.38-.02-.53-.08-.15-.68-1.63-.93-2.23-.24-.58-.49-.5-.67-.51-.17 0-.37-.01-.57-.01-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.87 1.22 3.07.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.62.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35zM12 22a10 10 0 0 1-5.1-1.4l-.36-.22-3.79 1 1.01-3.7-.24-.38A9.9 9.9 0 0 1 2 12a10 10 0 1 1 10 10zm0-22C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.98L0 24l6.18-1.62A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12S18.63 0 12 0z"/></svg>'
+};
+
+function kvContactos(settings) {
+  settings = settings || {};
+  const ig = (settings.instagram || '').trim();
+  const fb = (settings.facebook || '').trim();
+  const wa = (settings.whatsapp || '').trim();
+  const out = [];
+  if (ig) out.push({ tipo: 'instagram', texto: ig, url: 'https://instagram.com/' + ig.replace(/^@/, '').replace(/\s+/g, '') });
+  if (fb) {
+    let url, texto;
+    if (/^https?:\/\//i.test(fb)) { url = fb; texto = fb.replace(/^https?:\/\/(www\.)?(m\.)?facebook\.com\//i, '').replace(/\/$/, '') || 'Facebook'; }
+    else { url = 'https://facebook.com/' + fb.replace(/^@/, ''); texto = fb.replace(/^@/, ''); }
+    out.push({ tipo: 'facebook', texto: texto, url: url });
+  }
+  if (wa) out.push({ tipo: 'whatsapp', texto: wa, url: 'https://wa.me/' + wa.replace(/[^0-9]/g, '') });
+  return out;
+}
+
+/* fila de contactos con ícono + enlace. `tipos` opcional filtra cuáles mostrar. */
+function kvContactoRow(settings, tipos) {
+  let cs = kvContactos(settings);
+  if (tipos) cs = cs.filter(c => tipos.indexOf(c.tipo) !== -1);
+  if (!cs.length) return '';
+  return '<div class="fb-contactos">' + cs.map(c =>
+    '<a class="fb-contacto fb-contacto-' + c.tipo + '" href="' + c.url + '" target="_blank" rel="noopener">' +
+      '<span class="fb-contacto-ico">' + KV_ICONOS[c.tipo] + '</span>' +
+      '<span class="fb-contacto-txt">' + escapeHtml(c.texto) + '</span>' +
+    '</a>'
+  ).join('') + '</div>';
+}
+
+/* tarjeta pública (estilo Amore: foto + barra de etiqueta), clickeable para ampliar */
 function kvCardHtml(p) {
   return (
-    '<div class="cat-card">' +
+    '<div class="cat-card cat-card-click" data-id="' + p.id + '" role="button" tabindex="0" aria-label="Ver ' + escapeHtml(p.name) + '">' +
       '<div class="cat-card-foto" style="' + kvFotoCss(p) + '">' +
         (!p.photo ? '<span class="cat-card-sinfoto">✦</span>' : '') +
+        '<span class="cat-card-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="8" x2="11" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>' +
       '</div>' +
       '<div class="cat-card-etiqueta">' +
         '<div class="cat-card-nombre">' + escapeHtml(p.name) + '</div>' +

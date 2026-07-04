@@ -141,7 +141,7 @@
 
   // ---------- CONTACTO ----------
   $('adm-guardar-contacto').addEventListener('click', () => {
-    settingsRef.set({ instagram: $('adm-ig').value.trim(), whatsapp: $('adm-wa').value.trim() }, { merge: true })
+    settingsRef.set({ instagram: $('adm-ig').value.trim(), facebook: $('adm-fb').value.trim(), whatsapp: $('adm-wa').value.trim() }, { merge: true })
       .then(() => guardado('adm-contacto-ok')).catch(err => console.error(err));
   });
 
@@ -279,6 +279,7 @@
   // ---------- poblar campos desde settings ----------
   function poblarCampos() {
     if (activo() !== $('adm-ig')) $('adm-ig').value = settings.instagram || '';
+    if (activo() !== $('adm-fb')) $('adm-fb').value = settings.facebook || '';
     if (activo() !== $('adm-wa')) $('adm-wa').value = settings.whatsapp || '';
 
     const theme = Object.assign({}, KV_THEME_DEFAULT, settings.theme || {});

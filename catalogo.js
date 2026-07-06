@@ -26,9 +26,10 @@
   function buildSlides() {
     slides = [{ type: 'cover' }, { type: 'info' }];
     const cats = kvCategorias(settings);
-    cats.forEach(cat => pushCategoria(cat, products.filter(p => p.category === cat.id)));
+    const visibles = products.filter(kvEnStock);
+    cats.forEach(cat => pushCategoria(cat, visibles.filter(p => p.category === cat.id)));
     // productos cuya colección fue eliminada: se muestran en "Otros"
-    const huerfanos = products.filter(p => !cats.some(c => c.id === p.category));
+    const huerfanos = visibles.filter(p => !cats.some(c => c.id === p.category));
     if (huerfanos.length) {
       pushCategoria({ id: '__otros__', nombre: 'Otros', sub: 'Otros accesorios de la colección', imagen: huerfanos[0].photo || cats[0] && cats[0].imagen || '' }, huerfanos);
     }
@@ -187,13 +188,19 @@
   const lb = $('fb-lightbox');
   function abrirLightbox(p) {
     if (!p) return;
-    $('fb-lb-foto').style.backgroundImage = p.photo ? "url('" + p.photo + "')" : KV_SIN_FOTO;
-    $('fb-lb-foto').classList.toggle('sin-foto', !p.photo);
+    const foto = $('fb-lb-foto');
+    foto.innerHTML = kvFotoInner(p);
+    foto.classList.toggle('sin-foto', !p.photo);
     $('fb-lb-codigo').textContent = p.code || '';
     $('fb-lb-nombre').textContent = p.name || '';
     $('fb-lb-detalle').textContent = p.detail || '';
     $('fb-lb-detalle').style.display = p.detail ? '' : 'none';
-    $('fb-lb-precio').textContent = formatCLP(p.price);
+    const of = kvPrecioOferta(p);
+    $('fb-lb-precio').innerHTML = of
+      ? '<span class="fb-lb-precio-old">' + formatCLP(p.price) + '</span>' +
+        '<span class="fb-lb-precio-of">' + formatCLP(of) + '</span>' +
+        '<span class="fb-lb-oferta-pill">Oferta</span>'
+      : formatCLP(p.price);
     lb.hidden = false;
     document.body.classList.add('fb-lb-open');
   }

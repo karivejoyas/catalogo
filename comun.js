@@ -63,7 +63,7 @@ function kvApplyTheme(t) {
 
 function KV_PRODUCTOS_INICIALES() {
   const p = (code, name, detail, price, photo, category, order) =>
-    ({ code, name, detail, price, photo: 'assets/productos/' + photo + '.jpg', category, order });
+    ({ code, name, detail, price, photo: 'assets/productos/' + photo + '.jpg', category, order, stock: true });
   return [
     // ---- FLORES ----
     p('FL-001', 'Florón rojo',            'Aprox. 5cm de diámetro', 13990, 'floron-rojo', 'flores', 1),
@@ -132,8 +132,55 @@ function escapeHtml(str) {
 
 const KV_SIN_FOTO = 'repeating-linear-gradient(45deg, rgba(122,47,176,0.08) 0 11px, rgba(122,47,176,0.02) 11px 22px)';
 
-function kvFotoCss(p) {
-  return 'background-image:' + (p.photo ? "url('" + p.photo + "')" : KV_SIN_FOTO) + ';';
+/* ¿el producto está disponible? (sin campo = disponible) */
+function kvEnStock(p) { return !p || p.stock !== false; }
+
+/* precio de oferta válido (mayor que 0 y menor que el original), o 0 si no hay */
+function kvPrecioOferta(p) {
+  const o = Number(p && p.priceOffer) || 0;
+  const base = Number(p && p.price) || 0;
+  return (o > 0 && o < base) ? o : 0;
+}
+
+/* encuadre de la foto: posición X/Y (%) y zoom (%) — por defecto centrado */
+function kvFoco(p) {
+  const f = (p && p.foco) || {};
+  return {
+    x: f.x != null ? f.x : 50,
+    y: f.y != null ? f.y : 50,
+    zoom: f.zoom != null ? f.zoom : 100
+  };
+}
+
+/* capa de imagen con el encuadre aplicado (posición + zoom). '' si no hay foto */
+function kvFotoInner(p) {
+  if (!p || !p.photo) return '';
+  const f = kvFoco(p);
+  return '<div class="kv-fbg" style="background-image:url(\'' + p.photo + '\');' +
+         'background-position:' + f.x + '% ' + f.y + '%;' +
+         'transform:scale(' + (f.zoom / 100) + ');transform-origin:' + f.x + '% ' + f.y + '%;"></div>';
+}
+
+/* siguiente número correlativo (a partir del número más alto en los códigos) */
+function kvNextNum(products) {
+  let max = 0;
+  (products || []).forEach(p => {
+    const m = String(p.code || '').match(/(\d+)\s*$/);
+    if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+  });
+  return max + 1;
+}
+
+/* HTML del precio (con oferta si corresponde) para la tarjeta pública */
+function kvPrecioHtml(p) {
+  const of = kvPrecioOferta(p);
+  if (of) {
+    return '<span class="cat-card-precios">' +
+      '<span class="cat-card-precio-old">' + formatCLP(p.price) + '</span>' +
+      '<span class="cat-card-precio cat-card-precio-of">' + formatCLP(of) + '</span>' +
+    '</span>';
+  }
+  return '<span class="cat-card-precio">' + formatCLP(p.price) + '</span>';
 }
 
 /* ---------- contacto: Instagram / Facebook / WhatsApp ---------- */
@@ -191,16 +238,19 @@ function kvContactoRow(settings, tipos) {
 
 /* tarjeta pública (estilo Amore: foto + barra de etiqueta), clickeable para ampliar */
 function kvCardHtml(p) {
+  const oferta = kvPrecioOferta(p) ? '<span class="cat-card-oferta">Oferta</span>' : '';
   return (
     '<div class="cat-card cat-card-click" data-id="' + p.id + '" role="button" tabindex="0" aria-label="Ver ' + escapeHtml(p.name) + '">' +
-      '<div class="cat-card-foto" style="' + kvFotoCss(p) + '">' +
+      '<div class="cat-card-foto' + (!p.photo ? ' sin-foto' : '') + '">' +
+        kvFotoInner(p) +
         (!p.photo ? '<span class="cat-card-sinfoto">✦</span>' : '') +
+        oferta +
         '<span class="cat-card-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="8" x2="11" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>' +
       '</div>' +
       '<div class="cat-card-etiqueta">' +
         '<div class="cat-card-nombre">' + escapeHtml(p.name) + '</div>' +
         (p.detail ? '<div class="cat-card-detalle">' + escapeHtml(p.detail) + '</div>' : '') +
-        '<div class="cat-card-pie"><span class="cat-card-codigo">' + escapeHtml(p.code) + '</span><span class="cat-card-precio">' + formatCLP(p.price) + '</span></div>' +
+        '<div class="cat-card-pie"><span class="cat-card-codigo">' + escapeHtml(p.code) + '</span>' + kvPrecioHtml(p) + '</div>' +
       '</div>' +
     '</div>'
   );
@@ -211,10 +261,19 @@ function kvCardEditHtml(p, cats) {
   cats = cats || KV_CATEGORIAS;
   const opciones = cats.map(c =>
     '<option value="' + c.id + '"' + (p.category === c.id ? ' selected' : '') + '>' + escapeHtml(c.nombre) + '</option>').join('');
+  const f = kvFoco(p);
+  const enStock = kvEnStock(p);
+  const of = p.priceOffer != null && Number(p.priceOffer) > 0 ? p.priceOffer : '';
   return (
-    '<div class="cat-card cat-card-edit" data-id="' + p.id + '">' +
-      '<div class="cat-card-foto" style="' + kvFotoCss(p) + '">' +
+    '<div class="cat-card cat-card-edit' + (enStock ? '' : ' sin-stock') + '" data-id="' + p.id + '">' +
+      '<div class="cat-card-foto' + (!p.photo ? ' sin-foto' : '') + '">' +
+        kvFotoInner(p) +
         (!p.photo ? '<span class="cat-card-sinfoto">✦</span>' : '') +
+        (enStock ? '' : '<span class="ed-badge-sin">Sin stock</span>') +
+        '<div class="ed-orden">' +
+          '<button type="button" class="ed-mini-btn" data-role="mover" data-dir="prev" data-id="' + p.id + '" title="Mover antes" aria-label="Mover antes">‹</button>' +
+          '<button type="button" class="ed-mini-btn" data-role="mover" data-dir="next" data-id="' + p.id + '" title="Mover después" aria-label="Mover después">›</button>' +
+        '</div>' +
         '<div class="ed-foto-botones">' +
           '<label class="ed-btn-foto">' + (p.photo ? 'Cambiar foto' : 'Agregar foto') +
             '<input type="file" accept="image/*" data-role="upload" data-id="' + p.id + '" style="display:none;" />' +
@@ -229,14 +288,31 @@ function kvCardEditHtml(p, cats) {
         '</div>' +
         '<input class="ed-input ed-nombre" data-role="name" data-id="' + p.id + '" value="' + escapeHtml(p.name) + '" placeholder="Nombre" />' +
         '<input class="ed-input ed-detalle" data-role="detail" data-id="' + p.id + '" value="' + escapeHtml(p.detail || '') + '" placeholder="Detalle (ej: 5cm de diámetro)" />' +
-        '<div class="ed-fila">' +
-          '<span class="ed-peso">$</span>' +
-          '<input class="ed-input ed-precio" data-role="price" data-id="' + p.id + '" value="' + p.price + '" inputmode="numeric" />' +
+        '<div class="ed-precios">' +
+          '<label class="ed-precio-campo"><span class="ed-precio-lbl">Precio</span>' +
+            '<span class="ed-precio-box"><span class="ed-peso">$</span>' +
+            '<input class="ed-input ed-precio" data-role="price" data-id="' + p.id + '" value="' + p.price + '" inputmode="numeric" /></span>' +
+          '</label>' +
+          '<label class="ed-precio-campo"><span class="ed-precio-lbl">Oferta <span class="ed-opc">(opcional)</span></span>' +
+            '<span class="ed-precio-box"><span class="ed-peso">$</span>' +
+            '<input class="ed-input ed-precio ed-precio-of" data-role="priceOffer" data-id="' + p.id + '" value="' + of + '" inputmode="numeric" placeholder="—" /></span>' +
+          '</label>' +
         '</div>' +
         '<div class="ed-coleccion">' +
           '<label class="ed-coleccion-label">📁 Colección:</label>' +
           '<select class="ed-input ed-categoria" data-role="category" data-id="' + p.id + '">' + opciones + '</select>' +
         '</div>' +
+        '<div class="ed-encuadre">' +
+          '<div class="ed-encuadre-tit">🎯 Encuadre de la foto</div>' +
+          '<label class="ed-slider"><span>Zoom</span><input type="range" min="100" max="250" step="1" data-role="foco-zoom" data-id="' + p.id + '" value="' + f.zoom + '" /></label>' +
+          '<label class="ed-slider"><span>Horizontal</span><input type="range" min="0" max="100" step="1" data-role="foco-x" data-id="' + p.id + '" value="' + f.x + '" /></label>' +
+          '<label class="ed-slider"><span>Vertical</span><input type="range" min="0" max="100" step="1" data-role="foco-y" data-id="' + p.id + '" value="' + f.y + '" /></label>' +
+        '</div>' +
+        '<label class="ed-stock' + (enStock ? '' : ' is-off') + '">' +
+          '<input type="checkbox" data-role="stock" data-id="' + p.id + '"' + (enStock ? ' checked' : '') + ' />' +
+          '<span class="ed-stock-sw"></span>' +
+          '<span class="ed-stock-txt">' + (enStock ? 'En stock' : 'Sin stock (oculto)') + '</span>' +
+        '</label>' +
       '</div>' +
     '</div>'
   );

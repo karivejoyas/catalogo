@@ -42,8 +42,8 @@
     if (unsubItems) return;
     unsubItems = itemsCol.orderBy('order').onSnapshot((snap) => {
       products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (products.length === 0) sembrar();
-      renderProductos();
+      if (products.length === 0) { sembrar(); return; }
+      renderProductosGuarded();
     }, (err) => console.error('Error leyendo productos:', err));
     unsubSettings = settingsRef.onSnapshot((doc) => {
       settings = doc.data() || {};
@@ -74,10 +74,26 @@
   function agregar(categoria) {
     const cat = kvCategorias(settings).find(c => c.id === categoria);
     const maxOrder = products.reduce((m, p) => Math.max(m, p.order || 0), 0);
+    const num = kvNextNum(products);   // sigue el correlativo del número más alto
     itemsCol.add({
-      code: (cat && cat.prefijo ? cat.prefijo : 'PR') + '-' + String(products.length + 1).padStart(3, '0'),
-      name: 'Nuevo producto', detail: '', price: 0, photo: null, category: categoria, order: maxOrder + 1
+      code: (cat && cat.prefijo ? cat.prefijo : 'PR') + '-' + String(num).padStart(3, '0'),
+      name: 'Nuevo producto', detail: '', price: 0, priceOffer: 0, photo: null, category: categoria, order: maxOrder + 1, stock: true
     }).catch(err => console.error('Error agregando:', err));
+  }
+
+  // reordenar dentro de la misma colección (‹ antes / › después)
+  function moverProducto(id, dir) {
+    const p0 = products.find(p => p.id === id);
+    if (!p0) return;
+    const lista = products.filter(p => p.category === p0.category).sort((a, b) => (a.order || 0) - (b.order || 0));
+    const i = lista.findIndex(p => p.id === id);
+    const j = i + (dir === 'prev' ? -1 : 1);
+    if (j < 0 || j >= lista.length) return;
+    const orden = lista.map(p => p.order || 0).slice().sort((a, b) => a - b); // huecos de orden de esta colección
+    lista.splice(j, 0, lista.splice(i, 1)[0]);                                 // mueve el elemento
+    const batch = kvDb.batch();
+    lista.forEach((p, k) => { if ((p.order || 0) !== orden[k]) batch.update(itemsCol.doc(p.id), { order: orden[k] }); });
+    batch.commit().catch(err => console.error('Error reordenando:', err));
   }
 
   $('adm-reset').addEventListener('click', () => {
@@ -90,11 +106,23 @@
     }).catch(err => console.error('Error restaurando:', err));
   });
 
+  let pendienteProductos = false;
   function renderProductosGuarded() {
     const cont = $('adm-categorias');
-    if (cont && cont.contains(document.activeElement)) return; // no interrumpir una edición en curso
+    if (cont && cont.contains(document.activeElement)) { pendienteProductos = true; return; } // no interrumpir una edición
+    pendienteProductos = false;
     renderProductos();
   }
+  // al salir del foco de la sección, si quedó un render pendiente, se aplica
+  (function () {
+    const cont = $('adm-categorias');
+    if (!cont) return;
+    cont.addEventListener('focusout', () => {
+      setTimeout(() => {
+        if (pendienteProductos && !cont.contains(document.activeElement)) { pendienteProductos = false; renderProductos(); }
+      }, 0);
+    });
+  })();
 
   function renderProductos() {
     const cats = kvCategorias(settings);
@@ -129,14 +157,46 @@
       const num = parseInt(String(e.target.value).replace(/[^0-9]/g, ''), 10);
       actualizar(e.target.dataset.id, 'price', isNaN(num) ? 0 : num);
     }));
+    r.querySelectorAll('[data-role="priceOffer"]').forEach(n => n.addEventListener('change', e => {
+      const num = parseInt(String(e.target.value).replace(/[^0-9]/g, ''), 10);
+      actualizar(e.target.dataset.id, 'priceOffer', isNaN(num) ? 0 : num);
+    }));
     r.querySelectorAll('[data-role="category"]').forEach(n => n.addEventListener('change', e => actualizar(e.target.dataset.id, 'category', e.target.value)));
     r.querySelectorAll('[data-role="delete"]').forEach(n => n.addEventListener('click', e => eliminar(e.target.dataset.id)));
+    r.querySelectorAll('[data-role="mover"]').forEach(n => n.addEventListener('click', e => moverProducto(e.currentTarget.dataset.id, e.currentTarget.dataset.dir)));
+    r.querySelectorAll('[data-role="stock"]').forEach(n => n.addEventListener('change', e => {
+      actualizar(e.target.dataset.id, 'stock', e.target.checked);
+      const card = e.target.closest('.cat-card-edit');
+      if (card) card.classList.toggle('sin-stock', !e.target.checked);
+      const lbl = e.target.closest('.ed-stock');
+      if (lbl) { lbl.classList.toggle('is-off', !e.target.checked); const t = lbl.querySelector('.ed-stock-txt'); if (t) t.textContent = e.target.checked ? 'En stock' : 'Sin stock (oculto)'; }
+    }));
+    r.querySelectorAll('[data-role^="foco-"]').forEach(n => {
+      n.addEventListener('input', e => aplicarFocoPreview(e.target.dataset.id));
+      n.addEventListener('change', e => actualizar(e.target.dataset.id, 'foco', focoDeCard(e.target.dataset.id)));
+    });
     r.querySelectorAll('[data-role="remove-photo"]').forEach(n => n.addEventListener('click', e => actualizar(e.target.dataset.id, 'photo', null)));
     r.querySelectorAll('[data-role="upload"]').forEach(n => n.addEventListener('change', e => {
       const file = e.target.files && e.target.files[0];
       if (file) kvCompressPhoto(file, (data) => actualizar(e.target.dataset.id, 'photo', data), 1000, 0.88);
       e.target.value = '';
     }));
+  }
+
+  // encuadre: lee los 3 sliders de una tarjeta y aplica la vista previa en vivo
+  function focoDeCard(id) {
+    const r = $('adm-categorias');
+    const gv = (role) => { const el = r.querySelector('[data-role="' + role + '"][data-id="' + id + '"]'); return el ? parseInt(el.value, 10) : null; };
+    return { x: gv('foco-x'), y: gv('foco-y'), zoom: gv('foco-zoom') };
+  }
+  function aplicarFocoPreview(id) {
+    const f = focoDeCard(id);
+    const card = $('adm-categorias').querySelector('.cat-card-edit[data-id="' + id + '"]');
+    const bg = card && card.querySelector('.kv-fbg');
+    if (!bg) return;
+    bg.style.backgroundPosition = f.x + '% ' + f.y + '%';
+    bg.style.transform = 'scale(' + (f.zoom / 100) + ')';
+    bg.style.transformOrigin = f.x + '% ' + f.y + '%';
   }
 
   // ---------- FONDO DE PRODUCTOS ----------

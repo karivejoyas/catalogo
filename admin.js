@@ -217,7 +217,7 @@
   }
 
   // ---------- FONDOS (productos e información) ----------
-  function setupFondo(prefix, key, defColor) {
+  function setupFondo(prefix, key, defFondo) {
     let tmp = null;
     const sel = 'input[name="' + prefix + '-tipo"]';
     function visib(tipo) {
@@ -235,22 +235,22 @@
     $(prefix + '-guardar').addEventListener('click', () => {
       const tipo = (document.querySelector(sel + ':checked') || {}).value || 'gradiente';
       const fondo = { tipo: tipo, color: $(prefix + '-color').value, opacidad: parseInt($(prefix + '-op').value, 10) };
-      fondo.imagen = tmp || (settings[key] && settings[key].imagen) || null;
+      fondo.imagen = tmp || (settings[key] && settings[key].imagen) || (defFondo && defFondo.imagen) || null;
       const dato = {}; dato[key] = fondo;
       settingsRef.set(dato, { merge: true }).then(() => { tmp = null; guardado(prefix + '-ok'); }).catch(err => console.error(err));
     });
     return function poblar() {
-      const f = settings[key] || {};
+      const f = (settings[key] && settings[key].tipo) ? settings[key] : defFondo;   // muestra el fondo sugerido si aún no hay uno propio
       const tipo = f.tipo || 'gradiente';
       document.querySelectorAll(sel).forEach(r => { if (activo() !== r) r.checked = (r.value === tipo); });
-      if (activo() !== $(prefix + '-color')) $(prefix + '-color').value = f.color || defColor;
+      if (activo() !== $(prefix + '-color')) $(prefix + '-color').value = f.color || '#2a1540';
       if (activo() !== $(prefix + '-op')) { const op = f.opacidad != null ? f.opacidad : 35; $(prefix + '-op').value = op; $(prefix + '-op-val').textContent = op; }
       if (!tmp) $(prefix + '-preview').style.backgroundImage = f.imagen ? "url('" + f.imagen + "')" : 'none';
       visib(tipo);
     };
   }
-  const poblarFondoProd = setupFondo('adm-fondo', 'fondoProd', '#2a1540');
-  const poblarFondoInfo = setupFondo('adm-fondoi', 'fondoInfo', '#2a1540');
+  const poblarFondoProd = setupFondo('adm-fondo', 'fondoProd', KV_FONDO_PROD_DEFAULT);
+  const poblarFondoInfo = setupFondo('adm-fondoi', 'fondoInfo', KV_FONDO_INFO_DEFAULT);
 
   // ---------- CONTACTO ----------
   $('adm-guardar-contacto').addEventListener('click', () => {

@@ -233,10 +233,20 @@ function kvFondo(f) {
   if (f.tipo === 'imagen' && f.imagen) { imgUrl = f.imagen; imgOp = (f.opacidad != null ? f.opacidad : 35) / 100; }
   return { base: base, imgUrl: imgUrl, imgOp: imgOp };
 }
+/* fondos sugeridos por defecto (se muestran si el admin no configuró otro) */
+const KV_FONDO_PROD_DEFAULT = { tipo: 'imagen', imagen: 'assets/fondo-productos.jpg', opacidad: 55 };
+const KV_FONDO_INFO_DEFAULT = { tipo: 'imagen', imagen: 'assets/fondo-info.jpg', opacidad: 85 };
+
 /* fondo de las páginas de productos */
-function kvFondoProd(settings) { return kvFondo(settings && settings.fondoProd); }
+function kvFondoProd(settings) {
+  const f = settings && settings.fondoProd;
+  return kvFondo(f && f.tipo ? f : KV_FONDO_PROD_DEFAULT);
+}
 /* fondo de las páginas de texto (información, cómo comprar, despedida) */
-function kvFondoInfo(settings) { return kvFondo(settings && settings.fondoInfo); }
+function kvFondoInfo(settings) {
+  const f = settings && settings.fondoInfo;
+  return kvFondo(f && f.tipo ? f : KV_FONDO_INFO_DEFAULT);
+}
 
 /* fila de contactos con ícono + enlace. `tipos` opcional filtra cuáles mostrar. */
 function kvContactoRow(settings, tipos) {

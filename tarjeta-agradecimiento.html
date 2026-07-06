@@ -47,8 +47,8 @@
   .back h2{ font-family:'Cormorant Garamond','Georgia',serif; font-style:italic; font-weight:600; font-size:17px; color:var(--morado); line-height:1; }
   .back .sub{ font-size:6px; letter-spacing:.22em; text-transform:uppercase; color:var(--dorado-cl); margin-top:.8mm; }
   .cuidados{ list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:1.4mm 6mm; margin:2.4mm 0 2.4mm; text-align:left; width:100%; max-width:66mm; }
-  .cuidados li{ position:relative; padding-left:4mm; font-size:7.2px; line-height:1.35; color:var(--tinta); }
-  .cuidados li::before{ content:'\2726'; position:absolute; left:0; top:2.2px; color:var(--dorado); font-size:6.2px; line-height:1; }
+  .cuidados li{ display:flex; align-items:baseline; gap:1.7mm; font-size:7.2px; line-height:1.35; color:var(--tinta); }
+  .cuidados li::before{ content:'\2726'; color:var(--dorado); font-size:6.2px; flex:0 0 auto; }
 
   @media print{
     body{ background:#fff; }

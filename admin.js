@@ -119,7 +119,14 @@
   let pendienteProductos = false;
   function renderProductosGuarded() {
     const cont = $('adm-categorias');
-    if (cont && cont.contains(document.activeElement)) { pendienteProductos = true; return; } // no interrumpir una edición
+    const ae = document.activeElement;
+    // solo se pospone el refresco si se está editando un campo de texto/selección
+    // (no cuando el foco está en un botón como Agregar/Eliminar/mover ni en casillas)
+    const editando = cont && ae && cont.contains(ae) && (
+      ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT' ||
+      (ae.tagName === 'INPUT' && ae.type !== 'checkbox' && ae.type !== 'button' && ae.type !== 'submit')
+    );
+    if (editando) { pendienteProductos = true; return; }
     pendienteProductos = false;
     renderProductos();
   }

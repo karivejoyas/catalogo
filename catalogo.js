@@ -48,7 +48,6 @@
           '<div class="fb-cover-img" style="background-image:url(\'' + cover.image + '\');"></div>' +
           '<div class="fb-cover-velo"></div>' +
           '<div class="fb-cover-inner">' +
-            '<div class="fb-logo-circulo"><img src="assets/logo-karive-crop.png" alt="Karivé Joyas" /></div>' +
             '<h1 class="fb-titulo">Catálogo</h1>' +
             '<div class="fb-sub">· De productos ·</div>' +
             '<div class="fb-corazon">♥</div>' +

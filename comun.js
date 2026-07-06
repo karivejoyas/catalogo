@@ -225,14 +225,18 @@ function kvContactos(settings) {
 
 const KV_WHATSAPP_MSG_DEFAULT = '¡Hola Karivé Joyas! ✨ Vi su catálogo y me encantó una pieza, ¿me podrían dar más información? 💛';
 
-/* fondo de las páginas de productos (color sólido o imagen con transparencia) */
-function kvFondoProd(settings) {
-  const f = (settings && settings.fondoProd) || {};
+/* fondo de una página (color sólido o imagen con transparencia) */
+function kvFondo(f) {
+  f = f || {};
   let base = '', imgUrl = null, imgOp = 0.35;
   if (f.tipo === 'color' && f.color) base = 'background:' + f.color + ';';
   if (f.tipo === 'imagen' && f.imagen) { imgUrl = f.imagen; imgOp = (f.opacidad != null ? f.opacidad : 35) / 100; }
   return { base: base, imgUrl: imgUrl, imgOp: imgOp };
 }
+/* fondo de las páginas de productos */
+function kvFondoProd(settings) { return kvFondo(settings && settings.fondoProd); }
+/* fondo de las páginas de texto (información, cómo comprar, despedida) */
+function kvFondoInfo(settings) { return kvFondo(settings && settings.fondoInfo); }
 
 /* fila de contactos con ícono + enlace. `tipos` opcional filtra cuáles mostrar. */
 function kvContactoRow(settings, tipos) {

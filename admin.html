@@ -90,8 +90,33 @@
         </div>
       </div>
       <div class="adm-guardar-fila">
-        <button id="adm-guardar-fondo" class="adm-btn-solido">Guardar fondo</button>
+        <button id="adm-fondo-guardar" class="adm-btn-solido">Guardar fondo</button>
         <span id="adm-fondo-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      </div>
+    </section>
+
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Fondo de las páginas de información</h2>
+      <p class="adm-seccion-sub">El fondo de las páginas de texto (información, cómo comprar y despedida): el degradado original, un color sólido o una imagen con la transparencia que quieras.</p>
+      <div class="adm-fondo-tipos">
+        <label><input type="radio" name="adm-fondoi-tipo" value="gradiente" /> Degradado original</label>
+        <label><input type="radio" name="adm-fondoi-tipo" value="color" /> Color sólido</label>
+        <label><input type="radio" name="adm-fondoi-tipo" value="imagen" /> Imagen de fondo</label>
+      </div>
+      <div class="adm-fondo-opciones">
+        <label class="adm-color"><span>Color de fondo</span><input type="color" id="adm-fondoi-color" /></label>
+        <div class="adm-editor-fila" style="margin-top:12px;">
+          <div class="adm-editor-foto" id="adm-fondoi-preview"></div>
+          <div class="adm-editor-campos">
+            <label class="adm-btn-solido adm-btn-file">Subir imagen de fondo<input type="file" accept="image/*" id="adm-fondoi-file" hidden /></label>
+            <label class="adm-etiqueta">Transparencia de la imagen: <span id="adm-fondoi-op-val">35</span>%</label>
+            <input type="range" id="adm-fondoi-op" min="5" max="100" value="35" class="adm-range" />
+          </div>
+        </div>
+      </div>
+      <div class="adm-guardar-fila">
+        <button id="adm-fondoi-guardar" class="adm-btn-solido">Guardar fondo</button>
+        <span id="adm-fondoi-ok" class="adm-guardado" hidden>✓ Guardado</span>
       </div>
     </section>
 

@@ -61,8 +61,10 @@
     if (s.type === 'info') {
       const info = Object.assign({}, KV_INFO_DEFAULT, settings.info || {});
       const bullets = [info.b1, info.b2, info.b3, info.b4].filter(Boolean).map(b => '<li>' + escapeHtml(b) + '</li>').join('');
+      const fi = kvFondoInfo(settings);
       return (
-        '<div class="fb-info">' +
+        '<div class="fb-info" style="' + fi.base + '">' +
+          (fi.imgUrl ? '<div class="fb-txt-bg" style="background-image:url(\'' + fi.imgUrl + '\');opacity:' + fi.imgOp + ';"></div>' : '') +
           '<div class="fb-info-divisor"><span></span>✦<span></span></div>' +
           '<h2 class="fb-info-titulo">' + escapeHtml(info.titulo) + '</h2>' +
           '<ul class="fb-info-lista">' + bullets + '</ul>' +
@@ -93,8 +95,10 @@
         if (!t && !d) continue;
         pasos += '<div class="fb-paso"><h3>' + escapeHtml(t || '') + '</h3><p>' + escapeHtml(d || '') + '</p></div>';
       }
+      const fih = kvFondoInfo(settings);
       return (
-        '<div class="fb-howto">' +
+        '<div class="fb-howto" style="' + fih.base + '">' +
+          (fih.imgUrl ? '<div class="fb-txt-bg" style="background-image:url(\'' + fih.imgUrl + '\');opacity:' + fih.imgOp + ';"></div>' : '') +
           '<div class="fb-info-divisor"><span></span>✦<span></span></div>' +
           '<h2 class="fb-info-titulo">' + escapeHtml(h.titulo) + '</h2>' +
           '<div class="fb-pasos">' + pasos + '</div>' +
@@ -104,8 +108,10 @@
     }
     if (s.type === 'bye') {
       const d = Object.assign({}, KV_DESPEDIDA_DEFAULT, settings.despedida || {});
+      const fib = kvFondoInfo(settings);
       return (
-        '<div class="fb-bye">' +
+        '<div class="fb-bye" style="' + fib.base + '">' +
+          (fib.imgUrl ? '<div class="fb-txt-bg" style="background-image:url(\'' + fib.imgUrl + '\');opacity:' + fib.imgOp + ';"></div>' : '') +
           '<div class="fb-logo-circulo"><img src="assets/logo-karive-crop.png" alt="Karivé Joyas" /></div>' +
           '<h2 class="fb-bye-titulo">' + escapeHtml(d.titulo) + '</h2>' +
           '<p class="fb-bye-msg">' + escapeHtml(d.mensaje) + '</p>' +

@@ -216,26 +216,41 @@
     bg.style.transformOrigin = f.x + '% ' + f.y + '%';
   }
 
-  // ---------- FONDO DE PRODUCTOS ----------
-  let fondoImgTmp = null;
-  function visibilidadFondo(tipo) {
-    tipo = tipo || (document.querySelector('input[name="adm-fondo-tipo"]:checked') || {}).value || 'gradiente';
-    $('adm-fondo-color').closest('.adm-color').style.display = tipo === 'color' ? '' : 'none';
-    $('adm-fondo-preview').closest('.adm-editor-fila').style.display = tipo === 'imagen' ? '' : 'none';
+  // ---------- FONDOS (productos e información) ----------
+  function setupFondo(prefix, key, defColor) {
+    let tmp = null;
+    const sel = 'input[name="' + prefix + '-tipo"]';
+    function visib(tipo) {
+      tipo = tipo || (document.querySelector(sel + ':checked') || {}).value || 'gradiente';
+      $(prefix + '-color').closest('.adm-color').style.display = tipo === 'color' ? '' : 'none';
+      $(prefix + '-preview').closest('.adm-editor-fila').style.display = tipo === 'imagen' ? '' : 'none';
+    }
+    document.querySelectorAll(sel).forEach(r => r.addEventListener('change', () => visib()));
+    $(prefix + '-op').addEventListener('input', e => { $(prefix + '-op-val').textContent = e.target.value; });
+    $(prefix + '-file').addEventListener('change', e => {
+      const file = e.target.files && e.target.files[0];
+      if (file) kvCompressPhoto(file, (data) => { tmp = data; $(prefix + '-preview').style.backgroundImage = "url('" + data + "')"; }, 1400, 0.8);
+      e.target.value = '';
+    });
+    $(prefix + '-guardar').addEventListener('click', () => {
+      const tipo = (document.querySelector(sel + ':checked') || {}).value || 'gradiente';
+      const fondo = { tipo: tipo, color: $(prefix + '-color').value, opacidad: parseInt($(prefix + '-op').value, 10) };
+      fondo.imagen = tmp || (settings[key] && settings[key].imagen) || null;
+      const dato = {}; dato[key] = fondo;
+      settingsRef.set(dato, { merge: true }).then(() => { tmp = null; guardado(prefix + '-ok'); }).catch(err => console.error(err));
+    });
+    return function poblar() {
+      const f = settings[key] || {};
+      const tipo = f.tipo || 'gradiente';
+      document.querySelectorAll(sel).forEach(r => { if (activo() !== r) r.checked = (r.value === tipo); });
+      if (activo() !== $(prefix + '-color')) $(prefix + '-color').value = f.color || defColor;
+      if (activo() !== $(prefix + '-op')) { const op = f.opacidad != null ? f.opacidad : 35; $(prefix + '-op').value = op; $(prefix + '-op-val').textContent = op; }
+      if (!tmp) $(prefix + '-preview').style.backgroundImage = f.imagen ? "url('" + f.imagen + "')" : 'none';
+      visib(tipo);
+    };
   }
-  document.querySelectorAll('input[name="adm-fondo-tipo"]').forEach(r => r.addEventListener('change', () => visibilidadFondo()));
-  $('adm-fondo-op').addEventListener('input', e => { $('adm-fondo-op-val').textContent = e.target.value; });
-  $('adm-fondo-file').addEventListener('change', e => {
-    const file = e.target.files && e.target.files[0];
-    if (file) kvCompressPhoto(file, (data) => { fondoImgTmp = data; $('adm-fondo-preview').style.backgroundImage = "url('" + data + "')"; }, 1400, 0.8);
-    e.target.value = '';
-  });
-  $('adm-guardar-fondo').addEventListener('click', () => {
-    const tipo = (document.querySelector('input[name="adm-fondo-tipo"]:checked') || {}).value || 'gradiente';
-    const fondoProd = { tipo: tipo, color: $('adm-fondo-color').value, opacidad: parseInt($('adm-fondo-op').value, 10) };
-    fondoProd.imagen = fondoImgTmp || (settings.fondoProd && settings.fondoProd.imagen) || null;
-    settingsRef.set({ fondoProd: fondoProd }, { merge: true }).then(() => { fondoImgTmp = null; guardado('adm-fondo-ok'); }).catch(err => console.error(err));
-  });
+  const poblarFondoProd = setupFondo('adm-fondo', 'fondoProd', '#2a1540');
+  const poblarFondoInfo = setupFondo('adm-fondoi', 'fondoInfo', '#2a1540');
 
   // ---------- CONTACTO ----------
   $('adm-guardar-contacto').addEventListener('click', () => {
@@ -381,14 +396,9 @@
     if (activo() !== $('adm-wa')) $('adm-wa').value = settings.whatsapp || '';
     if (activo() !== $('adm-wa-msg')) $('adm-wa-msg').value = settings.whatsappMsg != null ? settings.whatsappMsg : KV_WHATSAPP_MSG_DEFAULT;
 
-    // fondo de productos
-    const f = settings.fondoProd || {};
-    const ftipo = f.tipo || 'gradiente';
-    document.querySelectorAll('input[name="adm-fondo-tipo"]').forEach(r => { if (activo() !== r) r.checked = (r.value === ftipo); });
-    if (activo() !== $('adm-fondo-color')) $('adm-fondo-color').value = f.color || '#2a1540';
-    if (activo() !== $('adm-fondo-op')) { const op = f.opacidad != null ? f.opacidad : 35; $('adm-fondo-op').value = op; $('adm-fondo-op-val').textContent = op; }
-    if (!fondoImgTmp) $('adm-fondo-preview').style.backgroundImage = f.imagen ? "url('" + f.imagen + "')" : 'none';
-    visibilidadFondo(ftipo);
+    // fondos (productos e información)
+    poblarFondoProd();
+    poblarFondoInfo();
 
     const theme = Object.assign({}, KV_THEME_DEFAULT, settings.theme || {});
     COLOR_KEYS.forEach(k => { const inp = colorInput(k); if (activo() !== inp) inp.value = theme[k]; });

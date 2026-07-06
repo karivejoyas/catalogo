@@ -61,7 +61,8 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-siguenos{font-size:clamp(10px,1.5vh,12px);font-weight:300;letter-spacing:0.08em;color:var(--kv-lavanda);margin:16px 0 0;}
 
 /* -- página: info -- */
-.fb-info{height:100%;overflow:hidden;background:radial-gradient(130% 110% at 50% 0%, #35184f 0%, var(--kv-morado-osc) 75%);padding:clamp(26px,5vh,46px) clamp(20px,5vw,40px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.fb-info{position:relative;z-index:0;height:100%;overflow:hidden;background:radial-gradient(130% 110% at 50% 0%, #35184f 0%, var(--kv-morado-osc) 75%);padding:clamp(26px,5vh,46px) clamp(20px,5vw,40px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.fb-txt-bg{position:absolute;inset:0;z-index:-1;background-size:cover;background-position:center;}
 .fb-info-divisor{display:flex;align-items:center;justify-content:center;gap:14px;color:var(--kv-dorado);font-size:14px;margin-bottom:8px;}
 .fb-info-divisor span{width:44px;height:1px;background:linear-gradient(90deg,transparent,var(--kv-dorado));}
 .fb-info-divisor span:last-child{background:linear-gradient(90deg,var(--kv-dorado),transparent);}
@@ -121,14 +122,14 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-menu-btn.abierto{background:rgba(227,197,114,0.16);}
 
 /* páginas: ¿cómo comprar? y despedida */
-.fb-howto{height:100%;overflow:hidden;background:radial-gradient(130% 110% at 50% 0%, #35184f 0%, var(--kv-morado-osc) 78%);padding:clamp(18px,3.4vh,34px) clamp(16px,5vw,32px);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:clamp(6px,1.3vh,12px);text-align:center;}
+.fb-howto{position:relative;z-index:0;height:100%;overflow:hidden;background:radial-gradient(130% 110% at 50% 0%, #35184f 0%, var(--kv-morado-osc) 78%);padding:clamp(18px,3.4vh,34px) clamp(16px,5vw,32px);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:clamp(6px,1.3vh,12px);text-align:center;}
 .fb-howto .fb-info-divisor{margin:0;flex:0 0 auto;}
 .fb-howto .fb-info-titulo{margin:0;font-size:clamp(21px,3.2vh,29px);flex:0 0 auto;}
 .fb-howto .fb-info-contacto{margin:0;font-size:12.5px;flex:0 0 auto;}
 .fb-pasos{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-evenly;gap:clamp(6px,1.2vh,12px);margin:0;width:100%;min-height:0;}
 .fb-paso h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(14.5px,2.2vh,20px);color:var(--kv-dorado-cl);margin:0 0 2px;line-height:1.12;}
 .fb-paso p{font-weight:300;font-size:clamp(11px,1.6vh,13px);line-height:1.38;color:var(--kv-lavanda);margin:0;}
-.fb-bye{height:100%;background:radial-gradient(130% 110% at 50% 0%, #35184f 0%, var(--kv-morado-osc) 78%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 26px;}
+.fb-bye{position:relative;z-index:0;height:100%;overflow:hidden;background:radial-gradient(130% 110% at 50% 0%, #35184f 0%, var(--kv-morado-osc) 78%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 26px;}
 .fb-bye .fb-logo-circulo{margin-bottom:8px;}
 .fb-bye-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(30px,6vh,52px);line-height:1.05;color:var(--kv-crema);margin:14px 0 0;}
 .fb-bye-msg{font-weight:300;font-size:clamp(13px,1.9vh,15.5px);line-height:1.6;color:var(--kv-lavanda);max-width:82%;margin:16px 0 0;}

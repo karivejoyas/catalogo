@@ -74,7 +74,7 @@
   function agregar(categoria) {
     const cat = kvCategorias(settings).find(c => c.id === categoria);
     const maxOrder = products.reduce((m, p) => Math.max(m, p.order || 0), 0);
-    const num = kvNextNum(products);   // sigue el correlativo del número más alto
+    const num = kvNextNumCat(products, categoria);   // sigue el correlativo de esa colección
     itemsCol.add({
       code: (cat && cat.prefijo ? cat.prefijo : 'PR') + '-' + String(num).padStart(3, '0'),
       name: 'Nuevo producto', detail: '', price: 0, priceOffer: 0, photo: null, category: categoria, order: maxOrder + 1, stock: true
@@ -91,8 +91,18 @@
     if (j < 0 || j >= lista.length) return;
     const orden = lista.map(p => p.order || 0).slice().sort((a, b) => a - b); // huecos de orden de esta colección
     lista.splice(j, 0, lista.splice(i, 1)[0]);                                 // mueve el elemento
+    const cambios = [];
+    lista.forEach((p, k) => { if ((p.order || 0) !== orden[k]) cambios.push({ id: p.id, order: orden[k] }); });
+    if (!cambios.length) return;
+    // actualización inmediata en pantalla (para que se vea el cambio con un solo clic)
+    cambios.forEach(c => { const it = products.find(p => p.id === c.id); if (it) it.order = c.order; });
+    products.sort((a, b) => (a.order || 0) - (b.order || 0));
+    renderProductos();
+    const cardEl = document.querySelector('.cat-card-edit[data-id="' + id + '"]');
+    if (cardEl) cardEl.scrollIntoView({ block: 'nearest' });
+    // guardar en la base de datos
     const batch = kvDb.batch();
-    lista.forEach((p, k) => { if ((p.order || 0) !== orden[k]) batch.update(itemsCol.doc(p.id), { order: orden[k] }); });
+    cambios.forEach(c => batch.update(itemsCol.doc(c.id), { order: c.order }));
     batch.commit().catch(err => console.error('Error reordenando:', err));
   }
 

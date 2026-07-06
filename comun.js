@@ -161,10 +161,21 @@ function kvFotoInner(p) {
          'transform:scale(' + (f.zoom / 100) + ');transform-origin:' + f.x + '% ' + f.y + '%;"></div>';
 }
 
-/* siguiente número correlativo (a partir del número más alto en los códigos) */
+/* siguiente número correlativo global (a partir del número más alto en todos los códigos) */
 function kvNextNum(products) {
   let max = 0;
   (products || []).forEach(p => {
+    const m = String(p.code || '').match(/(\d+)\s*$/);
+    if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+  });
+  return max + 1;
+}
+
+/* siguiente número correlativo DE UNA COLECCIÓN (continúa la numeración de esa colección) */
+function kvNextNumCat(products, categoria) {
+  let max = 0;
+  (products || []).forEach(p => {
+    if (p.category !== categoria) return;
     const m = String(p.code || '').match(/(\d+)\s*$/);
     if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
   });

@@ -25,15 +25,15 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-body{height:100vh;height:100dvh;overflow:hidden;}
 .fb-app{height:100vh;height:100dvh;display:flex;flex-direction:column;background:radial-gradient(120% 100% at 50% 0%, #1e0f30 0%, var(--kv-morado-osc) 80%);}
 
-.fb-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px clamp(12px,3vw,28px);flex:0 0 auto;}
-.fb-logo img{display:block;height:30px;width:auto;filter:drop-shadow(0 0 6px rgba(255,255,255,0.3)) brightness(1.25);}
+.fb-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px clamp(12px,3vw,28px);flex:0 0 auto;}
+.fb-logo img{display:block;height:44px;width:auto;filter:drop-shadow(0 0 6px rgba(255,255,255,0.3)) brightness(1.25);}
 .fb-nav{display:flex;gap:clamp(10px,2vw,22px);}
 .fb-nav a{font-size:11.5px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:var(--kv-lavanda);text-decoration:none;white-space:nowrap;transition:color .2s;}
 .fb-nav a:hover,.fb-nav a.is-active{color:var(--kv-dorado-cl);}
 
-.fb-stage{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(4px,1.5vw,20px);padding:6px clamp(6px,2vw,20px);}
+.fb-stage{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(4px,1.5vw,20px);padding:4px clamp(6px,2vw,20px);}
 .fb-page-wrap{height:100%;display:flex;align-items:center;justify-content:center;}
-.fb-page{width:min(94vw,50vh);aspect-ratio:64/100;max-height:100%;border-radius:16px;overflow:hidden;position:relative;background:var(--kv-lila-fondo);box-shadow:0 22px 64px rgba(0,0,0,0.55);transition:transform .3s cubic-bezier(0.33,0,0.2,1), opacity .3s ease;}
+.fb-page{width:min(97vw,64vh);aspect-ratio:61/100;max-height:100%;border-radius:16px;overflow:hidden;position:relative;background:var(--kv-lila-fondo);box-shadow:0 22px 64px rgba(0,0,0,0.55);transition:transform .3s cubic-bezier(0.33,0,0.2,1), opacity .3s ease;}
 .fb-out-next{opacity:0;transform:translateX(-32px) scale(.965);}
 .fb-out-prev{opacity:0;transform:translateX(32px) scale(.965);}
 .fb-in-next{opacity:0;transform:translateX(32px) scale(.965);}
@@ -42,7 +42,7 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-arrow{flex:0 0 auto;font-family:'Jost',sans-serif;font-size:clamp(34px,4.5vw,48px);line-height:1;color:var(--kv-dorado-cl);background:none;border:none;cursor:pointer;padding:0 4px;opacity:.75;transition:opacity .2s, transform .2s, text-shadow .2s;}
 .fb-arrow:hover{opacity:1;transform:scale(1.18);text-shadow:0 0 18px rgba(227,197,114,0.6);}
 
-.fb-footer{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:20px;padding:8px 0 calc(8px + env(safe-area-inset-bottom));}
+.fb-footer{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:20px;padding:5px 0 calc(6px + env(safe-area-inset-bottom));}
 .fb-counter{font-size:12px;letter-spacing:0.12em;color:var(--kv-lavanda);min-width:64px;text-align:center;}
 .fb-arrow-mini{font-size:24px;line-height:1;color:var(--kv-dorado-cl);background:none;border:none;cursor:pointer;padding:2px 10px;}
 
@@ -135,6 +135,11 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-bye-contacto{font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--kv-lavanda);margin:14px 0 0;}
 .fb-bye-marca{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--kv-crema);margin:20px 0 0;}
 
+/* en pantallas anchas (PC/tablet) la página es más ancha para llenar el espacio */
+@media (min-width: 641px){
+  .fb-page{width:min(82vw,66vh);aspect-ratio:73/100;}
+}
+
 @media (max-width: 640px){
   .fb-arrow{display:none;}
   .fb-topbar{gap:8px;}
@@ -174,7 +179,7 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .adm-etiqueta{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#8f7aa0;}
 
 /* tarjeta edición */
-.cat-card-edit .cat-card-foto{aspect-ratio:1/1;}
+.cat-card-edit .cat-card-foto{aspect-ratio:6/5;}
 .ed-foto-botones{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;justify-content:center;padding:10px;background:linear-gradient(transparent,rgba(0,0,0,0.6));}
 .ed-btn-foto{font-family:'Jost',sans-serif;font-size:12px;font-weight:500;color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border:none;border-radius:999px;padding:7px 14px;cursor:pointer;}
 .ed-btn-foto-ghost{font-family:'Jost',sans-serif;font-size:12px;color:#fff;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.5);border-radius:999px;padding:7px 12px;cursor:pointer;}

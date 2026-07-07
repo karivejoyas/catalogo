@@ -240,7 +240,7 @@
       settingsRef.set(dato, { merge: true }).then(() => { tmp = null; guardado(prefix + '-ok'); }).catch(err => console.error(err));
     });
     return function poblar() {
-      const f = (settings[key] && settings[key].tipo) ? settings[key] : defFondo;   // muestra el fondo sugerido si aún no hay uno propio
+      const f = (settings[key] && settings[key].tipo) ? settings[key] : (defFondo || {});   // muestra el fondo sugerido si aún no hay uno propio
       const tipo = f.tipo || 'gradiente';
       document.querySelectorAll(sel).forEach(r => { if (activo() !== r) r.checked = (r.value === tipo); });
       if (activo() !== $(prefix + '-color')) $(prefix + '-color').value = f.color || '#2a1540';
@@ -249,8 +249,11 @@
       visib(tipo);
     };
   }
-  const poblarFondoProd = setupFondo('adm-fondo', 'fondoProd', KV_FONDO_PROD_DEFAULT);
-  const poblarFondoInfo = setupFondo('adm-fondoi', 'fondoInfo', KV_FONDO_INFO_DEFAULT);
+  let poblarFondoProd = () => {}, poblarFondoInfo = () => {};
+  try {
+    poblarFondoProd = setupFondo('adm-fondo', 'fondoProd', typeof KV_FONDO_PROD_DEFAULT !== 'undefined' ? KV_FONDO_PROD_DEFAULT : null);
+    poblarFondoInfo = setupFondo('adm-fondoi', 'fondoInfo', typeof KV_FONDO_INFO_DEFAULT !== 'undefined' ? KV_FONDO_INFO_DEFAULT : null);
+  } catch (err) { console.error('Error configurando fondos:', err); }
 
   // ---------- CONTACTO ----------
   $('adm-guardar-contacto').addEventListener('click', () => {
@@ -396,9 +399,8 @@
     if (activo() !== $('adm-wa')) $('adm-wa').value = settings.whatsapp || '';
     if (activo() !== $('adm-wa-msg')) $('adm-wa-msg').value = settings.whatsappMsg != null ? settings.whatsappMsg : KV_WHATSAPP_MSG_DEFAULT;
 
-    // fondos (productos e información)
-    poblarFondoProd();
-    poblarFondoInfo();
+    // fondos (productos e información): un fallo aquí no debe frenar el resto
+    try { poblarFondoProd(); poblarFondoInfo(); } catch (err) { console.error('Error poblando fondos:', err); }
 
     const theme = Object.assign({}, KV_THEME_DEFAULT, settings.theme || {});
     COLOR_KEYS.forEach(k => { const inp = colorInput(k); if (activo() !== inp) inp.value = theme[k]; });

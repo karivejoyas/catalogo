@@ -266,12 +266,23 @@
     $('adm-ig-caption').value = KV_IG_CAPTION_DEFAULT;
   });
 
+  // selección de productos para publicar (persiste entre re-renders)
+  const igSel = new Set();
+  function igActualizarBarra() {
+    const n = igSel.size;
+    $('adm-ig-selcount').textContent = n + (n === 1 ? ' producto seleccionado' : ' productos seleccionados') + (n > 1 ? ' → carrusel' : '');
+    $('adm-ig-preview').disabled = n === 0;
+  }
+
   function renderIG() {
     const cont = $('adm-ig-lista'); if (!cont) return;
     const enStock = products.filter(kvEnStock);
+    // limpiar selecciones de productos que ya no existen o quedaron sin stock
+    [...igSel].forEach(id => { if (!enStock.some(p => p.id === id)) igSel.delete(id); });
     $('adm-ig-contador').textContent = enStock.length + ' productos con stock';
     cont.innerHTML = enStock.map(p =>
       '<div class="ig-fila" data-id="' + p.id + '">' +
+        '<label class="ig-check"><input type="checkbox" data-role="ig-sel" data-id="' + p.id + '"' + (igSel.has(p.id) ? ' checked' : '') + ' /><span></span></label>' +
         '<div class="ig-thumb"' + (p.photo ? ' style="background-image:url(\'' + p.photo + '\')"' : '') + '>' + (p.photo ? '' : '✦') + '</div>' +
         '<div class="ig-info">' +
           '<div class="ig-nombre">' + escapeHtml(p.name || '') + '</div>' +
@@ -285,7 +296,115 @@
       '</div>').join('');
     cont.querySelectorAll('[data-role="ig-img"]').forEach(n => n.addEventListener('click', e => descargarPostIG(e.currentTarget.dataset.id, e.currentTarget)));
     cont.querySelectorAll('[data-role="ig-txt"]').forEach(n => n.addEventListener('click', e => copiarCaptionIG(e.currentTarget.dataset.id, e.currentTarget)));
+    cont.querySelectorAll('[data-role="ig-sel"]').forEach(n => n.addEventListener('change', e => {
+      if (e.target.checked) igSel.add(e.target.dataset.id); else igSel.delete(e.target.dataset.id);
+      igActualizarBarra(); renderIGTags();
+    }));
+    igActualizarBarra(); renderIGTags();
   }
+
+  // ---------- hashtags (predefinidos + de colección + propios) ----------
+  function igTagsTodos() {
+    const extras = Array.isArray(settings.igTagsExtra) ? settings.igTagsExtra : [];
+    const auto = kvTagsDeProductos(products.filter(p => igSel.has(p.id)), settings);
+    const base = KV_IG_TAGS_BASE.concat(extras.filter(t => KV_IG_TAGS_BASE.indexOf(t) === -1));
+    return { base: base, auto: auto.filter(t => base.map(b => b.toLowerCase()).indexOf(t.toLowerCase()) === -1) };
+  }
+  function igTagsActivos() {
+    const off = Array.isArray(settings.igTagsOff) ? settings.igTagsOff : [];
+    const t = igTagsTodos();
+    return t.auto.concat(t.base).filter(x => off.indexOf(x) === -1);
+  }
+  function renderIGTags() {
+    const cont = $('adm-ig-tags'); if (!cont) return;
+    const off = Array.isArray(settings.igTagsOff) ? settings.igTagsOff : [];
+    const t = igTagsTodos();
+    const chip = (tag, auto) =>
+      '<button type="button" class="ig-tag' + (off.indexOf(tag) === -1 ? ' is-on' : '') + (auto ? ' is-auto' : '') + '" data-tag="' + escapeHtml(tag) + '">' +
+        (auto ? '✦ ' : '') + escapeHtml(tag) + '</button>';
+    cont.innerHTML = t.auto.map(x => chip(x, true)).join('') + t.base.map(x => chip(x, false)).join('');
+    cont.querySelectorAll('.ig-tag').forEach(n => n.addEventListener('click', e => {
+      const tag = e.currentTarget.dataset.tag;
+      const cur = Array.isArray(settings.igTagsOff) ? settings.igTagsOff.slice() : [];
+      const i = cur.indexOf(tag);
+      if (i === -1) cur.push(tag); else cur.splice(i, 1);
+      settings.igTagsOff = cur;                       // reflejo inmediato
+      renderIGTags();
+      settingsRef.set({ igTagsOff: cur }, { merge: true }).catch(err => console.error(err));
+    }));
+  }
+  $('adm-ig-tag-add').addEventListener('click', () => {
+    let t = $('adm-ig-tag-nuevo').value.trim().replace(/\s+/g, '');
+    if (!t) return;
+    if (t[0] !== '#') t = '#' + t;
+    const cur = Array.isArray(settings.igTagsExtra) ? settings.igTagsExtra.slice() : [];
+    if (cur.indexOf(t) === -1 && KV_IG_TAGS_BASE.indexOf(t) === -1) {
+      cur.push(t);
+      settings.igTagsExtra = cur;
+      renderIGTags();
+      settingsRef.set({ igTagsExtra: cur }, { merge: true }).catch(err => console.error(err));
+    }
+    $('adm-ig-tag-nuevo').value = '';
+  });
+
+  // ---------- vista previa + publicar ----------
+  let igPreviewImgs = [];
+  const igModal = $('ig-modal');
+  function igEstado(msg) { $('ig-m-estado').textContent = msg || ''; }
+  function cerrarIGModal() { igModal.hidden = true; igEstado(''); }
+  igModal.querySelectorAll('[data-role="ig-close"]').forEach(n => n.addEventListener('click', cerrarIGModal));
+
+  $('adm-ig-preview').addEventListener('click', async () => {
+    const prods = products.filter(p => igSel.has(p.id));
+    if (!prods.length) return;
+    if (prods.length > 10) { window.alert('Instagram permite máximo 10 fotos por publicación. Quita algunos productos.'); return; }
+    igModal.hidden = false;
+    $('ig-m-fotos').innerHTML = '<div class="ig-m-cargando">Generando imágenes… ⏳</div>';
+    $('ig-m-caption').value = kvCaptionMulti(prods, settings, igTagsActivos());
+    igPreviewImgs = [];
+    try {
+      for (const p of prods) igPreviewImgs.push(await kvGenerarPostIG(p, settings));
+      $('ig-m-fotos').innerHTML = igPreviewImgs.map((u, i) =>
+        '<div class="ig-m-foto"><img src="' + u + '" alt="Foto ' + (i + 1) + '" />' + (igPreviewImgs.length > 1 ? '<span class="ig-m-num">' + (i + 1) + '/' + igPreviewImgs.length + '</span>' : '') + '</div>').join('');
+      igEstado(igPreviewImgs.length > 1 ? 'Se publicará como carrusel de ' + igPreviewImgs.length + ' fotos.' : '');
+    } catch (err) {
+      console.error(err);
+      $('ig-m-fotos').innerHTML = '<div class="ig-m-cargando">⚠ No se pudieron generar las imágenes.</div>';
+    }
+  });
+
+  $('ig-m-publicar').addEventListener('click', async () => {
+    const url = String(settings.igPubUrl || '').trim();
+    const clave = String(settings.igPubClave || '').trim();
+    if (!url) { igEstado('⚠ Falta configurar la URL del publicador (sección "Conexión con el publicador", abajo).'); return; }
+    if (!igPreviewImgs.length) { igEstado('⚠ Primero genera la vista previa.'); return; }
+    const btn = $('ig-m-publicar');
+    btn.disabled = true;
+    igEstado('Publicando… puede tardar hasta 1 minuto ⏳ (no cierres esta ventana)');
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // simple request: evita bloqueos CORS
+        body: JSON.stringify({ clave: clave, caption: $('ig-m-caption').value, images: igPreviewImgs.map(u => u.split(',')[1]) })
+      });
+      const d = await r.json();
+      if (d && d.ok) {
+        igEstado('✅ ¡Publicado en Instagram! Revisa tu perfil.');
+        igSel.clear(); renderIG();
+      } else {
+        igEstado('❌ ' + ((d && d.error) || 'Error desconocido al publicar.'));
+      }
+    } catch (err) {
+      igEstado('❌ No se pudo contactar al publicador: ' + err.message);
+    }
+    btn.disabled = false;
+  });
+
+  // conexión con el publicador
+  $('adm-ig-pubguardar').addEventListener('click', () => {
+    settingsRef.set({ igPubUrl: $('adm-ig-puburl').value.trim(), igPubClave: $('adm-ig-pubclave').value.trim() }, { merge: true })
+      .then(() => guardado('adm-ig-pub-ok')).catch(err => console.error(err));
+  });
 
   function descargarPostIG(id, btn) {
     const p = products.find(x => x.id === id); if (!p) return Promise.resolve();
@@ -463,6 +582,8 @@
     if (activo() !== $('adm-wa')) $('adm-wa').value = settings.whatsapp || '';
     if (activo() !== $('adm-wa-msg')) $('adm-wa-msg').value = settings.whatsappMsg != null ? settings.whatsappMsg : KV_WHATSAPP_MSG_DEFAULT;
     if (activo() !== $('adm-ig-caption')) $('adm-ig-caption').value = settings.igCaption != null ? settings.igCaption : KV_IG_CAPTION_DEFAULT;
+    if (activo() !== $('adm-ig-puburl')) $('adm-ig-puburl').value = settings.igPubUrl || '';
+    if (activo() !== $('adm-ig-pubclave')) $('adm-ig-pubclave').value = settings.igPubClave || '';
 
     // fondos (productos e información): un fallo aquí no debe frenar el resto
     try { poblarFondoProd(); poblarFondoInfo(); } catch (err) { console.error('Error poblando fondos:', err); }

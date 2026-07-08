@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260708" />
+<link rel="stylesheet" href="catalogo.css?v=20260709" />
 </head>
 <body>
 
@@ -56,14 +56,17 @@
   <!-- ===== INSTAGRAM ===== -->
   <div class="adm-panel" data-panel="instagram" hidden>
     <section class="adm-seccion">
-      <h2 class="adm-seccion-titulo">Kit para Instagram</h2>
-      <p class="adm-seccion-sub">Genera una imagen cuadrada lista para postear (foto + nombre + precio + tu marca) y el texto con hashtags para cada producto. Descárgala y súbela a Instagram, o prográmala gratis en Meta Business Suite.</p>
-      <label class="adm-etiqueta">Texto del post (usa <b>{nombre}</b> <b>{precio}</b> <b>{detalle}</b> <b>{codigo}</b> y se reemplazan solos)</label>
-      <textarea id="adm-ig-caption" class="adm-input" rows="7" style="font-family:'Jost',sans-serif;"></textarea>
-      <div class="adm-guardar-fila">
-        <button id="adm-ig-guardar" class="adm-btn-solido">Guardar texto</button>
-        <button id="adm-ig-reset" class="adm-btn-borde">Texto por defecto</button>
-        <span id="adm-ig-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      <h2 class="adm-seccion-titulo">Publicar en Instagram</h2>
+      <p class="adm-seccion-sub">Marca uno o varios productos en la lista de abajo (varios = un carrusel en una sola publicación, máx. 10). La descripción y los hashtags se arman solos según los productos, y antes de publicar verás una vista previa que puedes editar.</p>
+      <label class="adm-etiqueta">Hashtags (toca para activar o desactivar — los de colección ✦ se agregan según los productos elegidos)</label>
+      <div id="adm-ig-tags" class="ig-tags"></div>
+      <div class="ig-tag-extra">
+        <input id="adm-ig-tag-nuevo" class="adm-input" placeholder="#agregarOtroHashtag" style="max-width:240px;" />
+        <button id="adm-ig-tag-add" class="adm-btn-borde">+ Agregar</button>
+      </div>
+      <div class="ig-pubbar">
+        <span id="adm-ig-selcount" class="cat-contador">0 productos seleccionados</span>
+        <button id="adm-ig-preview" class="adm-btn-solido" disabled>👁 Vista previa de la publicación</button>
       </div>
     </section>
     <section class="adm-seccion">
@@ -72,6 +75,30 @@
         <button id="adm-ig-todas" class="adm-btn-borde">⬇ Descargar todas las imágenes</button>
       </div>
       <div id="adm-ig-lista"></div>
+    </section>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Kit manual (descargar imagen y texto)</h2>
+      <p class="adm-seccion-sub">Plantilla del texto para el botón 📋 Texto de cada producto. Usa <b>{nombre}</b> <b>{precio}</b> <b>{detalle}</b> <b>{codigo}</b> y se reemplazan solos.</p>
+      <textarea id="adm-ig-caption" class="adm-input" rows="7" style="font-family:'Jost',sans-serif;"></textarea>
+      <div class="adm-guardar-fila">
+        <button id="adm-ig-guardar" class="adm-btn-solido">Guardar texto</button>
+        <button id="adm-ig-reset" class="adm-btn-borde">Texto por defecto</button>
+        <span id="adm-ig-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      </div>
+    </section>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Conexión con el publicador</h2>
+      <p class="adm-seccion-sub">Pega aquí la URL de tu publicador de Google (Apps Script) y la clave secreta. Solo se configura una vez.</p>
+      <div class="adm-contacto">
+        <label class="adm-etiqueta">URL del publicador (termina en /exec)</label>
+        <input id="adm-ig-puburl" class="adm-input" placeholder="https://script.google.com/macros/s/…/exec" />
+        <label class="adm-etiqueta">Clave secreta (la misma que pusiste en el script)</label>
+        <input id="adm-ig-pubclave" class="adm-input" placeholder="karive2026" />
+        <div class="adm-guardar-fila">
+          <button id="adm-ig-pubguardar" class="adm-btn-solido">Guardar conexión</button>
+          <span id="adm-ig-pub-ok" class="adm-guardado" hidden>✓ Guardado</span>
+        </div>
+      </div>
     </section>
     <div style="height:60px;"></div>
   </div>
@@ -245,13 +272,30 @@
     <div style="height:60px;"></div>
   </div>
 
+  <!-- vista previa de la publicación de Instagram -->
+  <div class="ig-modal" id="ig-modal" hidden>
+    <div class="ig-m-backdrop" data-role="ig-close"></div>
+    <div class="ig-m-card">
+      <button class="ig-m-x" data-role="ig-close" aria-label="Cerrar">✕</button>
+      <h3 class="ig-m-titulo">Vista previa de la publicación</h3>
+      <div class="ig-m-fotos" id="ig-m-fotos"></div>
+      <label class="adm-etiqueta">Descripción (puedes editarla antes de publicar)</label>
+      <textarea id="ig-m-caption" class="adm-input" rows="10" style="font-family:'Jost',sans-serif;"></textarea>
+      <div class="adm-guardar-fila">
+        <button id="ig-m-publicar" class="adm-btn-solido">🚀 Publicar en Instagram</button>
+        <button class="adm-btn-borde" data-role="ig-close">Cancelar</button>
+      </div>
+      <div id="ig-m-estado" class="ig-m-estado"></div>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260708"></script>
-<script src="comun.js?v=20260708"></script>
-<script src="admin.js?v=20260708"></script>
+<script src="firebase-config.js?v=20260709"></script>
+<script src="comun.js?v=20260709"></script>
+<script src="admin.js?v=20260709"></script>
 </body>
 </html>

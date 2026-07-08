@@ -263,6 +263,49 @@ function kvCaptionIG(p, settings) {
           .replace(/\{detalle\}/g, p.detail || '');
 }
 
+/* hashtags predefinidos (la dueña activa/desactiva los que quiera) */
+const KV_IG_TAGS_BASE = ['#KariveJoyas', '#HechoAManoConAmor', '#ArcillaPolimerica', '#JoyasArtesanales', '#AccesoriosChile', '#ArosArtesanales', '#HechoEnChile', '#Handmade', '#EmprendimientoChileno', '#Miyuki', '#Mostacillas'];
+
+/* convierte un nombre ("Argollas de cristal") en hashtag (#argollasdecristal) */
+function kvTagDeNombre(n) {
+  n = String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  return n ? '#' + n : '';
+}
+
+/* hashtags automáticos según las colecciones de los productos seleccionados */
+function kvTagsDeProductos(prods, settings) {
+  const out = [];
+  (prods || []).forEach(p => {
+    const t = kvTagDeNombre(kvCat(p.category, settings).nombre);
+    if (t && t !== '#otros' && out.indexOf(t) === -1) out.push(t);
+  });
+  return out;
+}
+
+/* descripción automática para 1 o varios productos (envíos a todo Chile, sin retiros) */
+function kvCaptionMulti(prods, settings, tags) {
+  const L = [];
+  if (prods.length === 1) {
+    const p = prods[0], of = kvPrecioOferta(p);
+    L.push('✨ ' + (p.name || '') + ' — ' + (of ? formatCLP(of) + ' (antes ' + formatCLP(p.price) + ')' : formatCLP(p.price)));
+    if (p.detail) L.push(p.detail);
+    if (p.code) L.push('Código: ' + p.code);
+  } else {
+    L.push('✨ Nuevas joyitas Karivé, hechas a mano ✨');
+    L.push('');
+    prods.forEach(p => {
+      const of = kvPrecioOferta(p);
+      L.push('💜 ' + (p.name || '') + ' — ' + formatCLP(of || p.price) + (p.code ? ' · ' + p.code : ''));
+    });
+  }
+  L.push('');
+  L.push('🤍 Hechas a mano, con mucho amor');
+  L.push('📩 Pedidos por DM');
+  L.push('🚚 Envíos a todo Chile');
+  if (tags && tags.length) { L.push(''); L.push(tags.join(' ')); }
+  return L.join('\n');
+}
+
 function kvCargarImagen(src) {
   return new Promise((res) => {
     if (!src) return res(null);

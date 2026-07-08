@@ -389,7 +389,11 @@
       });
       const d = await r.json();
       if (d && d.ok) {
-        igEstado('✅ ¡Publicado en Instagram! Revisa tu perfil.');
+        let msg = '✅ ¡Publicado en Instagram';
+        if (d.fb === 'ok') msg += ' y Facebook';
+        msg += '! Revisa tu perfil.';
+        if (d.fb && d.fb !== 'ok' && d.fb !== 'no configurado') msg += ' ⚠ Facebook: ' + d.fb;
+        igEstado(msg);
         igSel.clear(); renderIG();
       } else {
         igEstado('❌ ' + ((d && d.error) || 'Error desconocido al publicar.'));
@@ -532,6 +536,27 @@
     } catch (err) { igEstado('❌ IA: ' + err.message); }
     btn.disabled = false;
   });
+
+  // --- pedirle un cambio a la IA sobre la descripción actual ---
+  async function igIAAplicar() {
+    const pedido = $('ig-m-ia-pedido').value.trim();
+    if (!pedido) { igEstado('Escribe primero qué quieres cambiar (ej: "hazla más corta").'); return; }
+    const btn = $('ig-m-ia-aplicar');
+    btn.disabled = true; igEstado('✨ Aplicando tu cambio…');
+    try {
+      const actual = $('ig-m-caption').value;
+      const texto = await iaLlamar([
+        { role: 'system', content: IA_SISTEMA_MARCA },
+        { role: 'user', content: 'Esta es la descripción actual de un post de Instagram:\n---\n' + actual + '\n---\nModifícala según esta instrucción: "' + pedido + '". Mantén los precios y códigos tal como están (no los inventes ni cambies) y conserva los hashtags al final. Responde SOLO con la descripción final completa, sin explicaciones.' }
+      ], false);
+      $('ig-m-caption').value = texto.trim();
+      $('ig-m-ia-pedido').value = '';
+      igEstado('✨ Listo — revisa cómo quedó.');
+    } catch (err) { igEstado('❌ IA: ' + err.message); }
+    btn.disabled = false;
+  }
+  $('ig-m-ia-aplicar').addEventListener('click', igIAAplicar);
+  $('ig-m-ia-pedido').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); igIAAplicar(); } });
 
   // --- botón: hashtags nuevos con IA (se agregan tocándolos) ---
   $('ig-m-ia-tags').addEventListener('click', async () => {

@@ -248,6 +248,125 @@ function kvFondoInfo(settings) {
   return kvFondo(f && f.tipo ? f : KV_FONDO_INFO_DEFAULT);
 }
 
+/* ---------- Kit para Instagram: caption + imagen de post ---------- */
+const KV_IG_CAPTION_DEFAULT =
+  '✨ {nombre} — {precio}\n{detalle}\n\n💜 Hecho a mano con mucho amor\n📩 Pedidos por DM\n🚚 Envíos a todo Chile\n\n#KariveJoyas #JoyasArtesanales #AccesoriosChile #HechoAMano #Aros #Aretes';
+
+/* texto listo para pegar en Instagram, reemplazando los datos del producto */
+function kvCaptionIG(p, settings) {
+  let t = (settings && settings.igCaption != null) ? settings.igCaption : KV_IG_CAPTION_DEFAULT;
+  const of = kvPrecioOferta(p);
+  const precio = of ? (formatCLP(of) + ' (antes ' + formatCLP(p.price) + ')') : formatCLP(p.price);
+  return t.replace(/\{nombre\}/g, p.name || '')
+          .replace(/\{precio\}/g, precio)
+          .replace(/\{codigo\}/g, p.code || '')
+          .replace(/\{detalle\}/g, p.detail || '');
+}
+
+function kvCargarImagen(src) {
+  return new Promise((res) => {
+    if (!src) return res(null);
+    const im = new Image();
+    im.crossOrigin = 'anonymous';
+    im.onload = () => res(im);
+    im.onerror = () => res(null);
+    im.src = src;
+  });
+}
+
+/* parte el texto en como máximo `maxLineas` líneas que quepan en `maxW` */
+function kvWrap(ctx, text, maxW, maxLineas) {
+  const palabras = String(text || '').split(/\s+/).filter(Boolean);
+  const lineas = []; let cur = '';
+  palabras.forEach(w => {
+    const t = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(t).width > maxW && cur) { lineas.push(cur); cur = w; } else cur = t;
+  });
+  if (cur) lineas.push(cur);
+  if (lineas.length > maxLineas) { lineas.length = maxLineas; lineas[maxLineas - 1] = lineas[maxLineas - 1].replace(/\s*\S*$/, '') + '…'; }
+  return lineas;
+}
+
+/* genera una imagen cuadrada 1080x1080 lista para Instagram (Promise<dataURL jpeg>) */
+function kvGenerarPostIG(p, settings) {
+  const theme = Object.assign({}, KV_THEME_DEFAULT, (settings && settings.theme) || {});
+  const S = 1080, fotoH = 760;
+  const listo = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  return listo
+    .then(() => Promise.all([kvCargarImagen(p.photo), kvCargarImagen('assets/logo-karive-crop.png')]))
+    .then(([foto, logo]) => {
+      const c = document.createElement('canvas'); c.width = S; c.height = S;
+      const g = c.getContext('2d');
+      g.fillStyle = '#2a1540'; g.fillRect(0, 0, S, S);
+      // ---- foto (recorte tipo cover con el encuadre del producto) ----
+      if (foto) {
+        const f = kvFoco(p), zoom = f.zoom / 100;
+        const scale = Math.max(S / foto.width, fotoH / foto.height) * zoom;
+        const dw = foto.width * scale, dh = foto.height * scale;
+        const dx = (S - dw) * (f.x / 100), dy = (fotoH - dh) * (f.y / 100);
+        g.save(); g.beginPath(); g.rect(0, 0, S, fotoH); g.clip();
+        g.drawImage(foto, dx, dy, dw, dh); g.restore();
+      } else { g.fillStyle = '#EFEAF5'; g.fillRect(0, 0, S, fotoH); }
+      // velo inferior sobre la foto para fundir con la banda
+      const velo = g.createLinearGradient(0, fotoH - 120, 0, fotoH);
+      velo.addColorStop(0, 'rgba(42,18,62,0)'); velo.addColorStop(1, 'rgba(42,18,62,0.35)');
+      g.fillStyle = velo; g.fillRect(0, fotoH - 120, S, 120);
+      // ---- banda inferior ----
+      const grad = g.createLinearGradient(0, fotoH, S, S);
+      grad.addColorStop(0, theme.morado); grad.addColorStop(1, theme.moradoProf);
+      g.fillStyle = grad; g.fillRect(0, fotoH, S, S - fotoH);
+      g.fillStyle = theme.dorado; g.fillRect(0, fotoH, S, 5);
+      // ---- logo en círculo (arriba izquierda) ----
+      if (logo) {
+        const lx = 96, ly = 96, r = 66;
+        g.save(); g.beginPath(); g.arc(lx, ly, r, 0, Math.PI * 2); g.closePath();
+        g.fillStyle = '#FBF6EE'; g.shadowColor = 'rgba(0,0,0,0.35)'; g.shadowBlur = 22; g.fill();
+        g.shadowBlur = 0; g.clip();
+        const lw = r * 1.7, lh = lw * (logo.height / logo.width);
+        g.drawImage(logo, lx - lw / 2, ly - lh / 2, lw, lh); g.restore();
+      }
+      // ---- etiqueta OFERTA ----
+      const of = kvPrecioOferta(p);
+      if (of) {
+        g.save(); g.font = '700 34px "Jost", sans-serif'; g.textAlign = 'center';
+        const tw = g.measureText('OFERTA').width, pw = tw + 46, px = S - pw - 40, py = 44, ph = 60;
+        g.fillStyle = theme.dorado;
+        if (g.roundRect) { g.beginPath(); g.roundRect(px, py, pw, ph, 30); g.fill(); } else g.fillRect(px, py, pw, ph);
+        g.fillStyle = theme.moradoProf; g.fillText('OFERTA', px + pw / 2, py + 41); g.restore();
+      }
+      // ---- textos de la banda ----
+      g.textAlign = 'center';
+      g.fillStyle = '#FBF6EE'; g.font = '600 60px "Cormorant Garamond", serif';
+      const nom = kvWrap(g, p.name, S - 150, 2);
+      let y = fotoH + (nom.length > 1 ? 74 : 92);
+      nom.forEach(l => { g.fillText(l, S / 2, y); y += 62; });
+      if (p.detail && nom.length === 1) {
+        g.fillStyle = '#CBB7D8'; g.font = '300 30px "Jost", sans-serif';
+        g.fillText(kvWrap(g, p.detail, S - 180, 1)[0], S / 2, y + 4); y += 34;
+      }
+      // precio
+      const precioY = fotoH + 226;
+      if (of) {
+        g.font = '600 40px "Cormorant Garamond", serif'; g.fillStyle = '#9a86ab';
+        const oldW = g.measureText(formatCLP(p.price)).width;
+        g.fillText(formatCLP(p.price), S / 2, precioY - 46);
+        g.strokeStyle = '#9a86ab'; g.lineWidth = 3; g.beginPath();
+        g.moveTo((S - oldW) / 2 - 6, precioY - 58); g.lineTo((S + oldW) / 2 + 6, precioY - 58); g.stroke();
+        g.font = '700 78px "Cormorant Garamond", serif'; g.fillStyle = theme.dorado;
+        g.fillText(formatCLP(of), S / 2, precioY + 20);
+      } else {
+        g.font = '700 82px "Cormorant Garamond", serif'; g.fillStyle = theme.dorado;
+        g.fillText(formatCLP(p.price), S / 2, precioY);
+      }
+      // pie: código + pedidos por DM
+      g.font = '500 27px "Jost", sans-serif'; g.fillStyle = '#CBB7D8';
+      const ig = (settings && settings.instagram) ? String(settings.instagram).replace(/^@/, '') : '';
+      const pie = (p.code ? p.code + '   •   ' : '') + (ig ? '@' + ig : 'Pedidos por DM');
+      g.fillText(pie, S / 2, S - 44);
+      return c.toDataURL('image/jpeg', 0.92);
+    });
+}
+
 /* fila de contactos con ícono + enlace. `tipos` opcional filtra cuáles mostrar. */
 function kvContactoRow(settings, tipos) {
   let cs = kvContactos(settings);

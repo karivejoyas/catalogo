@@ -44,12 +44,14 @@
       products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       if (products.length === 0) { sembrar(); return; }
       renderProductosGuarded();
+      renderIG();
     }, (err) => console.error('Error leyendo productos:', err));
     unsubSettings = settingsRef.onSnapshot((doc) => {
       settings = doc.data() || {};
       poblarCampos();
       renderCatsEditorGuarded();
       renderProductosGuarded();
+      renderIG();
     }, (err) => console.error('Error leyendo configuración:', err));
   }
   function dejarDeEscuchar() {
@@ -255,6 +257,68 @@
     poblarFondoInfo = setupFondo('adm-fondoi', 'fondoInfo', typeof KV_FONDO_INFO_DEFAULT !== 'undefined' ? KV_FONDO_INFO_DEFAULT : null);
   } catch (err) { console.error('Error configurando fondos:', err); }
 
+  // ---------- INSTAGRAM (kit de publicaciones) ----------
+  $('adm-ig-guardar').addEventListener('click', () => {
+    settingsRef.set({ igCaption: $('adm-ig-caption').value }, { merge: true })
+      .then(() => guardado('adm-ig-ok')).catch(err => console.error(err));
+  });
+  $('adm-ig-reset').addEventListener('click', () => {
+    $('adm-ig-caption').value = KV_IG_CAPTION_DEFAULT;
+  });
+
+  function renderIG() {
+    const cont = $('adm-ig-lista'); if (!cont) return;
+    const enStock = products.filter(kvEnStock);
+    $('adm-ig-contador').textContent = enStock.length + ' productos con stock';
+    cont.innerHTML = enStock.map(p =>
+      '<div class="ig-fila" data-id="' + p.id + '">' +
+        '<div class="ig-thumb"' + (p.photo ? ' style="background-image:url(\'' + p.photo + '\')"' : '') + '>' + (p.photo ? '' : '✦') + '</div>' +
+        '<div class="ig-info">' +
+          '<div class="ig-nombre">' + escapeHtml(p.name || '') + '</div>' +
+          '<div class="ig-precio">' + formatCLP(kvPrecioOferta(p) || p.price) + (kvPrecioOferta(p) ? ' <span class="ig-of">Oferta</span>' : '') + '</div>' +
+          '<div class="ig-codigo">' + escapeHtml(p.code || '') + '</div>' +
+        '</div>' +
+        '<div class="ig-acciones">' +
+          '<button type="button" class="adm-btn-solido ig-btn" data-role="ig-img" data-id="' + p.id + '">⬇ Imagen</button>' +
+          '<button type="button" class="adm-btn-borde ig-btn" data-role="ig-txt" data-id="' + p.id + '">📋 Texto</button>' +
+        '</div>' +
+      '</div>').join('');
+    cont.querySelectorAll('[data-role="ig-img"]').forEach(n => n.addEventListener('click', e => descargarPostIG(e.currentTarget.dataset.id, e.currentTarget)));
+    cont.querySelectorAll('[data-role="ig-txt"]').forEach(n => n.addEventListener('click', e => copiarCaptionIG(e.currentTarget.dataset.id, e.currentTarget)));
+  }
+
+  function descargarPostIG(id, btn) {
+    const p = products.find(x => x.id === id); if (!p) return Promise.resolve();
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Generando…'; }
+    return kvGenerarPostIG(p, settings).then(url => {
+      const a = document.createElement('a');
+      a.href = url; a.download = 'karive-' + (p.code || id) + '.jpg';
+      document.body.appendChild(a); a.click(); a.remove();
+      if (btn) { btn.disabled = false; btn.textContent = '✓ Descargada'; setTimeout(() => { btn.textContent = '⬇ Imagen'; }, 1800); }
+    }).catch(err => { console.error('Error generando post:', err); if (btn) { btn.disabled = false; btn.textContent = '⬇ Imagen'; } });
+  }
+
+  function copiarCaptionIG(id, btn) {
+    const p = products.find(x => x.id === id); if (!p) return;
+    const txt = kvCaptionIG(p, settings);
+    const ok = () => { if (btn) { btn.textContent = '✓ Copiado'; setTimeout(() => { btn.textContent = '📋 Texto'; }, 1800); } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok).catch(() => window.prompt('Copia el texto:', txt));
+    else window.prompt('Copia el texto:', txt);
+  }
+
+  $('adm-ig-todas').addEventListener('click', async () => {
+    const enStock = products.filter(kvEnStock);
+    if (!enStock.length) return;
+    if (!window.confirm('Se descargarán ' + enStock.length + ' imágenes, una por una. Puede que tu navegador pida permiso para descargas múltiples. ¿Continuar?')) return;
+    const btn = $('adm-ig-todas'); btn.disabled = true;
+    for (let i = 0; i < enStock.length; i++) {
+      btn.textContent = 'Descargando ' + (i + 1) + '/' + enStock.length + '…';
+      await descargarPostIG(enStock[i].id);
+      await new Promise(r => setTimeout(r, 700));
+    }
+    btn.disabled = false; btn.textContent = '⬇ Descargar todas las imágenes';
+  });
+
   // ---------- CONTACTO ----------
   $('adm-guardar-contacto').addEventListener('click', () => {
     settingsRef.set({ instagram: $('adm-ig').value.trim(), facebook: $('adm-fb').value.trim(), whatsapp: $('adm-wa').value.trim(), whatsappMsg: $('adm-wa-msg').value.trim() }, { merge: true })
@@ -398,6 +462,7 @@
     if (activo() !== $('adm-fb')) $('adm-fb').value = settings.facebook || '';
     if (activo() !== $('adm-wa')) $('adm-wa').value = settings.whatsapp || '';
     if (activo() !== $('adm-wa-msg')) $('adm-wa-msg').value = settings.whatsappMsg != null ? settings.whatsappMsg : KV_WHATSAPP_MSG_DEFAULT;
+    if (activo() !== $('adm-ig-caption')) $('adm-ig-caption').value = settings.igCaption != null ? settings.igCaption : KV_IG_CAPTION_DEFAULT;
 
     // fondos (productos e información): un fallo aquí no debe frenar el resto
     try { poblarFondoProd(); poblarFondoInfo(); } catch (err) { console.error('Error poblando fondos:', err); }

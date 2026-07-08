@@ -38,6 +38,7 @@
     <button class="adm-tab" data-tab="diseno">Diseño y colores</button>
     <button class="adm-tab" data-tab="portada">Portada e info</button>
     <button class="adm-tab" data-tab="contacto">Contacto</button>
+    <button class="adm-tab" data-tab="instagram">Instagram</button>
   </div>
 
   <!-- ===== PRODUCTOS ===== -->
@@ -49,6 +50,29 @@
       </div>
     </div>
     <div id="adm-categorias"></div>
+    <div style="height:60px;"></div>
+  </div>
+
+  <!-- ===== INSTAGRAM ===== -->
+  <div class="adm-panel" data-panel="instagram" hidden>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Kit para Instagram</h2>
+      <p class="adm-seccion-sub">Genera una imagen cuadrada lista para postear (foto + nombre + precio + tu marca) y el texto con hashtags para cada producto. Descárgala y súbela a Instagram, o prográmala gratis en Meta Business Suite.</p>
+      <label class="adm-etiqueta">Texto del post (usa <b>{nombre}</b> <b>{precio}</b> <b>{detalle}</b> <b>{codigo}</b> y se reemplazan solos)</label>
+      <textarea id="adm-ig-caption" class="adm-input" rows="7" style="font-family:'Jost',sans-serif;"></textarea>
+      <div class="adm-guardar-fila">
+        <button id="adm-ig-guardar" class="adm-btn-solido">Guardar texto</button>
+        <button id="adm-ig-reset" class="adm-btn-borde">Texto por defecto</button>
+        <span id="adm-ig-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      </div>
+    </section>
+    <section class="adm-seccion">
+      <div class="adm-barra-sup">
+        <span class="cat-contador" id="adm-ig-contador"></span>
+        <button id="adm-ig-todas" class="adm-btn-borde">⬇ Descargar todas las imágenes</button>
+      </div>
+      <div id="adm-ig-lista"></div>
+    </section>
     <div style="height:60px;"></div>
   </div>
 

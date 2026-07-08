@@ -400,6 +400,224 @@
     btn.disabled = false;
   });
 
+  // ---------- IA (Gemini principal / Groq respaldo) ----------
+  // Las claves viven SOLO en este navegador (localStorage): la configuración del
+  // catálogo es públicamente legible y guardarlas ahí las expondría.
+  const IA_LS = { gem: 'kv_ia_gemini', groq: 'kv_ia_groq', pref: 'kv_ia_pref' };
+  function iaKeys() {
+    return {
+      gem: localStorage.getItem(IA_LS.gem) || '',
+      groq: localStorage.getItem(IA_LS.groq) || '',
+      pref: localStorage.getItem(IA_LS.pref) || 'gemini'
+    };
+  }
+  $('ia-guardar').addEventListener('click', () => {
+    localStorage.setItem(IA_LS.gem, $('ia-key-gemini').value.trim());
+    localStorage.setItem(IA_LS.groq, $('ia-key-groq').value.trim());
+    localStorage.setItem(IA_LS.pref, (document.querySelector('input[name="ia-pref"]:checked') || {}).value || 'gemini');
+    guardado('ia-keys-ok');
+  });
+  (function poblarIAKeys() {
+    const k = iaKeys();
+    $('ia-key-gemini').value = k.gem;
+    $('ia-key-groq').value = k.groq;
+    document.querySelectorAll('input[name="ia-pref"]').forEach(r => { r.checked = (r.value === k.pref); });
+  })();
+
+  const IA_GEM_MODELOS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  const IA_GROQ_TXT = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+  const IA_GROQ_VIS = ['meta-llama/llama-4-scout-17b-16e-instruct'];
+
+  async function iaGemini(key, msgs) {
+    const sys = msgs.find(m => m.role === 'system');
+    const contents = msgs.filter(m => m.role !== 'system').map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }].concat((m.images || []).map(b => ({ inline_data: { mime_type: 'image/jpeg', data: b } })))
+    }));
+    const body = { contents: contents };
+    if (sys) body.systemInstruction = { parts: [{ text: sys.content }] };
+    let ultimo = '';
+    for (const modelo of IA_GEM_MODELOS) {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelo + ':generateContent?key=' + encodeURIComponent(key), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
+        const t = d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts && d.candidates[0].content.parts.map(p => p.text || '').join('');
+        if (t) return t;
+        ultimo = 'respuesta vacía';
+      } else {
+        ultimo = (d.error && d.error.message) || ('HTTP ' + r.status);
+        if (r.status !== 404 && r.status !== 400) break;   // solo prueba otro modelo si éste no existe
+      }
+    }
+    throw new Error('Gemini: ' + ultimo);
+  }
+
+  async function iaGroq(key, msgs, conImagenes) {
+    const modelos = conImagenes ? IA_GROQ_VIS.concat(IA_GROQ_TXT) : IA_GROQ_TXT;
+    const messages = msgs.map(m => {
+      if (m.images && m.images.length) {
+        return { role: m.role, content: [{ type: 'text', text: m.content }].concat(m.images.map(b => ({ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + b } }))) };
+      }
+      return { role: m.role, content: m.content };
+    });
+    let ultimo = '';
+    for (const modelo of modelos) {
+      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+        body: JSON.stringify({ model: modelo, messages: messages, temperature: 0.7 })
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
+        const t = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+        if (t) return t;
+        ultimo = 'respuesta vacía';
+      } else {
+        ultimo = (d.error && d.error.message) || ('HTTP ' + r.status);
+        if (r.status !== 404 && r.status !== 400) break;
+      }
+    }
+    throw new Error('Groq: ' + ultimo);
+  }
+
+  /* llama a la IA preferida y usa la otra como respaldo si falla */
+  async function iaLlamar(msgs, conImagenes) {
+    const k = iaKeys();
+    const orden = k.pref === 'groq' ? ['groq', 'gemini'] : ['gemini', 'groq'];
+    let ultimo = 'No hay claves de IA. Configúralas en la pestaña "Asistente IA".';
+    for (const p of orden) {
+      try {
+        if (p === 'gemini' && k.gem) return await iaGemini(k.gem, msgs);
+        if (p === 'groq' && k.groq) return await iaGroq(k.groq, msgs, conImagenes);
+      } catch (err) { ultimo = err.message; }
+    }
+    throw new Error(ultimo);
+  }
+
+  /* miniatura base64 (sin encabezado) de una foto, para enviarla a la IA */
+  function iaMiniatura(src, max) {
+    return kvCargarImagen(src).then(img => {
+      if (!img) return null;
+      const c = document.createElement('canvas');
+      const s = Math.min(1, (max || 512) / Math.max(img.width, img.height));
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.8).split(',')[1];
+    });
+  }
+
+  const IA_SISTEMA_MARCA = 'Eres la community manager de Karivé Joyas, una marca chilena de joyas artesanales hechas a mano (arcilla polimérica, miyuki, mostacillas). Escribes en español de Chile, con tono cálido y cercano. La marca solo hace envíos a todo Chile (NO hay retiros) y los pedidos son por DM de Instagram.';
+
+  // --- botón: descripción con IA (mira las fotos de los productos elegidos) ---
+  $('ig-m-ia-desc').addEventListener('click', async () => {
+    const prods = products.filter(p => igSel.has(p.id));
+    if (!prods.length) return;
+    const btn = $('ig-m-ia-desc');
+    btn.disabled = true; igEstado('✨ La IA está mirando tus joyas…');
+    try {
+      const imgs = [];
+      for (const p of prods.slice(0, 4)) { const b = await iaMiniatura(p.photo, 512); if (b) imgs.push(b); }
+      const datos = prods.map(p => '- ' + p.name + ' (' + kvCat(p.category, settings).nombre + ') ' + formatCLP(kvPrecioOferta(p) || p.price)).join('\n');
+      const texto = await iaLlamar([
+        { role: 'system', content: IA_SISTEMA_MARCA },
+        { role: 'user', content: 'Escribe SOLO la descripción para un post de Instagram con estas piezas (sin hashtags, sin inventar datos ni precios, máximo 4 líneas, con 2 o 3 emojis):\n' + datos, images: imgs }
+      ], imgs.length > 0);
+      const L = [texto.trim(), ''];
+      prods.forEach(p => { const of = kvPrecioOferta(p); L.push('💜 ' + (p.name || '') + ' — ' + formatCLP(of || p.price) + (p.code ? ' · ' + p.code : '')); });
+      L.push('', '📩 Pedidos por DM', '🚚 Envíos a todo Chile', '', igTagsActivos().join(' '));
+      $('ig-m-caption').value = L.join('\n');
+      igEstado('✨ Descripción generada — revísala y edítala si quieres.');
+    } catch (err) { igEstado('❌ IA: ' + err.message); }
+    btn.disabled = false;
+  });
+
+  // --- botón: hashtags nuevos con IA (se agregan tocándolos) ---
+  $('ig-m-ia-tags').addEventListener('click', async () => {
+    const prods = products.filter(p => igSel.has(p.id));
+    if (!prods.length) return;
+    const btn = $('ig-m-ia-tags');
+    btn.disabled = true; igEstado('#️⃣ Buscando hashtags nuevos…');
+    try {
+      const datos = prods.map(p => p.name + ' (' + kvCat(p.category, settings).nombre + ')').join(', ');
+      const actuales = igTagsActivos().join(' ');
+      const texto = await iaLlamar([
+        { role: 'system', content: IA_SISTEMA_MARCA },
+        { role: 'user', content: 'Sugiere 8 hashtags NUEVOS y relevantes en español para un post de Instagram con: ' + datos + '. NO repitas ninguno de estos: ' + actuales + '. Responde SOLO los hashtags separados por espacios.' }
+      ], false);
+      const ya = igTagsActivos().map(t => t.toLowerCase());
+      const sugs = [];
+      (texto.match(/#[\wáéíóúñÁÉÍÓÚÑ]+/g) || []).forEach(t => {
+        if (ya.indexOf(t.toLowerCase()) === -1 && sugs.map(x => x.toLowerCase()).indexOf(t.toLowerCase()) === -1) sugs.push(t);
+      });
+      if (!sugs.length) { igEstado('La IA no encontró hashtags nuevos. Intenta de nuevo.'); btn.disabled = false; return; }
+      const cont = $('ig-m-sugeridos');
+      cont.innerHTML = sugs.slice(0, 10).map(t => '<button type="button" class="ig-tag" data-tag="' + escapeHtml(t) + '">+ ' + escapeHtml(t) + '</button>').join('');
+      cont.querySelectorAll('.ig-tag').forEach(n => n.addEventListener('click', e => {
+        const tag = e.currentTarget.dataset.tag;
+        const ta = $('ig-m-caption');
+        ta.value = ta.value.replace(/\s*$/, '') + ' ' + tag;   // lo agrega al final de la descripción
+        e.currentTarget.disabled = true; e.currentTarget.classList.add('is-on');
+      }));
+      igEstado('Toca los hashtags que quieras agregar a la descripción. 👇');
+    } catch (err) { igEstado('❌ IA: ' + err.message); }
+    btn.disabled = false;
+  });
+
+  // --- asistente de chat sobre el catálogo ---
+  const iaHist = [];
+  function contextoCatalogo() {
+    const cats = kvCategorias(settings);
+    let s = 'CATÁLOGO ACTUAL DE KARIVÉ JOYAS\n';
+    cats.forEach(c => {
+      const items = products.filter(p => p.category === c.id);
+      if (!items.length) return;
+      s += '\n' + c.nombre + ' (' + items.length + ' productos):\n';
+      items.forEach(p => {
+        const of = kvPrecioOferta(p);
+        s += '- ' + (p.code || '') + ' ' + (p.name || '') + ' · ' + formatCLP(p.price) + (of ? ' (en oferta a ' + formatCLP(of) + ')' : '') + (kvEnStock(p) ? '' : ' [SIN STOCK]') + '\n';
+      });
+    });
+    const huer = products.filter(p => !cats.some(c => c.id === p.category));
+    if (huer.length) { s += '\nSin colección:\n'; huer.forEach(p => { s += '- ' + (p.code || '') + ' ' + (p.name || '') + ' · ' + formatCLP(p.price) + '\n'; }); }
+    s += '\nContacto: Instagram ' + (settings.instagram || '') + ' · Facebook ' + (settings.facebook || '') + ' · WhatsApp ' + (settings.whatsapp || '');
+    s += '\nCatálogo web: https://karivejoyas.github.io/catalogo/';
+    return s.slice(0, 9000);
+  }
+  function iaChatAdd(rol, texto) {
+    const div = document.createElement('div');
+    div.className = 'ia-msg ia-' + rol;
+    div.textContent = texto;
+    $('ia-chat').appendChild(div);
+    $('ia-chat').scrollTop = $('ia-chat').scrollHeight;
+    return div;
+  }
+  async function iaPreguntar() {
+    const q = $('ia-preg').value.trim();
+    if (!q) return;
+    $('ia-preg').value = '';
+    iaChatAdd('user', q);
+    iaHist.push({ role: 'user', content: q });
+    while (iaHist.length > 12) iaHist.shift();
+    const pensando = iaChatAdd('bot', 'Pensando…');
+    pensando.classList.add('ia-pensando');
+    try {
+      const resp = await iaLlamar([
+        { role: 'system', content: IA_SISTEMA_MARCA + ' Responde breve y útil, usando SOLO estos datos reales del catálogo (no inventes productos ni precios):\n\n' + contextoCatalogo() }
+      ].concat(iaHist), false);
+      iaHist.push({ role: 'assistant', content: resp });
+      pensando.classList.remove('ia-pensando');
+      pensando.textContent = resp;
+    } catch (err) {
+      pensando.classList.remove('ia-pensando');
+      pensando.textContent = '⚠ ' + err.message;
+    }
+    $('ia-chat').scrollTop = $('ia-chat').scrollHeight;
+  }
+  $('ia-enviar').addEventListener('click', iaPreguntar);
+  $('ia-preg').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); iaPreguntar(); } });
+
   // conexión con el publicador
   $('adm-ig-pubguardar').addEventListener('click', () => {
     settingsRef.set({ igPubUrl: $('adm-ig-puburl').value.trim(), igPubClave: $('adm-ig-pubclave').value.trim() }, { merge: true })

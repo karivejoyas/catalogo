@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260709" />
+<link rel="stylesheet" href="catalogo.css?v=20260710" />
 </head>
 <body>
 
@@ -39,6 +39,7 @@
     <button class="adm-tab" data-tab="portada">Portada e info</button>
     <button class="adm-tab" data-tab="contacto">Contacto</button>
     <button class="adm-tab" data-tab="instagram">Instagram</button>
+    <button class="adm-tab" data-tab="ia">Asistente IA</button>
   </div>
 
   <!-- ===== PRODUCTOS ===== -->
@@ -97,6 +98,40 @@
         <div class="adm-guardar-fila">
           <button id="adm-ig-pubguardar" class="adm-btn-solido">Guardar conexión</button>
           <span id="adm-ig-pub-ok" class="adm-guardado" hidden>✓ Guardado</span>
+        </div>
+      </div>
+    </section>
+    <div style="height:60px;"></div>
+  </div>
+
+  <!-- ===== ASISTENTE IA ===== -->
+  <div class="adm-panel" data-panel="ia" hidden>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Asistente IA</h2>
+      <p class="adm-seccion-sub">Pregúntale lo que quieras sobre tu catálogo: precios, ideas de promociones, qué publicar, textos para clientas… Conoce tus productos reales.</p>
+      <div id="ia-chat" class="ia-chat">
+        <div class="ia-msg ia-bot">¡Hola! 💜 Soy el asistente de Karivé Joyas. Pregúntame lo que quieras sobre tu catálogo — por ejemplo: «¿cuáles son mis 5 productos más caros?» o «dame ideas para promocionar los charms».</div>
+      </div>
+      <div class="ia-fila">
+        <input id="ia-preg" class="adm-input" placeholder="Escribe tu pregunta…" />
+        <button id="ia-enviar" class="adm-btn-solido">Enviar</button>
+      </div>
+    </section>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Claves de IA</h2>
+      <p class="adm-seccion-sub">Consíguelas gratis: <b>Gemini</b> en aistudio.google.com/apikey · <b>Groq</b> en console.groq.com/keys. 🔒 Por seguridad se guardan <b>solo en este navegador</b> (no en la base de datos), así que si cambias de computador deberás pegarlas de nuevo.</p>
+      <div class="adm-contacto">
+        <label class="adm-etiqueta">Clave de Google Gemini (principal)</label>
+        <input id="ia-key-gemini" class="adm-input" placeholder="AIza…" autocomplete="off" />
+        <label class="adm-etiqueta">Clave de Groq (respaldo)</label>
+        <input id="ia-key-groq" class="adm-input" placeholder="gsk_…" autocomplete="off" />
+        <div class="adm-fondo-tipos">
+          <label><input type="radio" name="ia-pref" value="gemini" /> Usar Gemini primero</label>
+          <label><input type="radio" name="ia-pref" value="groq" /> Usar Groq primero</label>
+        </div>
+        <div class="adm-guardar-fila">
+          <button id="ia-guardar" class="adm-btn-solido">Guardar claves</button>
+          <span id="ia-keys-ok" class="adm-guardado" hidden>✓ Guardado en este navegador</span>
         </div>
       </div>
     </section>
@@ -281,6 +316,11 @@
       <div class="ig-m-fotos" id="ig-m-fotos"></div>
       <label class="adm-etiqueta">Descripción (puedes editarla antes de publicar)</label>
       <textarea id="ig-m-caption" class="adm-input" rows="10" style="font-family:'Jost',sans-serif;"></textarea>
+      <div class="adm-guardar-fila" style="margin-top:8px;">
+        <button id="ig-m-ia-desc" class="adm-btn-borde">✨ Descripción con IA</button>
+        <button id="ig-m-ia-tags" class="adm-btn-borde">#️⃣ Hashtags con IA</button>
+      </div>
+      <div id="ig-m-sugeridos" class="ig-tags" style="margin:0;"></div>
       <div class="adm-guardar-fila">
         <button id="ig-m-publicar" class="adm-btn-solido">🚀 Publicar en Instagram</button>
         <button class="adm-btn-borde" data-role="ig-close">Cancelar</button>
@@ -294,8 +334,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260709"></script>
-<script src="comun.js?v=20260709"></script>
-<script src="admin.js?v=20260709"></script>
+<script src="firebase-config.js?v=20260710"></script>
+<script src="comun.js?v=20260710"></script>
+<script src="admin.js?v=20260710"></script>
 </body>
 </html>

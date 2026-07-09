@@ -304,14 +304,27 @@
         '</div>' +
       '</div>';
     const cats = kvCategorias(settings);
-    let html = '';
+    const huer = enStock.filter(p => !cats.some(c => c.id === p.category));
+    // barra de acceso rápido: cada colección + la configuración del final
+    let nav = '<div class="adm-secnav">';
+    cats.forEach(cat => {
+      const n = enStock.filter(p => p.category === cat.id).length;
+      if (n) nav += '<button type="button" class="adm-secnav-btn" data-goto="ig-grupo-' + cat.id + '">' + escapeHtml(cat.nombre) + ' <span>' + n + '</span></button>';
+    });
+    if (huer.length) nav += '<button type="button" class="adm-secnav-btn" data-goto="ig-grupo-otros">Otros <span>' + huer.length + '</span></button>';
+    nav += '<button type="button" class="adm-secnav-btn adm-secnav-cfg" data-goto="ig-sec-config">⚙ Configuración</button>';
+    nav += '</div>';
+    let html = nav;
     cats.forEach(cat => {
       const items = enStock.filter(p => p.category === cat.id);
-      if (items.length) html += '<div class="ig-grupo-tit">' + escapeHtml(cat.nombre) + '</div>' + items.map(fila).join('');
+      if (items.length) html += '<div class="ig-grupo-tit" id="ig-grupo-' + cat.id + '">' + escapeHtml(cat.nombre) + '</div>' + items.map(fila).join('');
     });
-    const huer = enStock.filter(p => !cats.some(c => c.id === p.category));
-    if (huer.length) html += '<div class="ig-grupo-tit">Otros</div>' + huer.map(fila).join('');
+    if (huer.length) html += '<div class="ig-grupo-tit" id="ig-grupo-otros">Otros</div>' + huer.map(fila).join('');
     cont.innerHTML = html;
+    cont.querySelectorAll('[data-goto]').forEach(n => n.addEventListener('click', e => {
+      const s = document.getElementById(e.currentTarget.dataset.goto);
+      if (s) s.scrollIntoView({ behavior: 'smooth', block: e.currentTarget.dataset.goto === 'ig-sec-config' ? 'start' : 'center' });
+    }));
     cont.querySelectorAll('[data-role="ig-img"]').forEach(n => n.addEventListener('click', e => descargarPostIG(e.currentTarget.dataset.id, e.currentTarget)));
     cont.querySelectorAll('[data-role="ig-txt"]').forEach(n => n.addEventListener('click', e => copiarCaptionIG(e.currentTarget.dataset.id, e.currentTarget)));
     cont.querySelectorAll('[data-role="ig-sel"]').forEach(n => n.addEventListener('change', e => {
@@ -566,8 +579,12 @@
     try {
       const actual = $('ig-m-caption').value;
       const texto = await iaLlamar([
-        { role: 'system', content: IA_SISTEMA_MARCA + '\n\n' + igIAContexto(prods) },
-        { role: 'user', content: 'Descripción actual del post (puede estar vacía):\n---\n' + actual + '\n---\n\nHaz EXACTAMENTE lo que te pido, con total libertad: ' + pedido + '\n\nPuedes usar los nombres reales de los productos de arriba. Responde SOLO con la descripción final, sin explicaciones.' }
+        { role: 'system', content: IA_SISTEMA_MARCA + '\n\n' + igIAContexto(prods) + '\n\nREGLAS DE FORMATO (respétalas siempre):\n' +
+          '- Devuelve el texto BIEN ESPACIADO, como un post real de Instagram: frases cortas, con saltos de línea y una línea en blanco entre bloques. NUNCA lo dejes todo pegado en un solo párrafo.\n' +
+          '- Conserva el cierre "📩 Pedidos por DM" y "🚚 Envíos a todo Chile", cada uno en su propia línea.\n' +
+          '- Si el texto actual trae hashtags al final, déjalos en su propia línea al final (a menos que te pidan quitarlos).\n' +
+          '- Modifica SOLO lo que la usuaria pide; el resto de la estructura la mantienes.' },
+        { role: 'user', content: 'Este es el texto actual del post (respétale la estructura y el espaciado):\n---\n' + actual + '\n---\n\nHaz esto que te pido: ' + pedido + '\n\nUsa los nombres reales de los productos cuando corresponda. Responde SOLO con la descripción final, ya formateada con sus saltos de línea, sin explicaciones ni comentarios.' }
       ], false);
       $('ig-m-caption').value = texto.trim();
       $('ig-m-ia-pedido').value = '';

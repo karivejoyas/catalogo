@@ -369,10 +369,10 @@ function kvGenerarPostIG(p, settings) {
       // ---- foto COMPLETA (contain) sobre un fondo del mismo color de la foto ----
       if (foto) {
         g.fillStyle = kvColorFondo(foto); g.fillRect(0, 0, S, S);
-        const f = kvFoco(p), zoom = f.zoom / 100;
-        const scale = Math.min(S / foto.width, S / foto.height) * zoom;  // contain: se ve entero
+        // la foto original tal cual, completa y centrada (sin zoom ni recorte extra)
+        const scale = Math.min(S / foto.width, S / foto.height);  // contain: se ve entera
         const dw = foto.width * scale, dh = foto.height * scale;
-        const dx = (S - dw) * (f.x / 100), dy = (S - dh) * (f.y / 100);
+        const dx = (S - dw) / 2, dy = (S - dh) / 2;
         g.drawImage(foto, dx, dy, dw, dh);
       } else { g.fillStyle = '#EFEAF5'; g.fillRect(0, 0, S, S); }
       // ---- logo solo, sin círculo (arriba izquierda), con sombra suave para que se lea ----

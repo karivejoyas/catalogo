@@ -311,9 +311,7 @@
     return { base: base, auto: auto.filter(t => base.map(b => b.toLowerCase()).indexOf(t.toLowerCase()) === -1) };
   }
   function igTagsActivos() {
-    const off = Array.isArray(settings.igTagsOff) ? settings.igTagsOff : [];
-    const t = igTagsTodos();
-    return t.auto.concat(t.base).filter(x => off.indexOf(x) === -1);
+    return kvTagsActivos(products.filter(p => igSel.has(p.id)), settings);
   }
   function renderIGTags() {
     const cont = $('adm-ig-tags'); if (!cont) return;
@@ -523,15 +521,12 @@
     try {
       const imgs = [];
       for (const p of prods.slice(0, 4)) { const b = await iaMiniatura(p.photo, 512); if (b) imgs.push(b); }
-      const datos = prods.map(p => '- ' + p.name + ' (' + kvCat(p.category, settings).nombre + ') ' + formatCLP(kvPrecioOferta(p) || p.price)).join('\n');
+      const actual = $('ig-m-caption').value;
       const texto = await iaLlamar([
         { role: 'system', content: IA_SISTEMA_MARCA },
-        { role: 'user', content: 'Escribe SOLO la descripción para un post de Instagram con estas piezas (sin hashtags, sin inventar datos ni precios, máximo 4 líneas, con 2 o 3 emojis):\n' + datos, images: imgs }
+        { role: 'user', content: 'Este es el borrador de la descripción de un post de Instagram:\n---\n' + actual + '\n---\nReescríbelo para que sea más atractivo, cálido y natural, inspirándote en las fotos. MANTÉN la misma información: NO agregues precios ni datos que no estén ya en el borrador, y conserva los hashtags al final tal cual. Responde SOLO con la descripción final.', images: imgs }
       ], imgs.length > 0);
-      const L = [texto.trim(), ''];
-      prods.forEach(p => { const of = kvPrecioOferta(p); L.push('💜 ' + (p.name || '') + ' — ' + formatCLP(of || p.price) + (p.code ? ' · ' + p.code : '')); });
-      L.push('', '📩 Pedidos por DM', '🚚 Envíos a todo Chile', '', igTagsActivos().join(' '));
-      $('ig-m-caption').value = L.join('\n');
+      $('ig-m-caption').value = texto.trim();
       igEstado('✨ Descripción generada — revísala y edítala si quieres.');
     } catch (err) { igEstado('❌ IA: ' + err.message); }
     btn.disabled = false;
@@ -547,7 +542,7 @@
       const actual = $('ig-m-caption').value;
       const texto = await iaLlamar([
         { role: 'system', content: IA_SISTEMA_MARCA },
-        { role: 'user', content: 'Esta es la descripción actual de un post de Instagram:\n---\n' + actual + '\n---\nModifícala según esta instrucción: "' + pedido + '". Mantén los precios y códigos tal como están (no los inventes ni cambies) y conserva los hashtags al final. Responde SOLO con la descripción final completa, sin explicaciones.' }
+        { role: 'user', content: 'Esta es la descripción actual de un post de Instagram:\n---\n' + actual + '\n---\nAplica EXACTAMENTE esta instrucción de la usuaria: "' + pedido + '". Si te pide quitar algo (precios, hashtags, líneas, etc.), quítalo de verdad. No inventes precios ni datos nuevos. Responde SOLO con la descripción final, sin explicaciones ni comentarios.' }
       ], false);
       $('ig-m-caption').value = texto.trim();
       $('ig-m-ia-pedido').value = '';

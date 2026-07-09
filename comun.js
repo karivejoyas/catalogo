@@ -248,19 +248,19 @@ function kvFondoInfo(settings) {
   return kvFondo(f && f.tipo ? f : KV_FONDO_INFO_DEFAULT);
 }
 
-/* ---------- Kit para Instagram: caption + imagen de post ---------- */
+/* ---------- Kit para Instagram: caption + imagen de post ----------
+   Plantilla ÚNICA para la descripción (vista previa y botón Texto).
+   Marcadores que puedes usar o borrar:
+     {productos} = lista con precio y código (una línea por producto)
+     {nombres}   = solo los nombres, separados por comas (sin precios)
+     {hashtags}  = los hashtags activos
+   También sirven {nombre} {precio} {detalle} {codigo} (del primer producto). */
 const KV_IG_CAPTION_DEFAULT =
-  '✨ {nombre} — {precio}\n{detalle}\n\n💜 Hecho a mano con mucho amor\n📩 Pedidos por DM\n🚚 Envíos a todo Chile\n\n#KariveJoyas #JoyasArtesanales #AccesoriosChile #HechoAMano #Aros #Aretes';
+  '✨ Nuevas joyitas Karivé, hechas a mano ✨\n\n{productos}\n\n🤍 Hechas a mano, con mucho amor\n📩 Pedidos por DM\n🚚 Envíos a todo Chile\n\n{hashtags}';
 
-/* texto listo para pegar en Instagram, reemplazando los datos del producto */
+/* descripción del botón "Texto" de un producto (usa la misma plantilla) */
 function kvCaptionIG(p, settings) {
-  let t = (settings && settings.igCaption != null) ? settings.igCaption : KV_IG_CAPTION_DEFAULT;
-  const of = kvPrecioOferta(p);
-  const precio = of ? (formatCLP(of) + ' (antes ' + formatCLP(p.price) + ')') : formatCLP(p.price);
-  return t.replace(/\{nombre\}/g, p.name || '')
-          .replace(/\{precio\}/g, precio)
-          .replace(/\{codigo\}/g, p.code || '')
-          .replace(/\{detalle\}/g, p.detail || '');
+  return kvCaptionMulti([p], settings, kvTagsActivos([p], settings));
 }
 
 /* hashtags predefinidos (la dueña activa/desactiva los que quiera) */
@@ -282,28 +282,37 @@ function kvTagsDeProductos(prods, settings) {
   return out;
 }
 
-/* descripción automática para 1 o varios productos (envíos a todo Chile, sin retiros) */
+/* hashtags activos = auto (de colección) + predefinidos + propios, menos los apagados */
+function kvTagsActivos(prods, settings) {
+  settings = settings || {};
+  const off = Array.isArray(settings.igTagsOff) ? settings.igTagsOff : [];
+  const extras = Array.isArray(settings.igTagsExtra) ? settings.igTagsExtra : [];
+  const auto = kvTagsDeProductos(prods, settings);
+  const base = KV_IG_TAGS_BASE.concat(extras.filter(t => KV_IG_TAGS_BASE.indexOf(t) === -1));
+  const todos = auto.concat(base.filter(b => auto.map(a => a.toLowerCase()).indexOf(b.toLowerCase()) === -1));
+  return todos.filter(x => off.indexOf(x) === -1);
+}
+
+/* descripción a partir de la plantilla editable (reemplaza los marcadores) */
 function kvCaptionMulti(prods, settings, tags) {
-  const L = [];
-  if (prods.length === 1) {
-    const p = prods[0], of = kvPrecioOferta(p);
-    L.push('✨ ' + (p.name || '') + ' — ' + (of ? formatCLP(of) + ' (antes ' + formatCLP(p.price) + ')' : formatCLP(p.price)));
-    if (p.detail) L.push(p.detail);
-    if (p.code) L.push('Código: ' + p.code);
-  } else {
-    L.push('✨ Nuevas joyitas Karivé, hechas a mano ✨');
-    L.push('');
-    prods.forEach(p => {
-      const of = kvPrecioOferta(p);
-      L.push('💜 ' + (p.name || '') + ' — ' + formatCLP(of || p.price) + (p.code ? ' · ' + p.code : ''));
-    });
-  }
-  L.push('');
-  L.push('🤍 Hechas a mano, con mucho amor');
-  L.push('📩 Pedidos por DM');
-  L.push('🚚 Envíos a todo Chile');
-  if (tags && tags.length) { L.push(''); L.push(tags.join(' ')); }
-  return L.join('\n');
+  prods = prods || [];
+  let t = (settings && settings.igCaption != null) ? settings.igCaption : KV_IG_CAPTION_DEFAULT;
+  const linea = p => '💜 ' + (p.name || '') + ' — ' + formatCLP(kvPrecioOferta(p) || p.price) + (p.code ? ' · ' + p.code : '');
+  const productos = prods.map(linea).join('\n');
+  const nombres = prods.map(p => p.name || '').filter(Boolean).join(', ');
+  const p0 = prods[0] || {}, of0 = kvPrecioOferta(p0);
+  const tagsTxt = (tags && tags.length) ? tags.join(' ') : '';
+  return t
+    .replace(/\{productos\}/g, productos)
+    .replace(/\{nombres\}/g, nombres)
+    .replace(/\{hashtags\}/g, tagsTxt)
+    .replace(/\{nombre\}/g, p0.name || '')
+    .replace(/\{precio\}/g, of0 ? (formatCLP(of0) + ' (antes ' + formatCLP(p0.price) + ')') : formatCLP(p0.price || 0))
+    .replace(/\{detalle\}/g, p0.detail || '')
+    .replace(/\{codigo\}/g, p0.code || '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function kvCargarImagen(src) {

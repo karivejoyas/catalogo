@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260711" />
+<link rel="stylesheet" href="catalogo.css?v=20260712" />
 </head>
 <body>
 
@@ -78,12 +78,18 @@
       <div id="adm-ig-lista"></div>
     </section>
     <section class="adm-seccion">
-      <h2 class="adm-seccion-titulo">Kit manual (descargar imagen y texto)</h2>
-      <p class="adm-seccion-sub">Plantilla del texto para el botón 📋 Texto de cada producto. Usa <b>{nombre}</b> <b>{precio}</b> <b>{detalle}</b> <b>{codigo}</b> y se reemplazan solos.</p>
-      <textarea id="adm-ig-caption" class="adm-input" rows="7" style="font-family:'Jost',sans-serif;"></textarea>
+      <h2 class="adm-seccion-titulo">Plantilla de la descripción</h2>
+      <p class="adm-seccion-sub">Este es el texto que aparece <b>por defecto en la vista previa</b> (y en el botón 📋 Texto). Edítalo a tu gusto y <b>Guarda</b>: las próximas vistas previas saldrán así. Marcadores que puedes usar o <b>borrar</b>:</p>
+      <ul class="adm-ayuda">
+        <li><b>{productos}</b> → lista de los productos con su precio y código</li>
+        <li><b>{nombres}</b> → solo los nombres, sin precios</li>
+        <li><b>{hashtags}</b> → los hashtags activos</li>
+      </ul>
+      <p class="adm-seccion-sub">Ejemplo: si <b>no quieres precios</b>, cambia <b>{productos}</b> por <b>{nombres}</b> (o bórralo). Si <b>no quieres hashtags</b>, borra <b>{hashtags}</b>.</p>
+      <textarea id="adm-ig-caption" class="adm-input" rows="9" style="font-family:'Jost',sans-serif;"></textarea>
       <div class="adm-guardar-fila">
-        <button id="adm-ig-guardar" class="adm-btn-solido">Guardar texto</button>
-        <button id="adm-ig-reset" class="adm-btn-borde">Texto por defecto</button>
+        <button id="adm-ig-guardar" class="adm-btn-solido">Guardar plantilla</button>
+        <button id="adm-ig-reset" class="adm-btn-borde">Volver a la de por defecto</button>
         <span id="adm-ig-ok" class="adm-guardado" hidden>✓ Guardado</span>
       </div>
     </section>
@@ -338,8 +344,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260711"></script>
-<script src="comun.js?v=20260711"></script>
-<script src="admin.js?v=20260711"></script>
+<script src="firebase-config.js?v=20260712"></script>
+<script src="comun.js?v=20260712"></script>
+<script src="admin.js?v=20260712"></script>
 </body>
 </html>

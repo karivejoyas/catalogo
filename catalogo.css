@@ -354,3 +354,5 @@ body.fb-lb-open{overflow:hidden;}
 .ia-bot.ia-pensando{color:var(--kv-lavanda);font-style:italic;}
 .ia-fila{display:flex;gap:10px;max-width:760px;margin-top:12px;}
 .ia-fila .adm-input{flex:1;}
+.adm-ayuda{max-width:760px;margin:2px 0 12px;padding-left:20px;color:#a794bd;font-size:12.5px;line-height:1.7;}
+.adm-ayuda b{color:var(--kv-dorado-cl);font-weight:500;}

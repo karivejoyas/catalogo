@@ -668,9 +668,10 @@
       const tags = igTagsActivos();
       const texto = await iaLlamar([
         { role: 'system', content: IA_SISTEMA_MARCA },
-        { role: 'user', content: 'Escribe una descripción GENERAL y atractiva para un post de Instagram, inspirándote en las fotos (sus colores, estilo, lo hechas a mano).\n' +
+        { role: 'user', content: 'Escribe una descripción atractiva para un post de Instagram, inspirándote en las fotos (su estilo, colores, lo hechas a mano).\n' +
           'REGLAS:\n' +
-          '- NO menciones nombres de productos ni precios; habla de las joyas de forma general.\n' +
+          '- SÍ puedes hablar del TIPO o TEMA de las joyas que se ven (por ejemplo: si son corazones, flores, mariposas…) y describir ese estilo de forma general y bonita.\n' +
+          '- NO menciones nombres de productos, NI precios, NI enumeres los colores uno por uno (nada de "el corazón rojo, el verde, el azul…"). Habla del conjunto, no de piezas individuales.\n' +
           '- Invita a ver el catálogo completo con este enlace tal cual: ' + KV_CATALOGO_URL + '\n' +
           '- Termina con "📩 Pedidos por DM" y "🚚 Envíos a todo Chile".\n' +
           '- Texto bien espaciado (frases cortas con saltos de línea), cálido y natural.\n\n' +

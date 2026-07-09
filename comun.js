@@ -223,6 +223,8 @@ function kvContactos(settings) {
     let url, texto;
     if (/^https?:\/\//i.test(fb)) { url = fb; texto = fb.replace(/^https?:\/\/(www\.)?(m\.)?facebook\.com\//i, '').replace(/\/$/, '') || 'Facebook'; }
     else { url = 'https://facebook.com/' + fb.replace(/^@/, ''); texto = fb.replace(/^@/, ''); }
+    // si el enlace es del tipo profile.php?id=… (feo), muestra una etiqueta limpia
+    if (/^profile\.php/i.test(texto) || /facebook/i.test(texto) || texto.length > 24) texto = 'Karivé Joyas';
     out.push({ tipo: 'facebook', texto: texto, url: url });
   }
   if (wa) {

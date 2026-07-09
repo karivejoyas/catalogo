@@ -581,7 +581,8 @@
         ultimo = 'respuesta vacía';
       } else {
         ultimo = (d.error && d.error.message) || ('HTTP ' + r.status);
-        if (r.status !== 404 && r.status !== 400) break;   // solo prueba otro modelo si éste no existe
+        // prueba otro modelo si éste no existe (404/400) o si se agotó su cuota (429): cada modelo tiene su propio límite
+        if (r.status !== 404 && r.status !== 400 && r.status !== 429) break;
       }
     }
     throw new Error('Gemini: ' + ultimo);
@@ -619,14 +620,15 @@
   async function iaLlamar(msgs, conImagenes) {
     const k = iaKeys();
     const orden = k.pref === 'groq' ? ['groq', 'gemini'] : ['gemini', 'groq'];
-    let ultimo = 'No hay claves de IA. Configúralas en la pestaña "Asistente IA".';
+    const errores = [];
     for (const p of orden) {
       try {
         if (p === 'gemini' && k.gem) return await iaGemini(k.gem, msgs);
         if (p === 'groq' && k.groq) return await iaGroq(k.groq, msgs, conImagenes);
-      } catch (err) { ultimo = err.message; }
+      } catch (err) { errores.push(err.message); }
     }
-    throw new Error(ultimo);
+    if (!errores.length) throw new Error('No hay claves de IA. Ponlas en la pestaña "Asistente IA".');
+    throw new Error(errores.join(' · '));
   }
 
   /* miniatura base64 (sin encabezado) de una foto, para enviarla a la IA */

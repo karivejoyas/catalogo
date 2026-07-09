@@ -315,6 +315,22 @@ function kvCaptionMulti(prods, settings, tags) {
     .trim();
 }
 
+/* color de fondo de una foto: promedio de sus bordes (para rellenar sin cortar el producto) */
+function kvColorFondo(img) {
+  try {
+    const n = 12, c = document.createElement('canvas'); c.width = n; c.height = n;
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0, n, n);
+    const d = g.getImageData(0, 0, n, n).data;
+    let r = 0, gr = 0, b = 0, k = 0;
+    for (let i = 0; i < n; i++) {
+      [[i, 0], [i, n - 1], [0, i], [n - 1, i]].forEach(pt => {
+        const o = (pt[1] * n + pt[0]) * 4; r += d[o]; gr += d[o + 1]; b += d[o + 2]; k++;
+      });
+    }
+    return 'rgb(' + Math.round(r / k) + ',' + Math.round(gr / k) + ',' + Math.round(b / k) + ')';
+  } catch (e) { return '#F0EAE0'; }
+}
+
 function kvCargarImagen(src) {
   return new Promise((res) => {
     if (!src) return res(null);
@@ -350,10 +366,11 @@ function kvGenerarPostIG(p, settings) {
     .then(([foto, logo]) => {
       const c = document.createElement('canvas'); c.width = S; c.height = S;
       const g = c.getContext('2d');
-      // ---- foto a pantalla completa (recorte tipo cover con el encuadre del producto) ----
+      // ---- foto COMPLETA (contain) sobre un fondo del mismo color de la foto ----
       if (foto) {
+        g.fillStyle = kvColorFondo(foto); g.fillRect(0, 0, S, S);
         const f = kvFoco(p), zoom = f.zoom / 100;
-        const scale = Math.max(S / foto.width, S / foto.height) * zoom;
+        const scale = Math.min(S / foto.width, S / foto.height) * zoom;  // contain: se ve entero
         const dw = foto.width * scale, dh = foto.height * scale;
         const dx = (S - dw) * (f.x / 100), dy = (S - dh) * (f.y / 100);
         g.drawImage(foto, dx, dy, dw, dh);

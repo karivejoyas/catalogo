@@ -146,23 +146,32 @@
   function renderProductos() {
     const cats = kvCategorias(settings);
     $('adm-contador').textContent = products.length + ' productos';
-    let html = '';
+    const huerfanos = products.filter(p => !cats.some(c => c.id === p.category));
+    // barra de accesos rápidos a cada colección (para no bajar tanto)
+    let nav = '<div class="adm-secnav">';
+    cats.forEach(cat => { const n = products.filter(p => p.category === cat.id).length; nav += '<button type="button" class="adm-secnav-btn" data-goto="sec-' + cat.id + '">' + escapeHtml(cat.nombre) + ' <span>' + n + '</span></button>'; });
+    if (huerfanos.length) nav += '<button type="button" class="adm-secnav-btn" data-goto="sec-huerfanos">Sin colección <span>' + huerfanos.length + '</span></button>';
+    nav += '</div>';
+    let html = nav;
     cats.forEach(cat => {
       const items = products.filter(p => p.category === cat.id);
       html +=
-        '<section class="adm-seccion">' +
+        '<section class="adm-seccion" id="sec-' + cat.id + '">' +
           '<h2 class="adm-seccion-titulo">' + escapeHtml(cat.nombre) + ' <span class="adm-tag">(' + items.length + ')</span>' +
             ' <button type="button" class="adm-btn-solido adm-btn-mini" data-role="add" data-cat="' + cat.id + '">+ Agregar producto</button></h2>' +
           '<div class="adm-grilla">' + items.map(p => kvCardEditHtml(p, cats)).join('') + '</div>' +
         '</section>';
     });
-    const huerfanos = products.filter(p => !cats.some(c => c.id === p.category));
     if (huerfanos.length) {
-      html += '<section class="adm-seccion"><h2 class="adm-seccion-titulo">Sin colección <span class="adm-tag">(' + huerfanos.length + ')</span></h2>' +
+      html += '<section class="adm-seccion" id="sec-huerfanos"><h2 class="adm-seccion-titulo">Sin colección <span class="adm-tag">(' + huerfanos.length + ')</span></h2>' +
         '<p class="adm-seccion-sub">Estos productos quedaron sin colección. Cámbiales la colección con el selector 📁 de cada uno.</p>' +
         '<div class="adm-grilla">' + huerfanos.map(p => kvCardEditHtml(p, cats)).join('') + '</div></section>';
     }
     $('adm-categorias').innerHTML = html;
+    $('adm-categorias').querySelectorAll('[data-goto]').forEach(n => n.addEventListener('click', e => {
+      const s = document.getElementById(e.currentTarget.dataset.goto);
+      if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }));
     conectarProductos();
   }
 
@@ -280,7 +289,7 @@
     // limpiar selecciones de productos que ya no existen o quedaron sin stock
     [...igSel].forEach(id => { if (!enStock.some(p => p.id === id)) igSel.delete(id); });
     $('adm-ig-contador').textContent = enStock.length + ' productos con stock';
-    cont.innerHTML = enStock.map(p =>
+    const fila = p =>
       '<div class="ig-fila" data-id="' + p.id + '">' +
         '<label class="ig-check"><input type="checkbox" data-role="ig-sel" data-id="' + p.id + '"' + (igSel.has(p.id) ? ' checked' : '') + ' /><span></span></label>' +
         '<div class="ig-thumb"' + (p.photo ? ' style="background-image:url(\'' + p.photo + '\')"' : '') + '>' + (p.photo ? '' : '✦') + '</div>' +
@@ -293,7 +302,16 @@
           '<button type="button" class="adm-btn-solido ig-btn" data-role="ig-img" data-id="' + p.id + '">⬇ Imagen</button>' +
           '<button type="button" class="adm-btn-borde ig-btn" data-role="ig-txt" data-id="' + p.id + '">📋 Texto</button>' +
         '</div>' +
-      '</div>').join('');
+      '</div>';
+    const cats = kvCategorias(settings);
+    let html = '';
+    cats.forEach(cat => {
+      const items = enStock.filter(p => p.category === cat.id);
+      if (items.length) html += '<div class="ig-grupo-tit">' + escapeHtml(cat.nombre) + '</div>' + items.map(fila).join('');
+    });
+    const huer = enStock.filter(p => !cats.some(c => c.id === p.category));
+    if (huer.length) html += '<div class="ig-grupo-tit">Otros</div>' + huer.map(fila).join('');
+    cont.innerHTML = html;
     cont.querySelectorAll('[data-role="ig-img"]').forEach(n => n.addEventListener('click', e => descargarPostIG(e.currentTarget.dataset.id, e.currentTarget)));
     cont.querySelectorAll('[data-role="ig-txt"]').forEach(n => n.addEventListener('click', e => copiarCaptionIG(e.currentTarget.dataset.id, e.currentTarget)));
     cont.querySelectorAll('[data-role="ig-sel"]').forEach(n => n.addEventListener('change', e => {
@@ -512,7 +530,13 @@
 
   const IA_SISTEMA_MARCA = 'Eres la community manager de Karivé Joyas, una marca chilena de joyas artesanales hechas a mano (arcilla polimérica, miyuki, mostacillas). Escribes en español de Chile, con tono cálido y cercano. La marca solo hace envíos a todo Chile (NO hay retiros) y los pedidos son por DM de Instagram.';
 
-  // --- botón: descripción con IA (mira las fotos de los productos elegidos) ---
+  // datos reales de los productos elegidos, para que la IA los mencione por su nombre
+  function igIAContexto(prods) {
+    const l = prods.map(p => '- ' + (p.name || '') + ' (colección ' + kvCat(p.category, settings).nombre + ')' + (p.detail ? ', ' + p.detail : ''));
+    return 'Productos de esta publicación (menciónalos por su nombre real):\n' + l.join('\n');
+  }
+
+  // --- botón: descripción con IA (mira las fotos + conoce los nombres) ---
   $('ig-m-ia-desc').addEventListener('click', async () => {
     const prods = products.filter(p => igSel.has(p.id));
     if (!prods.length) return;
@@ -521,10 +545,10 @@
     try {
       const imgs = [];
       for (const p of prods.slice(0, 4)) { const b = await iaMiniatura(p.photo, 512); if (b) imgs.push(b); }
-      const actual = $('ig-m-caption').value;
+      const tags = igTagsActivos();
       const texto = await iaLlamar([
         { role: 'system', content: IA_SISTEMA_MARCA },
-        { role: 'user', content: 'Este es el borrador de la descripción de un post de Instagram:\n---\n' + actual + '\n---\nReescríbelo para que sea más atractivo, cálido y natural, inspirándote en las fotos. MANTÉN la misma información: NO agregues precios ni datos que no estén ya en el borrador, y conserva los hashtags al final tal cual. Responde SOLO con la descripción final.', images: imgs }
+        { role: 'user', content: 'Escribe una descripción para un post de Instagram: elegante, cálida y natural, inspirándote en las fotos y MENCIONANDO los productos por su nombre real. Termina con "📩 Pedidos por DM" y "🚚 Envíos a todo Chile".\n\n' + igIAContexto(prods) + (tags.length ? '\n\nAgrega al final, en su propia línea, estos hashtags tal cual:\n' + tags.join(' ') : '') + '\n\nResponde SOLO con la descripción, sin comentarios.', images: imgs }
       ], imgs.length > 0);
       $('ig-m-caption').value = texto.trim();
       igEstado('✨ Descripción generada — revísala y edítala si quieres.');
@@ -532,17 +556,18 @@
     btn.disabled = false;
   });
 
-  // --- pedirle un cambio a la IA sobre la descripción actual ---
+  // --- pedirle un cambio a la IA escribiendo libremente (sin límites) ---
   async function igIAAplicar() {
     const pedido = $('ig-m-ia-pedido').value.trim();
-    if (!pedido) { igEstado('Escribe primero qué quieres cambiar (ej: "hazla más corta").'); return; }
+    if (!pedido) { igEstado('Escribe primero qué quieres (ej: "hazla elegante y menciona los aros de media flor").'); return; }
+    const prods = products.filter(p => igSel.has(p.id));
     const btn = $('ig-m-ia-aplicar');
-    btn.disabled = true; igEstado('✨ Aplicando tu cambio…');
+    btn.disabled = true; igEstado('✨ Trabajando en tu pedido…');
     try {
       const actual = $('ig-m-caption').value;
       const texto = await iaLlamar([
-        { role: 'system', content: IA_SISTEMA_MARCA },
-        { role: 'user', content: 'Esta es la descripción actual de un post de Instagram:\n---\n' + actual + '\n---\nAplica EXACTAMENTE esta instrucción de la usuaria: "' + pedido + '". Si te pide quitar algo (precios, hashtags, líneas, etc.), quítalo de verdad. No inventes precios ni datos nuevos. Responde SOLO con la descripción final, sin explicaciones ni comentarios.' }
+        { role: 'system', content: IA_SISTEMA_MARCA + '\n\n' + igIAContexto(prods) },
+        { role: 'user', content: 'Descripción actual del post (puede estar vacía):\n---\n' + actual + '\n---\n\nHaz EXACTAMENTE lo que te pido, con total libertad: ' + pedido + '\n\nPuedes usar los nombres reales de los productos de arriba. Responde SOLO con la descripción final, sin explicaciones.' }
       ], false);
       $('ig-m-caption').value = texto.trim();
       $('ig-m-ia-pedido').value = '';

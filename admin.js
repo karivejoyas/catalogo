@@ -385,7 +385,7 @@
   const igFocoTimer = {};
   const igModal = $('ig-modal');
   function igEstado(msg) { $('ig-m-estado').textContent = msg || ''; }
-  function cerrarIGModal() { igModal.hidden = true; igEstado(''); }
+  function cerrarIGModal() { igModal.hidden = true; igEstado(''); clearInterval(igProgTimer); const pr = $('ig-m-progreso'); if (pr) pr.hidden = true; }
   igModal.querySelectorAll('[data-role="ig-close"]').forEach(n => n.addEventListener('click', cerrarIGModal));
 
   function igSlider(label, role, id, min, max, val) {
@@ -469,6 +469,35 @@
     }
   });
 
+  // barra de progreso estimada (no hay progreso real: es una sola llamada al publicador)
+  let igProgTimer = null;
+  function igProgresoPintar(pct, etapa) {
+    const f = $('ig-m-progreso-fill'); if (f) f.style.width = Math.round(pct) + '%';
+    const p = $('ig-m-progreso-pct'); if (p) p.textContent = Math.round(pct) + '%';
+    if (etapa) { const e = $('ig-m-progreso-etapa'); if (e) e.textContent = etapa; }
+  }
+  function igProgresoIniciar(nFotos) {
+    const prog = $('ig-m-progreso'); if (prog) prog.hidden = false;
+    igProgresoPintar(0, 'Preparando las imágenes…');
+    const total = 9000 + nFotos * 7000;   // duración estimada en ms
+    const t0 = Date.now();
+    clearInterval(igProgTimer);
+    igProgTimer = setInterval(() => {
+      const t = Date.now() - t0;
+      const p = 95 * (1 - Math.exp(-3 * t / total));   // sube y se acerca a 95% sin llegar
+      let etapa = 'Preparando las imágenes…';
+      if (p >= 12) etapa = '📸 Publicando en Instagram…';
+      if (p >= 55) etapa = '📘 Publicando en Facebook…';
+      if (p >= 85) etapa = '🔎 Verificando la publicación…';
+      igProgresoPintar(p, etapa);
+    }, 220);
+  }
+  function igProgresoFin(exito) {
+    clearInterval(igProgTimer); igProgTimer = null;
+    igProgresoPintar(100, exito ? '✅ ¡Listo!' : 'Terminado');
+    setTimeout(() => { const pr = $('ig-m-progreso'); if (pr) pr.hidden = true; }, exito ? 1400 : 500);
+  }
+
   $('ig-m-publicar').addEventListener('click', async () => {
     const url = String(settings.igPubUrl || '').trim();
     const clave = String(settings.igPubClave || '').trim();
@@ -476,7 +505,8 @@
     if (!igPreviewImgs.length) { igEstado('⚠ Primero genera la vista previa.'); return; }
     const btn = $('ig-m-publicar');
     btn.disabled = true;
-    igEstado('Publicando… puede tardar hasta 1 minuto ⏳ (no cierres esta ventana)');
+    igEstado('Publicando… no cierres esta ventana ⏳');
+    igProgresoIniciar(igPreviewImgs.length);
     try {
       const r = await fetch(url, {
         method: 'POST',
@@ -485,6 +515,7 @@
       });
       const d = await r.json();
       if (d && d.ok) {
+        igProgresoFin(true);
         let msg = '✅ ¡Publicado en Instagram';
         if (d.fb === 'ok') msg += ' y Facebook';
         msg += '! Revisa tu perfil.';
@@ -492,9 +523,11 @@
         igEstado(msg);
         igSel.clear(); renderIG();
       } else {
+        igProgresoFin(false);
         igEstado('❌ ' + ((d && d.error) || 'Error desconocido al publicar.'));
       }
     } catch (err) {
+      igProgresoFin(false);
       igEstado('❌ No se pudo contactar al publicador: ' + err.message);
     }
     btn.disabled = false;

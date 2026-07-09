@@ -649,7 +649,14 @@
     return 'Productos de esta publicación (menciónalos por su nombre real):\n' + l.join('\n');
   }
 
-  // --- botón: descripción con IA (mira las fotos + conoce los nombres) ---
+  const KV_CATALOGO_URL = 'https://karivejoyas.github.io/catalogo/';
+  // contexto GENERAL: solo las colecciones, sin nombres ni precios de productos
+  function igIAContextoGeneral(prods) {
+    const cols = [...new Set(prods.map(p => kvCat(p.category, settings).nombre).filter(Boolean))];
+    return cols.length ? 'Colecciones que aparecen en las fotos: ' + cols.join(', ') + '.' : '';
+  }
+
+  // --- botón: descripción con IA (general, inspirada en las fotos, sin nombres ni precios) ---
   $('ig-m-ia-desc').addEventListener('click', async () => {
     const prods = products.filter(p => igSel.has(p.id));
     if (!prods.length) return;
@@ -661,7 +668,14 @@
       const tags = igTagsActivos();
       const texto = await iaLlamar([
         { role: 'system', content: IA_SISTEMA_MARCA },
-        { role: 'user', content: 'Escribe una descripción para un post de Instagram: elegante, cálida y natural, inspirándote en las fotos y MENCIONANDO los productos por su nombre real. Termina con "📩 Pedidos por DM" y "🚚 Envíos a todo Chile".\n\n' + igIAContexto(prods) + (tags.length ? '\n\nAgrega al final, en su propia línea, estos hashtags tal cual:\n' + tags.join(' ') : '') + '\n\nResponde SOLO con la descripción, sin comentarios.', images: imgs }
+        { role: 'user', content: 'Escribe una descripción GENERAL y atractiva para un post de Instagram, inspirándote en las fotos (sus colores, estilo, lo hechas a mano).\n' +
+          'REGLAS:\n' +
+          '- NO menciones nombres de productos ni precios; habla de las joyas de forma general.\n' +
+          '- Invita a ver el catálogo completo con este enlace tal cual: ' + KV_CATALOGO_URL + '\n' +
+          '- Termina con "📩 Pedidos por DM" y "🚚 Envíos a todo Chile".\n' +
+          '- Texto bien espaciado (frases cortas con saltos de línea), cálido y natural.\n\n' +
+          igIAContextoGeneral(prods) + (tags.length ? '\n\nAgrega al final, en su propia línea, estos hashtags tal cual:\n' + tags.join(' ') : '') +
+          '\n\nResponde SOLO con la descripción, sin comentarios.', images: imgs }
       ], imgs.length > 0);
       $('ig-m-caption').value = texto.trim();
       igEstado('✨ Descripción generada — revísala y edítala si quieres.');

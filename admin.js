@@ -476,7 +476,8 @@
     const p = $('ig-m-progreso-pct'); if (p) p.textContent = Math.round(pct) + '%';
     if (etapa) { const e = $('ig-m-progreso-etapa'); if (e) e.textContent = etapa; }
   }
-  function igProgresoIniciar(nFotos) {
+  function igProgresoIniciar(nFotos, destino) {
+    const conIG = destino !== 'fb', conFB = destino !== 'ig';
     const prog = $('ig-m-progreso'); if (prog) prog.hidden = false;
     igProgresoPintar(0, 'Preparando las imágenes…');
     const total = 9000 + nFotos * 7000;   // duración estimada en ms
@@ -486,8 +487,8 @@
       const t = Date.now() - t0;
       const p = 95 * (1 - Math.exp(-3 * t / total));   // sube y se acerca a 95% sin llegar
       let etapa = 'Preparando las imágenes…';
-      if (p >= 12) etapa = '📸 Publicando en Instagram…';
-      if (p >= 55) etapa = '📘 Publicando en Facebook…';
+      if (p >= 12) etapa = conIG ? '📸 Publicando en Instagram…' : '📘 Publicando en Facebook…';
+      if (p >= 55 && conIG && conFB) etapa = '📘 Publicando en Facebook…';
       if (p >= 85) etapa = '🔎 Verificando la publicación…';
       igProgresoPintar(p, etapa);
     }, 220);
@@ -498,28 +499,37 @@
     setTimeout(() => { const pr = $('ig-m-progreso'); if (pr) pr.hidden = true; }, exito ? 1400 : 500);
   }
 
+  // el texto del botón sigue a la opción elegida
+  const IG_DEST_TXT = { ambas: '🚀 Publicar en Instagram y Facebook', ig: '🚀 Publicar solo en Instagram', fb: '🚀 Publicar solo en Facebook' };
+  function igDestino() { return (document.querySelector('input[name="ig-m-dest"]:checked') || {}).value || 'ambas'; }
+  document.querySelectorAll('input[name="ig-m-dest"]').forEach(r => r.addEventListener('change', () => {
+    $('ig-m-publicar').textContent = IG_DEST_TXT[igDestino()];
+  }));
+
   $('ig-m-publicar').addEventListener('click', async () => {
     const url = String(settings.igPubUrl || '').trim();
     const clave = String(settings.igPubClave || '').trim();
     if (!url) { igEstado('⚠ Falta configurar la URL del publicador (sección "Conexión con el publicador", abajo).'); return; }
     if (!igPreviewImgs.length) { igEstado('⚠ Primero genera la vista previa.'); return; }
+    const destino = igDestino();
     const btn = $('ig-m-publicar');
     btn.disabled = true;
     igEstado('Publicando… no cierres esta ventana ⏳');
-    igProgresoIniciar(igPreviewImgs.length);
+    igProgresoIniciar(igPreviewImgs.length, destino);
     try {
       const r = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // simple request: evita bloqueos CORS
-        body: JSON.stringify({ clave: clave, caption: $('ig-m-caption').value, images: igPreviewImgs.map(u => u.split(',')[1]) })
+        body: JSON.stringify({ clave: clave, destino: destino, caption: $('ig-m-caption').value, images: igPreviewImgs.map(u => u.split(',')[1]) })
       });
       const d = await r.json();
       if (d && d.ok) {
         igProgresoFin(true);
-        let msg = '✅ ¡Publicado en Instagram';
-        if (d.fb === 'ok') msg += ' y Facebook';
-        msg += '! Revisa tu perfil.';
-        if (d.fb && d.fb !== 'ok' && d.fb !== 'no configurado') msg += ' ⚠ Facebook: ' + d.fb;
+        const igOk = d.ig ? d.ig === 'ok' : destino !== 'fb';   // scripts antiguos no informan "ig"
+        const fbOk = d.fb === 'ok';
+        const donde = [igOk ? 'Instagram' : null, fbOk ? 'Facebook' : null].filter(Boolean).join(' y ');
+        let msg = '✅ ¡Publicado en ' + (donde || 'tus redes') + '! Revisa tu perfil.';
+        if (d.fb && ['ok', 'no configurado', 'omitido'].indexOf(d.fb) < 0) msg += ' ⚠ Facebook: ' + d.fb;
         igEstado(msg);
         igSel.clear(); renderIG();
       } else {

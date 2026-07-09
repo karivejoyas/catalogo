@@ -281,7 +281,10 @@
     const n = igSel.size;
     $('adm-ig-selcount').textContent = n + (n === 1 ? ' producto seleccionado' : ' productos seleccionados') + (n > 1 ? ' → carrusel' : '');
     $('adm-ig-preview').disabled = n === 0;
+    const des = $('adm-ig-deseleccionar'); if (des) des.hidden = n === 0;
   }
+  const igDesBtn = $('adm-ig-deseleccionar');
+  if (igDesBtn) igDesBtn.addEventListener('click', () => { igSel.clear(); renderIG(); });
 
   function renderIG() {
     const cont = $('adm-ig-lista'); if (!cont) return;

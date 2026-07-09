@@ -373,6 +373,7 @@ body.fb-lb-open{overflow:hidden;}
 
 /* ============ barra fija de publicar (Instagram) ============ */
 .ig-stickybar{position:sticky;bottom:12px;z-index:8;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;max-width:1180px;margin:10px auto 0;padding:13px 20px;background:rgba(36,18,56,0.96);backdrop-filter:blur(8px);border:1px solid rgba(227,197,114,0.5);border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,0.45);}
+.ig-stickybar-btns{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .ig-stickybar .adm-btn-solido{font-size:14px;padding:11px 22px;}
 .ig-stickybar .adm-btn-solido:disabled{opacity:0.45;cursor:default;}
 .ig-grupo-tit{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:var(--kv-dorado-cl);margin:14px 0 6px;padding-top:8px;border-top:1px solid rgba(201,162,75,0.18);}

@@ -377,11 +377,76 @@
   });
 
   // ---------- vista previa + publicar ----------
-  let igPreviewImgs = [];
+  let igPreviewImgs = [];        // dataURLs, alineadas con igPreviewProds
+  let igPreviewProds = [];       // productos que están en la vista previa
+  const igFocoTimer = {};
   const igModal = $('ig-modal');
   function igEstado(msg) { $('ig-m-estado').textContent = msg || ''; }
   function cerrarIGModal() { igModal.hidden = true; igEstado(''); }
   igModal.querySelectorAll('[data-role="ig-close"]').forEach(n => n.addEventListener('click', cerrarIGModal));
+
+  function igSlider(label, role, id, min, max, val) {
+    return '<label class="ed-slider"><span>' + label + '</span><input type="range" min="' + min + '" max="' + max + '" step="1" data-role="' + role + '" data-id="' + id + '" value="' + val + '" /></label>';
+  }
+  function igFocoDe(id) {
+    const cont = $('ig-m-fotos');
+    const gv = role => { const el = cont.querySelector('[data-role="' + role + '"][data-id="' + id + '"]'); return el ? parseInt(el.value, 10) : null; };
+    return { x: gv('igfoco-x'), y: gv('igfoco-y'), zoom: gv('igfoco-zoom') };
+  }
+  // mueve/hace zoom en vivo mientras arrastra el slider (regenera esa sola foto)
+  function igFocoInput(id) {
+    const i = igPreviewProds.findIndex(p => p.id === id);
+    if (i < 0) return;
+    const f = igFocoDe(id);
+    clearTimeout(igFocoTimer[id]);
+    igFocoTimer[id] = setTimeout(async () => {
+      igPreviewImgs[i] = await kvGenerarPostIG(igPreviewProds[i], settings, f);
+      const img = $('ig-m-fotos').querySelector('.ig-m-foto[data-i="' + i + '"] img');
+      if (img) img.src = igPreviewImgs[i];
+    }, 80);
+  }
+  // al soltar el slider, guarda el encuadre para que se recuerde
+  function igFocoGuardar(id) {
+    const f = igFocoDe(id);
+    actualizar(id, 'igFoco', f);
+    const p = igPreviewProds.find(x => x.id === id); if (p) p.igFoco = f;
+    const g = products.find(x => x.id === id); if (g) g.igFoco = f;
+  }
+  function igQuitarDePreview(id) {
+    igSel.delete(id);
+    const i = igPreviewProds.findIndex(p => p.id === id);
+    if (i >= 0) { igPreviewProds.splice(i, 1); igPreviewImgs.splice(i, 1); }
+    renderPreviewFotos();
+    renderIG();  // sincroniza las casillas y la barra de la lista de atrás
+  }
+  function renderPreviewFotos() {
+    const cont = $('ig-m-fotos');
+    const n = igPreviewProds.length;
+    if (!n) { cont.innerHTML = '<div class="ig-m-cargando">No quedan productos. Cierra y elige al menos uno.</div>'; $('ig-m-publicar').disabled = true; igEstado(''); return; }
+    $('ig-m-publicar').disabled = false;
+    cont.innerHTML = igPreviewProds.map((p, i) => {
+      const f = kvFocoIG(p);
+      return '<div class="ig-m-foto" data-i="' + i + '">' +
+        '<div class="ig-m-foto-img">' +
+          '<img src="' + (igPreviewImgs[i] || '') + '" alt="Foto ' + (i + 1) + '" />' +
+          (n > 1 ? '<span class="ig-m-num">' + (i + 1) + '/' + n + '</span>' : '') +
+          '<button type="button" class="ig-m-quitar" data-role="ig-quitar" data-id="' + p.id + '" title="Quitar de la publicación">✕</button>' +
+        '</div>' +
+        '<div class="ig-m-fnombre">' + escapeHtml(p.name || '') + '</div>' +
+        '<div class="ig-m-controles">' +
+          igSlider('Zoom', 'igfoco-zoom', p.id, 100, 260, f.zoom) +
+          igSlider('Horizontal', 'igfoco-x', p.id, 0, 100, f.x) +
+          igSlider('Vertical', 'igfoco-y', p.id, 0, 100, f.y) +
+        '</div>' +
+      '</div>';
+    }).join('');
+    cont.querySelectorAll('[data-role="ig-quitar"]').forEach(b => b.addEventListener('click', e => igQuitarDePreview(e.currentTarget.dataset.id)));
+    cont.querySelectorAll('[data-role^="igfoco-"]').forEach(s => {
+      s.addEventListener('input', e => igFocoInput(e.target.dataset.id));
+      s.addEventListener('change', e => igFocoGuardar(e.target.dataset.id));
+    });
+    igEstado(n > 1 ? 'Se publicará como carrusel de ' + n + ' fotos. Ajusta el zoom y la posición de cada foto; el logo queda fijo.' : 'Ajusta el zoom y la posición con los controles de abajo; el logo queda fijo.');
+  }
 
   $('adm-ig-preview').addEventListener('click', async () => {
     const prods = products.filter(p => igSel.has(p.id));
@@ -390,12 +455,11 @@
     igModal.hidden = false;
     $('ig-m-fotos').innerHTML = '<div class="ig-m-cargando">Generando imágenes… ⏳</div>';
     $('ig-m-caption').value = kvCaptionMulti(prods, settings, igTagsActivos());
+    igPreviewProds = prods.slice();
     igPreviewImgs = [];
     try {
-      for (const p of prods) igPreviewImgs.push(await kvGenerarPostIG(p, settings));
-      $('ig-m-fotos').innerHTML = igPreviewImgs.map((u, i) =>
-        '<div class="ig-m-foto"><img src="' + u + '" alt="Foto ' + (i + 1) + '" />' + (igPreviewImgs.length > 1 ? '<span class="ig-m-num">' + (i + 1) + '/' + igPreviewImgs.length + '</span>' : '') + '</div>').join('');
-      igEstado(igPreviewImgs.length > 1 ? 'Se publicará como carrusel de ' + igPreviewImgs.length + ' fotos.' : '');
+      for (let i = 0; i < igPreviewProds.length; i++) igPreviewImgs[i] = await kvGenerarPostIG(igPreviewProds[i], settings);
+      renderPreviewFotos();
     } catch (err) {
       console.error(err);
       $('ig-m-fotos').innerHTML = '<div class="ig-m-cargando">⚠ No se pudieron generar las imágenes.</div>';

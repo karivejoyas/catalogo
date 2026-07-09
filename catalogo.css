@@ -344,6 +344,13 @@ body.fb-lb-open{overflow:hidden;}
 .ig-m-foto img{width:200px;height:200px;border-radius:12px;display:block;object-fit:cover;box-shadow:0 8px 22px rgba(0,0,0,0.4);}
 .ig-m-num{position:absolute;top:8px;right:8px;font-size:11px;font-weight:600;color:#fff;background:rgba(0,0,0,0.55);padding:3px 8px;border-radius:999px;}
 .ig-m-cargando{padding:30px;color:var(--kv-lavanda);font-size:14px;}
+.ig-m-foto{width:200px;}
+.ig-m-foto-img{position:relative;}
+.ig-m-quitar{position:absolute;top:8px;left:8px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,0.6);color:#fff;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.ig-m-quitar:hover{background:#c0392b;}
+.ig-m-fnombre{font-size:12px;color:var(--kv-lavanda);margin:7px 2px 5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ig-m-controles{display:grid;gap:6px;padding:2px 2px;}
+.ig-m-controles .ed-slider{grid-template-columns:58px 1fr;gap:7px;}
 .ig-m-estado{min-height:20px;font-size:13.5px;color:var(--kv-dorado-cl);}
 
 /* ============ Asistente IA (admin) ============ */

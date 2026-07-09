@@ -152,6 +152,17 @@ function kvFoco(p) {
   };
 }
 
+/* encuadre PROPIO para la publicación de Instagram (independiente del catálogo):
+   por defecto la foto completa y centrada (zoom 100), pero editable en la vista previa */
+function kvFocoIG(p) {
+  const f = (p && p.igFoco) || {};
+  return {
+    x: f.x != null ? f.x : 50,
+    y: f.y != null ? f.y : 50,
+    zoom: f.zoom != null ? f.zoom : 100
+  };
+}
+
 /* capa de imagen con el encuadre aplicado (posición + zoom). '' si no hay foto */
 function kvFotoInner(p) {
   if (!p || !p.photo) return '';
@@ -357,7 +368,7 @@ function kvWrap(ctx, text, maxW, maxLineas) {
 
 /* genera una imagen cuadrada 1080x1080 lista para Instagram (Promise<dataURL jpeg>):
    la foto completa con el encuadre del producto + el logo solo (sin círculo), sin textos */
-function kvGenerarPostIG(p, settings) {
+function kvGenerarPostIG(p, settings, focoOverride) {
   const theme = Object.assign({}, KV_THEME_DEFAULT, (settings && settings.theme) || {});
   const S = 1080;
   const listo = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
@@ -369,10 +380,11 @@ function kvGenerarPostIG(p, settings) {
       // ---- foto COMPLETA (contain) sobre un fondo del mismo color de la foto ----
       if (foto) {
         g.fillStyle = kvColorFondo(foto); g.fillRect(0, 0, S, S);
-        // la foto original tal cual, completa y centrada (sin zoom ni recorte extra)
-        const scale = Math.min(S / foto.width, S / foto.height);  // contain: se ve entera
+        // encuadre de la foto sobre el fondo (por defecto completa y centrada; editable en la vista previa)
+        const f = focoOverride || kvFocoIG(p), zoom = f.zoom / 100;
+        const scale = Math.min(S / foto.width, S / foto.height) * zoom;  // contain * zoom
         const dw = foto.width * scale, dh = foto.height * scale;
-        const dx = (S - dw) / 2, dy = (S - dh) / 2;
+        const dx = (S - dw) * (f.x / 100), dy = (S - dh) * (f.y / 100);
         g.drawImage(foto, dx, dy, dw, dh);
       } else { g.fillStyle = '#EFEAF5'; g.fillRect(0, 0, S, S); }
       // ---- logo solo, sin círculo (arriba izquierda), con sombra suave para que se lea ----

@@ -672,7 +672,7 @@
           'REGLAS:\n' +
           '- SÍ puedes hablar del TIPO o TEMA de las joyas que se ven (por ejemplo: si son corazones, flores, mariposas…) y describir ese estilo de forma general y bonita.\n' +
           '- NO menciones nombres de productos, NI precios, NI enumeres los colores uno por uno (nada de "el corazón rojo, el verde, el azul…"). Habla del conjunto, no de piezas individuales.\n' +
-          '- Invita a ver el catálogo completo con este enlace tal cual: ' + KV_CATALOGO_URL + '\n' +
+          '- Invita a ver el catálogo completo así: una línea que diga "🔗 Míralo en el link de nuestra bio" y, en la línea de abajo, el enlace tal cual: ' + KV_CATALOGO_URL + '\n' +
           '- Termina con "📩 Pedidos por DM" y "🚚 Envíos a todo Chile".\n' +
           '- Texto bien espaciado (frases cortas con saltos de línea), cálido y natural.\n\n' +
           igIAContextoGeneral(prods) + (tags.length ? '\n\nAgrega al final, en su propia línea, estos hashtags tal cual:\n' + tags.join(' ') : '') +

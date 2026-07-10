@@ -34,8 +34,18 @@
     tab.addEventListener('click', () => {
       document.querySelectorAll('.adm-tab').forEach(t => t.classList.toggle('is-active', t === tab));
       document.querySelectorAll('.adm-panel').forEach(p => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
+      window.scrollTo({ top: 0 });
     });
   });
+
+  // mantiene el menú superior fijo: mide su alto para que las barras internas se peguen justo debajo
+  (function ajustarHeader() {
+    const h = document.getElementById('adm-header');
+    const set = () => { if (h) document.documentElement.style.setProperty('--adm-header-h', h.offsetHeight + 'px'); };
+    set();
+    window.addEventListener('resize', set);
+    if (window.ResizeObserver && h) new ResizeObserver(set).observe(h);
+  })();
 
   // ---------- datos ----------
   function escuchar() {
@@ -567,9 +577,31 @@
     document.querySelectorAll('input[name="ia-pref"]').forEach(r => { r.checked = (r.value === k.pref); });
   })();
 
-  const IA_GEM_MODELOS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  // lista por defecto, del que MENOS consume (lite) al que más; se actualiza sola con la lista real de Google
+  const IA_GEM_MODELOS = ['gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash'];
   const IA_GROQ_TXT = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
   const IA_GROQ_VIS = ['meta-llama/llama-4-scout-17b-16e-instruct'];
+  let _iaGemModelosCache = null;
+
+  // pregunta a Google qué modelos hay disponibles y los ordena del que menos consume al que más
+  async function iaGemModelos(key) {
+    if (_iaGemModelosCache) return _iaGemModelosCache;
+    try {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(key));
+      const d = await r.json();
+      if (d && d.models) {
+        const disp = d.models
+          .filter(m => (m.supportedGenerationMethods || []).indexOf('generateContent') >= 0)
+          .map(m => (m.name || '').replace(/^models\//, ''))
+          .filter(n => /^gemini/.test(n) && /flash|lite/.test(n) && !/pro|vision|embedding|image|tts|audio/.test(n));
+        // menor puntaje = menos consumo/más cuota gratis: primero los "lite" y los estables
+        const puntaje = n => (/lite/.test(n) ? 0 : 100) + (/(exp|preview|thinking)/.test(n) ? 30 : 0) + (/latest/.test(n) ? 5 : 0);
+        disp.sort((a, b) => puntaje(a) - puntaje(b));
+        if (disp.length) { _iaGemModelosCache = disp; return disp; }
+      }
+    } catch (e) {}
+    return IA_GEM_MODELOS;
+  }
 
   async function iaGemini(key, msgs) {
     const sys = msgs.find(m => m.role === 'system');
@@ -580,7 +612,8 @@
     const body = { contents: contents };
     if (sys) body.systemInstruction = { parts: [{ text: sys.content }] };
     let ultimo = '';
-    for (const modelo of IA_GEM_MODELOS) {
+    const modelos = await iaGemModelos(key);
+    for (const modelo of modelos) {
       const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelo + ':generateContent?key=' + encodeURIComponent(key), {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
       });
@@ -626,19 +659,39 @@
     throw new Error('Groq: ' + ultimo);
   }
 
-  /* llama a la IA preferida y usa la otra como respaldo si falla */
+  // popup: muestra el error de la IA principal y pregunta si usar la de respaldo
+  function iaPopupCambiar(principal, err, respaldo) {
+    return new Promise(resolve => {
+      const pop = $('ia-pop'); if (!pop) { resolve(true); return; }
+      $('ia-pop-tit').textContent = '⚠ ' + principal + ' no pudo responder';
+      $('ia-pop-msg').innerHTML = '<b>Motivo (' + escapeHtml(principal) + '):</b><br>' + escapeHtml(err) +
+        '<br><br>¿Quieres intentar con <b>' + escapeHtml(respaldo) + '</b> (tu IA de respaldo)?';
+      $('ia-pop-si').textContent = 'Sí, usar ' + respaldo;
+      pop.hidden = false;
+      const cerrar = val => { pop.hidden = true; $('ia-pop-si').onclick = null; $('ia-pop-no').onclick = null; resolve(val); };
+      $('ia-pop-si').onclick = () => cerrar(true);
+      $('ia-pop-no').onclick = () => cerrar(false);
+    });
+  }
+
+  /* llama a la IA preferida; si falla, muestra el error y pregunta si usar la de respaldo */
   async function iaLlamar(msgs, conImagenes) {
     const k = iaKeys();
-    const orden = k.pref === 'groq' ? ['groq', 'gemini'] : ['gemini', 'groq'];
-    const errores = [];
-    for (const p of orden) {
-      try {
-        if (p === 'gemini' && k.gem) return await iaGemini(k.gem, msgs);
-        if (p === 'groq' && k.groq) return await iaGroq(k.groq, msgs, conImagenes);
-      } catch (err) { errores.push(err.message); }
+    const prim = k.pref === 'groq' ? 'groq' : 'gemini';
+    const resp = prim === 'gemini' ? 'groq' : 'gemini';
+    const nombre = p => p === 'gemini' ? 'Gemini' : 'Groq';
+    const hayKey = p => p === 'gemini' ? !!k.gem : !!k.groq;
+    const correr = p => p === 'gemini' ? iaGemini(k.gem, msgs) : iaGroq(k.groq, msgs, conImagenes);
+    if (!hayKey(prim) && !hayKey(resp)) throw new Error('No hay claves de IA. Ponlas en la pestaña "Asistente IA".');
+    if (!hayKey(prim)) return await correr(resp);          // sin clave de la principal: usa el respaldo directo
+    try {
+      return await correr(prim);
+    } catch (err) {
+      if (!hayKey(resp)) throw err;                          // no hay respaldo: se muestra el error de la principal
+      const usar = await iaPopupCambiar(nombre(prim), err.message, nombre(resp));
+      if (!usar) throw err;                                  // eligió no cambiar: conserva el error de la principal
+      return await correr(resp);
     }
-    if (!errores.length) throw new Error('No hay claves de IA. Ponlas en la pestaña "Asistente IA".');
-    throw new Error(errores.join(' · '));
   }
 
   /* miniatura base64 (sin encabezado) de una foto, para enviarla a la IA */

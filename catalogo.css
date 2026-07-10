@@ -199,7 +199,8 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .ed-btn-eliminar{font-family:'Jost',sans-serif;font-size:11px;color:#e08a9a;background:transparent;border:1px solid rgba(224,138,154,0.4);border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap;margin-left:auto;}
 
 /* ---------- admin: pestañas y editores nuevos ---------- */
-.adm-tabs{max-width:1180px;margin:0 auto;padding:18px 24px 0;display:flex;gap:8px;flex-wrap:wrap;}
+.adm-header{position:sticky;top:0;z-index:40;background:rgba(30,15,48,0.94);backdrop-filter:blur(8px);border-bottom:1px solid rgba(201,162,75,0.18);box-shadow:0 6px 22px rgba(0,0,0,0.28);}
+.adm-tabs{max-width:1180px;margin:0 auto;padding:18px 24px 14px;display:flex;gap:8px;flex-wrap:wrap;}
 .adm-tab{font-family:'Jost',sans-serif;font-size:13px;font-weight:500;color:var(--kv-lavanda);background:transparent;border:1px solid rgba(203,183,216,0.3);border-radius:999px;padding:9px 18px;cursor:pointer;}
 .adm-tab.is-active{color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border-color:var(--kv-dorado-cl);}
 .adm-panel[hidden]{display:none;}
@@ -358,6 +359,16 @@ body.fb-lb-open{overflow:hidden;}
 .ig-m-progreso-txt{display:flex;justify-content:space-between;margin-top:5px;font-size:12.5px;color:var(--kv-lavanda);}
 .ig-m-progreso-txt span:last-child{color:var(--kv-dorado-cl);font-weight:600;}
 .ig-m-estado{min-height:20px;font-size:13.5px;color:var(--kv-dorado-cl);}
+#ig-m-caption{min-height:170px;resize:vertical;flex-shrink:0;line-height:1.5;}
+/* popup de cambio de IA */
+.ia-pop{position:fixed;inset:0;z-index:140;display:flex;align-items:center;justify-content:center;padding:18px;}
+.ia-pop[hidden]{display:none;}
+.ia-pop-back{position:absolute;inset:0;background:rgba(10,4,16,0.8);}
+.ia-pop-card{position:relative;z-index:2;width:min(460px,94vw);background:#241238;border:1px solid rgba(201,162,75,0.5);border-radius:16px;padding:24px;box-shadow:0 26px 70px rgba(0,0,0,0.6);}
+.ia-pop-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:23px;color:var(--kv-crema);margin-bottom:12px;}
+.ia-pop-msg{font-size:13.5px;color:var(--kv-lavanda);line-height:1.6;max-height:40vh;overflow:auto;word-break:break-word;}
+.ia-pop-msg b{color:var(--kv-dorado-cl);font-weight:600;}
+.ia-pop-btns{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;}
 
 /* ============ Asistente IA (admin) ============ */
 .ia-chat{max-width:760px;display:flex;flex-direction:column;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(201,162,75,0.25);border-radius:14px;padding:16px;min-height:220px;max-height:440px;overflow-y:auto;}
@@ -371,7 +382,7 @@ body.fb-lb-open{overflow:hidden;}
 .adm-ayuda b{color:var(--kv-dorado-cl);font-weight:500;}
 
 /* ============ navegación rápida de colecciones (Productos) ============ */
-.adm-secnav{position:sticky;top:0;z-index:6;display:flex;flex-wrap:wrap;gap:8px;max-width:1180px;margin:0 auto;padding:12px 24px;background:rgba(30,15,48,0.92);backdrop-filter:blur(6px);border-bottom:1px solid rgba(201,162,75,0.2);}
+.adm-secnav{position:sticky;top:var(--adm-header-h,0);z-index:6;display:flex;flex-wrap:wrap;gap:8px;max-width:1180px;margin:0 auto;padding:12px 24px;background:rgba(30,15,48,0.92);backdrop-filter:blur(6px);border-bottom:1px solid rgba(201,162,75,0.2);}
 .adm-secnav-btn{font-family:'Jost',sans-serif;font-size:12.5px;font-weight:500;color:var(--kv-lavanda);background:rgba(255,255,255,0.05);border:1px solid rgba(203,183,216,0.3);border-radius:999px;padding:7px 13px;cursor:pointer;transition:all .15s;}
 .adm-secnav-btn:hover{color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border-color:var(--kv-dorado-cl);}
 .adm-secnav-btn span{opacity:0.7;font-size:11px;}

@@ -556,26 +556,88 @@
   // ---------- IA (Gemini principal / Groq respaldo) ----------
   // Las claves viven SOLO en este navegador (localStorage): la configuración del
   // catálogo es públicamente legible y guardarlas ahí las expondría.
-  const IA_LS = { gem: 'kv_ia_gemini', groq: 'kv_ia_groq', pref: 'kv_ia_pref' };
+  const IA_LS = { or: 'kv_ia_or', gem: 'kv_ia_gemini', groq: 'kv_ia_groq', pref: 'kv_ia_pref' };
   function iaKeys() {
     return {
+      or: localStorage.getItem(IA_LS.or) || '',
       gem: localStorage.getItem(IA_LS.gem) || '',
       groq: localStorage.getItem(IA_LS.groq) || '',
       pref: localStorage.getItem(IA_LS.pref) || 'gemini'
     };
   }
   $('ia-guardar').addEventListener('click', () => {
+    localStorage.setItem(IA_LS.or, $('ia-key-or').value.trim());
     localStorage.setItem(IA_LS.gem, $('ia-key-gemini').value.trim());
     localStorage.setItem(IA_LS.groq, $('ia-key-groq').value.trim());
     localStorage.setItem(IA_LS.pref, (document.querySelector('input[name="ia-pref"]:checked') || {}).value || 'gemini');
+    _orModelosCache = null; _iaGemModelosCache = null;
     guardado('ia-keys-ok');
+    iaORConsultarUso().then(renderIAUso);
+    renderIAUso();
   });
   (function poblarIAKeys() {
     const k = iaKeys();
+    $('ia-key-or').value = k.or;
     $('ia-key-gemini').value = k.gem;
     $('ia-key-groq').value = k.groq;
     document.querySelectorAll('input[name="ia-pref"]').forEach(r => { r.checked = (r.value === k.pref); });
   })();
+
+  // ---------- uso diario de cada IA (conteo local + estado real de OpenRouter) ----------
+  function iaUsoDatos() {
+    const hoy = new Date().toISOString().slice(0, 10);
+    let u = {};
+    try { u = JSON.parse(localStorage.getItem('kv_ia_uso') || '{}'); } catch (e) {}
+    if (u.fecha !== hoy) u = { fecha: hoy, openrouter: 0, gemini: 0, groq: 0 };
+    return u;
+  }
+  function iaUsoSumar(p) {
+    const u = iaUsoDatos();
+    u[p] = (u[p] || 0) + 1;
+    localStorage.setItem('kv_ia_uso', JSON.stringify(u));
+    renderIAUso();
+  }
+  let orInfo = null;
+  async function iaORConsultarUso() {
+    const k = iaKeys();
+    if (!k.or) { orInfo = null; return; }
+    for (const ep of ['https://openrouter.ai/api/v1/key', 'https://openrouter.ai/api/v1/auth/key']) {
+      try {
+        const r = await fetch(ep, { headers: { 'Authorization': 'Bearer ' + k.or } });
+        if (r.ok) { const d = await r.json(); orInfo = d.data || d; return; }
+      } catch (e) {}
+    }
+    orInfo = { error: true };
+  }
+  function renderIAUso() {
+    const cont = $('ia-uso'); if (!cont) return;
+    const k = iaKeys(); const u = iaUsoDatos();
+    const fila = (nom, txts) => '<div class="ia-uso-fila"><div class="ia-uso-nombre">' + nom + '</div>' + txts.map(t => '<div class="ia-uso-det">' + t + '</div>').join('') + '</div>';
+    let html = '';
+    const orTxts = [];
+    if (!k.or) orTxts.push('Sin clave configurada.');
+    else {
+      orTxts.push('Hoy: <b>' + (u.openrouter || 0) + '</b> solicitudes desde este navegador.');
+      if (orInfo && !orInfo.error) {
+        orTxts.push('Crédito usado: <b>US$ ' + (Number(orInfo.usage) || 0).toFixed(2) + '</b>' + (orInfo.limit != null ? ' de US$ ' + orInfo.limit : ' (sin tope de crédito)') + ' — los modelos <b>:free</b> no gastan crédito.');
+        orTxts.push(orInfo.is_free_tier
+          ? 'Cuenta gratis: ~<b>50 solicitudes al día</b> a modelos gratis (sube a ~1.000/día si cargas US$10 una sola vez).'
+          : 'Cuenta con crédito: hasta ~<b>1.000 solicitudes al día</b> a modelos gratis.');
+      } else if (orInfo && orInfo.error) orTxts.push('⚠ No se pudo consultar el estado de la clave (revisa que sea válida).');
+    }
+    html += fila('🌐 OpenRouter — principal', orTxts);
+    html += fila('✨ Gemini — respaldo', [k.gem
+      ? 'Hoy: <b>' + (u.gemini || 0) + '</b> solicitudes desde este navegador. Límite gratis aproximado: ~1.000/día con flash-lite (Google no permite consultar cuánto te queda).'
+      : 'Sin clave configurada.']);
+    html += fila('⚡ Groq — respaldo', [k.groq
+      ? 'Hoy: <b>' + (u.groq || 0) + '</b> solicitudes desde este navegador. Límite gratis aproximado: ~1.000/día según el modelo (Groq tampoco permite consultarlo).'
+      : 'Sin clave configurada.']);
+    cont.innerHTML = html;
+  }
+  const iaUsoBtn = $('ia-uso-refrescar');
+  if (iaUsoBtn) iaUsoBtn.addEventListener('click', async () => { await iaORConsultarUso(); renderIAUso(); });
+  renderIAUso();
+  iaORConsultarUso().then(renderIAUso);
 
   // lista por defecto, del que MENOS consume (lite) al que más; se actualiza sola con la lista real de Google
   const IA_GEM_MODELOS = ['gemini-2.5-flash-lite', 'gemini-2.0-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash'];
@@ -631,6 +693,58 @@
     throw new Error('Gemini: ' + ultimo);
   }
 
+  // ---------- OpenRouter (principal): modelos GRATIS, priorizando los Gemini con visión ----------
+  const IA_OR_FALLBACK = ['google/gemini-2.0-flash-exp:free', 'meta-llama/llama-4-maverick:free', 'qwen/qwen2.5-vl-72b-instruct:free', 'mistralai/mistral-small-3.1-24b-instruct:free'];
+  let _orModelosCache = null;
+  // pregunta a OpenRouter qué modelos gratis hay y los ordena: Gemini primero (lee mejor las fotos)
+  async function iaORModelos() {
+    if (_orModelosCache) return _orModelosCache;
+    try {
+      const r = await fetch('https://openrouter.ai/api/v1/models');
+      const d = await r.json();
+      if (d && d.data) {
+        const libres = d.data.filter(m => m.pricing && parseFloat(m.pricing.prompt || '1') === 0 && parseFloat(m.pricing.completion || '1') === 0);
+        const conVision = libres.filter(m => {
+          const a = m.architecture || {};
+          return ((a.input_modalities || []).join(',') + ',' + (a.modality || '')).indexOf('image') >= 0;
+        });
+        const punt = id => (/google\/gemini/.test(id) ? 0 : /llama/.test(id) ? 10 : /qwen/.test(id) ? 20 : 30) + (/preview|exp/.test(id) ? 1 : 0);
+        const ids = (conVision.length ? conVision : libres).map(m => m.id).sort((a, b) => punt(a) - punt(b)).slice(0, 5);
+        if (ids.length) { _orModelosCache = ids; return ids; }
+      }
+    } catch (e) {}
+    return IA_OR_FALLBACK;
+  }
+
+  async function iaOpenRouter(key, msgs) {
+    const messages = msgs.map(m => {
+      if (m.images && m.images.length) {
+        return { role: m.role, content: [{ type: 'text', text: m.content }].concat(m.images.map(b => ({ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + b } }))) };
+      }
+      return { role: m.role, content: m.content };
+    });
+    let ultimo = '';
+    const modelos = await iaORModelos();
+    for (const modelo of modelos) {
+      const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+        body: JSON.stringify({ model: modelo, messages: messages, temperature: 0.7 })
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
+        const t = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+        if (t) return t;
+        ultimo = (d.error && d.error.message) || 'respuesta vacía';
+      } else {
+        ultimo = (d.error && d.error.message) || ('HTTP ' + r.status);
+        // con estos códigos vale la pena probar el siguiente modelo; con otros (ej. clave mala) no
+        if ([400, 402, 404, 408, 429, 502, 503].indexOf(r.status) < 0) break;
+      }
+    }
+    throw new Error('OpenRouter: ' + ultimo);
+  }
+
   async function iaGroq(key, msgs, conImagenes) {
     const modelos = conImagenes ? IA_GROQ_VIS.concat(IA_GROQ_TXT) : IA_GROQ_TXT;
     const messages = msgs.map(m => {
@@ -674,23 +788,26 @@
     });
   }
 
-  /* llama a la IA preferida; si falla, muestra el error y pregunta si usar la de respaldo */
+  /* cadena de IAs: OpenRouter primero; si falla, popup con el error y pregunta si usar el siguiente respaldo */
   async function iaLlamar(msgs, conImagenes) {
     const k = iaKeys();
-    const prim = k.pref === 'groq' ? 'groq' : 'gemini';
-    const resp = prim === 'gemini' ? 'groq' : 'gemini';
-    const nombre = p => p === 'gemini' ? 'Gemini' : 'Groq';
-    const hayKey = p => p === 'gemini' ? !!k.gem : !!k.groq;
-    const correr = p => p === 'gemini' ? iaGemini(k.gem, msgs) : iaGroq(k.groq, msgs, conImagenes);
-    if (!hayKey(prim) && !hayKey(resp)) throw new Error('No hay claves de IA. Ponlas en la pestaña "Asistente IA".');
-    if (!hayKey(prim)) return await correr(resp);          // sin clave de la principal: usa el respaldo directo
-    try {
-      return await correr(prim);
-    } catch (err) {
-      if (!hayKey(resp)) throw err;                          // no hay respaldo: se muestra el error de la principal
-      const usar = await iaPopupCambiar(nombre(prim), err.message, nombre(resp));
-      if (!usar) throw err;                                  // eligió no cambiar: conserva el error de la principal
-      return await correr(resp);
+    const nombre = { openrouter: 'OpenRouter', gemini: 'Gemini', groq: 'Groq' };
+    const hayKey = p => p === 'openrouter' ? !!k.or : p === 'gemini' ? !!k.gem : !!k.groq;
+    const correr = p => p === 'openrouter' ? iaOpenRouter(k.or, msgs) : p === 'gemini' ? iaGemini(k.gem, msgs) : iaGroq(k.groq, msgs, conImagenes);
+    const respaldos = k.pref === 'groq' ? ['groq', 'gemini'] : ['gemini', 'groq'];
+    const cadena = ['openrouter'].concat(respaldos).filter(hayKey);
+    if (!cadena.length) throw new Error('No hay claves de IA. Ponlas en la pestaña "Asistente IA".');
+    for (let i = 0; i < cadena.length; i++) {
+      const p = cadena[i];
+      try {
+        iaUsoSumar(p);
+        return await correr(p);
+      } catch (err) {
+        const sig = cadena[i + 1];
+        if (!sig) throw err;                                        // no queda respaldo: se muestra este error
+        const usar = await iaPopupCambiar(nombre[p], err.message, nombre[sig]);
+        if (!usar) throw err;                                       // eligió no cambiar: conserva el error
+      }
     }
   }
 

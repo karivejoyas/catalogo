@@ -369,6 +369,12 @@ body.fb-lb-open{overflow:hidden;}
 .ia-pop-msg{font-size:13.5px;color:var(--kv-lavanda);line-height:1.6;max-height:40vh;overflow:auto;word-break:break-word;}
 .ia-pop-msg b{color:var(--kv-dorado-cl);font-weight:600;}
 .ia-pop-btns{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;}
+/* uso de las IAs */
+.ia-uso{display:grid;gap:12px;max-width:620px;}
+.ia-uso-fila{background:rgba(255,255,255,0.05);border:1px solid rgba(201,162,75,0.25);border-radius:12px;padding:13px 17px;}
+.ia-uso-nombre{font-size:14px;font-weight:600;color:var(--kv-dorado-cl);margin-bottom:5px;}
+.ia-uso-det{font-size:12.5px;color:var(--kv-lavanda);line-height:1.6;}
+.ia-uso-det b{color:var(--kv-crema);font-weight:600;}
 
 /* ============ Asistente IA (admin) ============ */
 .ia-chat{max-width:760px;display:flex;flex-direction:column;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(201,162,75,0.25);border-radius:14px;padding:16px;min-height:220px;max-height:440px;overflow-y:auto;}

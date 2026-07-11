@@ -370,6 +370,11 @@
       return 'Para que tu joyita Karivé te dure muchísimo 💜<br><br>• Guárdala en un lugar seco.<br>• Evita el contacto con agua, perfumes y cremas.<br>• Límpiala suavecito con un paño seco.<br>• Al ser hecha a mano, trátala con cariño ✨';
     }
 
+    // contacto / redes / teléfono
+    if (/(instagram|facebook|face\b|whatsapp|wsp|wasap|telefono|fono|numero|celular|contact|redes|escribir)/.test(t)) {
+      return 'Puedes encontrarnos y escribirnos aquí 💜<br><br>' + chContacto() + '<br><br>Los pedidos se coordinan por DM y hacemos envíos a todo Chile 🚚';
+    }
+
     // búsqueda por colección o nombre de producto
     const coincide = [];
     cats.forEach(cat => { if (t.indexOf(chNorm(cat.nombre)) >= 0) visibles.filter(p => p.category === cat.id).forEach(p => coincide.push(p)); });
@@ -381,12 +386,52 @@
       return '¡Tenemos esto que te puede encantar! 💜<br><br>' + coincide.slice(0, 6).map(chItem).join('<br>') + '<br><br>' + chPedidos();
     }
 
-    // saludo
-    if (/(^| )(hola|buenas|buenos dias|buenas tardes|alo)/.test(t)) {
-      return '¡Hola! 💜 Soy la asistente de Karivé Joyas. Puedo contarte qué joyas tenemos, precios, ofertas, envíos y cuidados. Por ejemplo, pregúntame: <i>«busco algo de 5 mil pesos»</i> o <i>«¿qué tipos de joyas venden?»</i>';
+    // saludo (solo si el mensaje es corto y no traía otra pregunta)
+    if (t.length < 30 && /(^| )(hola|buenas|buenos dias|buenas tardes|alo|hey)/.test(t)) {
+      return '¡Hola! Bienvenida a Karivé Joyas 💜 Cuéntame qué andas buscando: ¿unos aros para un regalo, algo dentro de un presupuesto, o quieres conocer nuestras colecciones?';
     }
 
     return 'Te puedo ayudar con: nuestros <b>tipos de joyas</b>, <b>precios</b> (dime tu presupuesto, ej: «algo de 5 mil»), <b>ofertas</b>, <b>envíos</b> y <b>cuidados</b> ✨ Y para cualquier otra cosa, escríbenos por DM 💌 ' + chContacto();
+  }
+
+  // ---------- IA remota (clave escondida en el publicador de Google) con respaldo local ----------
+  const chHist = [];   // historial {role:'user'|'assistant', content:texto plano}
+  // catálogo compacto (solo texto, sin fotos) para que la IA responda con datos reales
+  function chContexto() {
+    const visibles = products.filter(kvEnStock);
+    const lineas = visibles.slice(0, 120).map(p => {
+      const of = kvPrecioOferta(p);
+      return '- ' + (p.name || '') + ' | ' + formatCLP(chPrecio(p)) + (of ? ' (oferta, antes ' + formatCLP(p.price) + ')' : '') +
+        ' | colección ' + chNombreCat(p.category) + (p.code ? ' | código ' + p.code : '') + (p.detail ? ' | ' + p.detail : '');
+    });
+    const cs = kvContactos(settings).map(c => c.tipo + ': ' + c.texto).join(' · ');
+    return 'PRODUCTOS DISPONIBLES:\n' + lineas.join('\n') + '\n\nCONTACTO: ' + cs +
+      '\nPedidos: por DM. Envíos a todo Chile. NO hay retiros.';
+  }
+  async function chIA() {
+    const url = String(settings.igPubUrl || '').trim();
+    if (!url) return null;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 25000);
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ accion: 'chat', historial: chHist.slice(-8), catalogo: chContexto() }),
+        signal: ctrl.signal
+      });
+      clearTimeout(timer);
+      const d = await r.json();
+      if (d && d.ok && d.texto) return String(d.texto);
+    } catch (e) {}
+    return null;   // sin conexión, sin clave o límite agotado -> respaldo local
+  }
+  // convierte la respuesta de la IA (texto/markdown simple) a HTML seguro
+  function chFormatear(txt) {
+    let h = escapeHtml(txt.trim());
+    h = h.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>');
+    h = h.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+    return h.replace(/\n/g, '<br>');
   }
 
   // ---------- interfaz del chat ----------
@@ -395,40 +440,75 @@
     btn.className = 'kv-chat-btn';
     btn.id = 'kv-chat-btn';
     btn.innerHTML = '💬';
-    btn.title = '¿Buscas algo? ¡Pregúntame!';
+    btn.title = 'Asesora virtual Karivé';
     btn.setAttribute('aria-label', 'Abrir asistente');
     const panel = document.createElement('div');
     panel.className = 'kv-chat';
     panel.id = 'kv-chat';
     panel.hidden = true;
     panel.innerHTML =
-      '<div class="kv-chat-top"><span>Asistente Karivé 💜</span><button class="kv-chat-x" id="kv-chat-x" aria-label="Cerrar">✕</button></div>' +
+      '<div class="kv-chat-top"><span>Karivé · Asesora virtual</span><button class="kv-chat-x" id="kv-chat-x" aria-label="Cerrar">✕</button></div>' +
       '<div class="kv-chat-msgs" id="kv-chat-msgs">' +
-        '<div class="kv-chat-m kv-chat-bot">¡Hola! 💜 Pregúntame por nuestras joyas: <i>«¿qué tipos de joyas venden?»</i>, <i>«busco algo de 5 mil pesos»</i>, <i>«¿hacen envíos?»</i>…</div>' +
+        '<div class="kv-chat-m kv-chat-bot">¡Bienvenida a Karivé Joyas! 💜 Soy tu asesora virtual y conozco todo nuestro catálogo.<br><br>Puedo ayudarte a encontrar la joya perfecta, recomendarte según tu presupuesto, contarte de nuestras colecciones, ofertas, envíos y cómo comprar.<br><br>¿Qué andas buscando hoy? ✨</div>' +
       '</div>' +
       '<div class="kv-chat-fila"><input id="kv-chat-in" type="text" placeholder="Escribe tu pregunta…" autocomplete="off" /><button id="kv-chat-send" aria-label="Enviar">➤</button></div>';
+    // burbuja de invitación para que el chat se note
+    const globo = document.createElement('button');
+    globo.className = 'kv-chat-globo';
+    globo.id = 'kv-chat-globo';
+    globo.hidden = true;
+    globo.innerHTML = '¿Buscas algo especial?<br><b>Pregúntame, te ayudo</b> 💜';
     document.body.appendChild(btn);
+    document.body.appendChild(globo);
     document.body.appendChild(panel);
     const msgs = panel.querySelector('#kv-chat-msgs');
     const input = panel.querySelector('#kv-chat-in');
+    const send = panel.querySelector('#kv-chat-send');
     function agregar(html, cls) {
       const d = document.createElement('div');
       d.className = 'kv-chat-m ' + cls;
       d.innerHTML = html;
       msgs.appendChild(d);
       msgs.scrollTop = msgs.scrollHeight;
+      return d;
     }
-    function enviar() {
+    let ocupado = false;
+    async function enviar() {
       const q = input.value.trim();
-      if (!q) return;
+      if (!q || ocupado) return;
+      ocupado = true; send.disabled = true;
       input.value = '';
       agregar(escapeHtml(q), 'kv-chat-user');
-      setTimeout(() => agregar(chResponder(q), 'kv-chat-bot'), 250);
+      chHist.push({ role: 'user', content: q });
+      const escribiendo = agregar('<span class="kv-chat-dots"><span></span><span></span><span></span></span>', 'kv-chat-bot');
+      const ia = await chIA();
+      escribiendo.remove();
+      const html = ia ? chFormatear(ia) : chResponder(q);
+      agregar(html, 'kv-chat-bot');
+      // el historial guarda texto plano para la próxima pregunta
+      chHist.push({ role: 'assistant', content: ia || html.replace(/<br\s*\/?>(\s*)/gi, '\n').replace(/<[^>]+>/g, '') });
+      if (chHist.length > 16) chHist.splice(0, chHist.length - 16);
+      ocupado = false; send.disabled = false; input.focus();
     }
-    btn.addEventListener('click', () => { panel.hidden = !panel.hidden; if (!panel.hidden) input.focus(); });
+    function abrir() {
+      panel.hidden = false; globo.hidden = true; btn.classList.remove('kv-chat-pulso');
+      try { sessionStorage.setItem('kv_chat_visto', '1'); } catch (e) {}
+      input.focus();
+    }
+    btn.addEventListener('click', () => { if (panel.hidden) abrir(); else panel.hidden = true; });
+    globo.addEventListener('click', abrir);
     panel.querySelector('#kv-chat-x').addEventListener('click', () => { panel.hidden = true; });
-    panel.querySelector('#kv-chat-send').addEventListener('click', enviar);
+    send.addEventListener('click', enviar);
     input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); enviar(); } });
+    // invitación: aparece a los 6 segundos (una vez por visita) y el botón late suavecito
+    let visto = false;
+    try { visto = sessionStorage.getItem('kv_chat_visto') === '1'; } catch (e) {}
+    if (!visto) {
+      setTimeout(() => {
+        if (panel.hidden) { globo.hidden = false; btn.classList.add('kv-chat-pulso'); }
+      }, 6000);
+      setTimeout(() => { globo.hidden = true; }, 26000);
+    }
   })();
 
   // ---------- datos en vivo ----------

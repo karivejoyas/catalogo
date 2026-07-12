@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260727" />
+<link rel="stylesheet" href="catalogo.css?v=20260728" />
 </head>
 <body>
 
@@ -100,7 +100,7 @@
     </section>
     <section class="adm-seccion">
       <h2 class="adm-seccion-titulo">Conexión con el publicador</h2>
-      <p class="adm-seccion-sub">Pega aquí la URL de tu publicador de Google (Apps Script) y la clave secreta. Solo se configura una vez.</p>
+      <p class="adm-seccion-sub">Pega aquí la URL de tu publicador de Google (Apps Script) y la clave secreta. 🔒 La clave se guarda <b>solo en este navegador</b> (nunca en la base pública) — si usas otro computador, escríbela ahí una vez y todo lo demás aparecerá solo.</p>
       <div class="adm-contacto">
         <label class="adm-etiqueta">URL del publicador (termina en /exec)</label>
         <input id="adm-ig-puburl" class="adm-input" placeholder="https://script.google.com/macros/s/…/exec" />
@@ -130,7 +130,7 @@
     </section>
     <section class="adm-seccion">
       <h2 class="adm-seccion-titulo">Claves de IA</h2>
-      <p class="adm-seccion-sub">Consíguelas gratis: <b>OpenRouter</b> en openrouter.ai/settings/keys · <b>Gemini</b> en aistudio.google.com/apikey · <b>Groq</b> en console.groq.com/keys. El orden de uso es: <b>OpenRouter primero</b> y, si se agota su límite, los respaldos. 🔒 Por seguridad se guardan <b>solo en este navegador</b> (no en la base de datos), así que si cambias de computador deberás pegarlas de nuevo.</p>
+      <p class="adm-seccion-sub">Consíguelas gratis: <b>OpenRouter</b> en openrouter.ai/settings/keys · <b>Gemini</b> en aistudio.google.com/apikey · <b>Groq</b> en console.groq.com/keys. El orden de uso es: <b>OpenRouter primero</b> y, si se agota su límite, los respaldos. 🔒 Al guardar quedan en este navegador y también <b>escondidas dentro de tu publicador de Google</b>: el <b>chat del catálogo</b> las usa desde allá (nadie puede verlas con F12) y <b>aparecerán solas</b> en cualquier otro navegador donde configures la conexión con tu clave secreta.</p>
       <div class="adm-contacto">
         <label class="adm-etiqueta">Clave de OpenRouter (principal)</label>
         <input id="ia-key-or" class="adm-input" placeholder="sk-or-…" autocomplete="off" />
@@ -381,8 +381,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260727"></script>
-<script src="comun.js?v=20260727"></script>
-<script src="admin.js?v=20260727"></script>
+<script src="firebase-config.js?v=20260728"></script>
+<script src="comun.js?v=20260728"></script>
+<script src="admin.js?v=20260728"></script>
 </body>
 </html>

@@ -518,8 +518,9 @@
 
   $('ig-m-publicar').addEventListener('click', async () => {
     const url = String(settings.igPubUrl || '').trim();
-    const clave = String(settings.igPubClave || '').trim();
+    const clave = pubClave();
     if (!url) { igEstado('⚠ Falta configurar la URL del publicador (sección "Conexión con el publicador", abajo).'); return; }
+    if (!clave) { igEstado('⚠ Falta la clave secreta en este navegador: escríbela en "Conexión con el publicador" y guarda.'); return; }
     if (!igPreviewImgs.length) { igEstado('⚠ Primero genera la vista previa.'); return; }
     const destino = igDestino();
     const btn = $('ig-m-publicar');
@@ -574,6 +575,12 @@
     guardado('ia-keys-ok');
     iaORConsultarUso().then(renderIAUso);
     renderIAUso();
+    // también se guardan escondidas en el publicador: el chat del catálogo las usa
+    // y aparecerán solas en cualquier otro navegador donde configures la conexión
+    sincronizarClavesIA().then(ok => {
+      const el = $('ia-keys-ok');
+      if (el && !el.hidden) el.textContent = ok ? '✓ Guardado aquí y en tu publicador (chat del catálogo ✓)' : '✓ Guardado en este navegador (no se pudo avisar al publicador)';
+    });
   });
   (function poblarIAKeys() {
     const k = iaKeys();
@@ -977,10 +984,71 @@
   $('ia-enviar').addEventListener('click', iaPreguntar);
   $('ia-preg').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); iaPreguntar(); } });
 
-  // conexión con el publicador
+  // ---------- conexión con el publicador ----------
+  // La URL va a la base (el catálogo la necesita para el chat), pero la CLAVE queda
+  // SOLO en este navegador: la configuración de la base es públicamente legible y
+  // guardarla ahí dejaría el publicador abierto a cualquiera.
+  function pubClave() { return (localStorage.getItem('kv_pub_clave') || String(settings.igPubClave || '')).trim(); }
+
+  // empuja las claves de IA al publicador: quedan escondidas en Google y las usa el chat del catálogo
+  async function sincronizarClavesIA() {
+    const url = String(settings.igPubUrl || '').trim(), clave = pubClave();
+    if (!url || !clave) return false;
+    const k = iaKeys();
+    if (!k.or && !k.gem && !k.groq) return false;   // sin claves aquí: no borrar las de la bóveda
+    try {
+      const r = await fetch(url, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ accion: 'config', clave: clave, claves: { or: k.or, gemini: k.gem, groq: k.groq } })
+      });
+      const d = await r.json();
+      return !!(d && d.ok);
+    } catch (e) { return false; }
+  }
+
+  // trae las claves guardadas en el publicador, para que aparezcan solas en cualquier navegador
+  let clavesTraidas = false;
+  async function traerClavesIA() {
+    const k = iaKeys();
+    if (k.or || k.gem || k.groq) return;               // este navegador ya las tiene
+    const url = String(settings.igPubUrl || '').trim(), clave = pubClave();
+    if (!url || !clave || clavesTraidas) return;
+    clavesTraidas = true;
+    try {
+      const r = await fetch(url, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ accion: 'config', clave: clave, leer: true })
+      });
+      const d = await r.json();
+      if (d && d.ok && d.claves) {
+        if (d.claves.or) localStorage.setItem(IA_LS.or, d.claves.or);
+        if (d.claves.gemini) localStorage.setItem(IA_LS.gem, d.claves.gemini);
+        if (d.claves.groq) localStorage.setItem(IA_LS.groq, d.claves.groq);
+        $('ia-key-or').value = d.claves.or || '';
+        $('ia-key-gemini').value = d.claves.gemini || '';
+        $('ia-key-groq').value = d.claves.groq || '';
+        renderIAUso();
+        iaORConsultarUso().then(renderIAUso);
+      }
+    } catch (e) {}
+  }
+
+  // migración: si la clave quedó guardada en la base (versión antigua), pásala a este navegador y bórrala de allá
+  let clavesMigradas = false;
+  function migrarPubClave() {
+    if (clavesMigradas) return;
+    const enBase = String(settings.igPubClave || '').trim();
+    if (!enBase) return;   // nada que migrar (aún); se reintenta en el próximo refresco
+    clavesMigradas = true;
+    if (!localStorage.getItem('kv_pub_clave')) localStorage.setItem('kv_pub_clave', enBase);
+    settingsRef.set({ igPubClave: '' }, { merge: true }).catch(() => {});
+  }
+
   $('adm-ig-pubguardar').addEventListener('click', () => {
-    settingsRef.set({ igPubUrl: $('adm-ig-puburl').value.trim(), igPubClave: $('adm-ig-pubclave').value.trim() }, { merge: true })
-      .then(() => guardado('adm-ig-pub-ok')).catch(err => console.error(err));
+    localStorage.setItem('kv_pub_clave', $('adm-ig-pubclave').value.trim());
+    settingsRef.set({ igPubUrl: $('adm-ig-puburl').value.trim(), igPubClave: '' }, { merge: true })
+      .then(() => { guardado('adm-ig-pub-ok'); sincronizarClavesIA(); traerClavesIA(); })
+      .catch(err => console.error(err));
   });
 
   function descargarPostIG(id, btn) {
@@ -1160,7 +1228,9 @@
     if (activo() !== $('adm-wa-msg')) $('adm-wa-msg').value = settings.whatsappMsg != null ? settings.whatsappMsg : KV_WHATSAPP_MSG_DEFAULT;
     if (activo() !== $('adm-ig-caption')) $('adm-ig-caption').value = settings.igCaption != null ? settings.igCaption : KV_IG_CAPTION_DEFAULT;
     if (activo() !== $('adm-ig-puburl')) $('adm-ig-puburl').value = settings.igPubUrl || '';
-    if (activo() !== $('adm-ig-pubclave')) $('adm-ig-pubclave').value = settings.igPubClave || '';
+    migrarPubClave();
+    if (activo() !== $('adm-ig-pubclave')) $('adm-ig-pubclave').value = pubClave();
+    traerClavesIA();
 
     // fondos (productos e información): un fallo aquí no debe frenar el resto
     try { poblarFondoProd(); poblarFondoInfo(); } catch (err) { console.error('Error poblando fondos:', err); }

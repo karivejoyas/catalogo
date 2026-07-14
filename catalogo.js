@@ -263,12 +263,14 @@
     urls.forEach(u => { if (!yaPrecargadas.has(u)) { yaPrecargadas.add(u); const im = new Image(); im.src = u; } });
   }
 
+  let waActualizar = null;
   function rebuild() {
     kvApplyTheme(Object.assign({}, KV_THEME_DEFAULT, settings.theme || {}));
     buildSlides();
     buildNav();
     pintar();
     precargar();
+    if (waActualizar) waActualizar();
   }
 
   // pinta la portada de inmediato (con valores por defecto) para no esperar
@@ -458,7 +460,28 @@
     globo.id = 'kv-chat-globo';
     globo.hidden = true;
     globo.innerHTML = '¿Buscas algo especial?<br><b>Pregúntame, te ayudo</b> 💜';
+    // ---- botón flotante de WhatsApp (al lado del chat) ----
+    const wa = document.createElement('a');
+    wa.className = 'kv-wa-btn';
+    wa.id = 'kv-wa-btn';
+    wa.target = '_blank';
+    wa.rel = 'noopener';
+    wa.setAttribute('aria-label', 'Escríbenos por WhatsApp');
+    wa.hidden = true;
+    wa.innerHTML =
+      '<span class="kv-wa-halo"></span>' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.38-.02-.53-.08-.15-.68-1.63-.93-2.23-.24-.58-.49-.5-.67-.51-.17 0-.37-.01-.57-.01-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.87 1.22 3.07.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.62.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35z"/><path fill="currentColor" d="M12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.98L0 24l6.18-1.62A11.94 11.94 0 0 0 12 24c6.63 0 12-5.37 12-12S18.63 0 12 0zm0 22a9.9 9.9 0 0 1-5.1-1.4l-.36-.22-3.79 1 1.01-3.7-.24-.38A9.9 9.9 0 0 1 2 12a10 10 0 1 1 10 10z"/></svg>' +
+      '<span class="kv-wa-tip">Escríbenos 💬</span>';
+    // mantiene el enlace y la visibilidad según el número configurado
+    waActualizar = function () {
+      const c = kvContactos(settings).find(x => x.tipo === 'whatsapp');
+      if (c) { wa.href = c.url; wa.hidden = false; }
+      else { wa.hidden = true; }
+    };
+    waActualizar();
+
     document.body.appendChild(btn);
+    document.body.appendChild(wa);
     document.body.appendChild(globo);
     document.body.appendChild(panel);
     const msgs = panel.querySelector('#kv-chat-msgs');

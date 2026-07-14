@@ -401,12 +401,12 @@ body.fb-lb-open{overflow:hidden;}
 .kv-chat-pulso{animation:kvPulso 2s ease-in-out infinite;}
 @keyframes kvPulso{0%,100%{box-shadow:0 10px 28px rgba(0,0,0,0.45);}50%{box-shadow:0 10px 28px rgba(0,0,0,0.45),0 0 0 10px rgba(227,197,114,0.25);}}
 /* botón flotante de WhatsApp (junto al chat) */
-.kv-wa-btn{position:fixed;left:82px;bottom:16px;z-index:80;width:54px;height:54px;border-radius:50%;background:linear-gradient(150deg,#2bd968,#1aa851);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(0,0,0,0.4);text-decoration:none;animation:kvWaFlota 3.4s ease-in-out infinite;transition:transform .18s;}
+.kv-wa-btn{position:fixed;right:16px;bottom:16px;z-index:80;width:54px;height:54px;border-radius:50%;background:linear-gradient(150deg,#2bd968,#1aa851);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(0,0,0,0.4);text-decoration:none;animation:kvWaFlota 3.4s ease-in-out infinite;transition:transform .18s;}
 .kv-wa-btn[hidden]{display:none;}
 .kv-wa-btn:hover{transform:scale(1.09) translateY(-1px);}
 .kv-wa-btn svg{width:30px;height:30px;position:relative;z-index:2;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.2));}
 .kv-wa-halo{position:absolute;inset:0;border-radius:50%;background:rgba(43,217,104,0.55);z-index:1;animation:kvWaHalo 3.4s ease-out infinite;}
-.kv-wa-tip{position:absolute;left:64px;white-space:nowrap;background:var(--kv-crema,#FAF5EC);color:var(--kv-morado-osc,#2A1245);font-family:'Jost',sans-serif;font-size:12.5px;font-weight:500;padding:7px 12px;border-radius:10px 10px 10px 4px;box-shadow:0 8px 22px rgba(0,0,0,0.35);opacity:0;transform:translateX(-6px);pointer-events:none;transition:opacity .2s,transform .2s;}
+.kv-wa-tip{position:absolute;right:64px;white-space:nowrap;background:var(--kv-crema,#FAF5EC);color:var(--kv-morado-osc,#2A1245);font-family:'Jost',sans-serif;font-size:12.5px;font-weight:500;padding:7px 12px;border-radius:10px 10px 4px 10px;box-shadow:0 8px 22px rgba(0,0,0,0.35);opacity:0;transform:translateX(6px);pointer-events:none;transition:opacity .2s,transform .2s;}
 .kv-wa-btn:hover .kv-wa-tip{opacity:1;transform:none;}
 @keyframes kvWaFlota{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
 @keyframes kvWaHalo{0%{transform:scale(1);opacity:0.5;}70%,100%{transform:scale(1.9);opacity:0;}}

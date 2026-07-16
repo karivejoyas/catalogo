@@ -24,7 +24,8 @@
   }
 
   function buildSlides() {
-    slides = [{ type: 'cover' }, { type: 'info' }];
+    // portada, info y "¿cómo comprar?" van primero (páginas 1, 2 y 3), antes de las colecciones
+    slides = [{ type: 'cover' }, { type: 'info' }, { type: 'howto' }];
     const cats = kvCategorias(settings);
     const visibles = products.filter(kvEnStock);
     cats.forEach(cat => pushCategoria(cat, visibles.filter(p => p.category === cat.id)));
@@ -33,7 +34,6 @@
     if (huerfanos.length) {
       pushCategoria({ id: '__otros__', nombre: 'Otros', sub: 'Otros accesorios de la colección', imagen: huerfanos[0].photo || cats[0] && cats[0].imagen || '' }, huerfanos);
     }
-    slides.push({ type: 'howto' });
     slides.push({ type: 'bye' });
     idx = Math.max(0, Math.min(idx, slides.length - 1));
   }

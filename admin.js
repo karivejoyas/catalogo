@@ -106,22 +106,93 @@
   }
 
   // ---------- PRODUCTOS ----------
-  function actualizar(id, campo, valor) {
+  // Los cambios NO se publican al instante: quedan en un BORRADOR local por producto
+  // y solo llegan al catálogo público cuando se toca "Guardar" en esa tarjeta.
+  const borradores = {};
+  function actualizar(id, campo, valor) {   // escritura directa (para acciones internas como reordenar)
     itemsCol.doc(id).update({ [campo]: valor }).catch(err => console.error('Error guardando:', err));
   }
+  function vista(p) { return p ? Object.assign({}, p, borradores[p.id] || {}) : p; }
+  function tieneBorrador(id) { return !!(borradores[id] && Object.keys(borradores[id]).length); }
+  function setBorrador(id, campo, valor) {
+    borradores[id] = borradores[id] || {};
+    borradores[id][campo] = valor;
+    marcarDirty(id);
+    actualizarBannerPend();
+  }
+  function marcarDirty(id) {
+    const cont = $('adm-categorias');
+    const card = cont && cont.querySelector('.cat-card-edit[data-id="' + id + '"]');
+    if (card) card.classList.toggle('ed-dirty', tieneBorrador(id));
+  }
+  function actualizarBannerPend() {
+    const bar = $('adm-pend-bar'); if (!bar) return;
+    const ids = Object.keys(borradores).filter(tieneBorrador);
+    if (!ids.length) { bar.hidden = true; bar.innerHTML = ''; return; }
+    const codes = ids.map(id => { const p = products.find(x => x.id === id); return vista(p || {}).code || id; });
+    bar.innerHTML = '⚠ Tienes cambios <b>sin guardar</b> en: <b>' + codes.map(escapeHtml).join(', ') + '</b> ' +
+      '<button type="button" id="adm-pend-todo" class="adm-btn-solido adm-btn-mini">Guardar todo</button>';
+    bar.hidden = false;
+    const btn = $('adm-pend-todo'); if (btn) btn.addEventListener('click', guardarTodo);
+  }
+
+  // valida un producto ya combinado con su borrador -> {errores:[], avisos:[]}
+  function validarProducto(m, id) {
+    const errores = [], avisos = [];
+    const nombre = String(m.name || '').trim();
+    if (!nombre || /^nuevo producto$/i.test(nombre)) errores.push('falta el nombre');
+    if (!(Number(m.price) > 0)) errores.push('falta el precio');
+    if (!m.photo) errores.push('falta la foto');
+    const code = String(m.code || '').trim();
+    if (!code) errores.push('falta el código');
+    else if (!/^[A-Za-zÑñ]{2,4}-?\d{1,4}$/.test(code)) avisos.push('el código «' + code + '» se ve raro (lo normal es como AG-014)');
+    const dup = products.find(x => x.id !== id && String(vista(x).code || '').toLowerCase() === code.toLowerCase());
+    if (code && dup) avisos.push('el código «' + code + '» ya lo usa otro producto');
+    const of = Number(m.priceOffer) || 0;
+    if (of > 0 && of >= Number(m.price)) avisos.push('la oferta debería ser menor que el precio normal');
+    if (!String(m.detail || '').trim()) avisos.push('no pusiste el detalle (ej: los cm)');
+    return { errores: errores, avisos: avisos };
+  }
+
+  function guardarProducto(id, silencioso) {
+    const b = borradores[id], p = products.find(x => x.id === id);
+    if (!b || !p) return false;
+    const m = Object.assign({}, p, b);
+    const v = validarProducto(m, id);
+    if (m.stock && v.errores.length) {   // si queda visible, los datos deben estar completos
+      if (!silencioso) window.alert('Para dejarlo CON STOCK (visible) primero completa:\n\n• ' + v.errores.join('\n• ') + '\n\nMientras tanto puedes dejarlo "Sin stock" y guardar.');
+      return false;
+    }
+    if (!silencioso && v.avisos.length) {
+      if (!window.confirm('⚠ Revisa esto:\n\n• ' + v.avisos.join('\n• ') + '\n\n¿Guardar de todas formas?')) return false;
+    }
+    itemsCol.doc(id).update(b).then(() => { delete borradores[id]; actualizarBannerPend(); }).catch(err => console.error('Error guardando:', err));
+    return true;
+  }
+  function guardarTodo() {
+    const ids = Object.keys(borradores).filter(tieneBorrador);
+    let quedan = 0;
+    ids.forEach(id => { if (!guardarProducto(id, true)) quedan++; });
+    if (quedan) window.alert('Guardé lo que estaba completo ✓\nQuedan ' + quedan + ' producto(s) con datos incompletos (o "sin stock"). Ábrelos, complétalos y guárdalos.');
+  }
+
   function eliminar(id) {
     if (!window.confirm('¿Eliminar este producto del catálogo?')) return;
+    delete borradores[id]; actualizarBannerPend();
     itemsCol.doc(id).delete().catch(err => console.error('Error eliminando:', err));
   }
   function agregar(categoria) {
     const cat = kvCategorias(settings).find(c => c.id === categoria);
     const maxOrder = products.reduce((m, p) => Math.max(m, p.order || 0), 0);
     const num = kvNextNumCat(products, categoria);   // sigue el correlativo de esa colección
+    // nace SIN STOCK (oculto) para llenarlo con calma antes de publicarlo
     itemsCol.add({
       code: (cat && cat.prefijo ? cat.prefijo : 'PR') + '-' + String(num).padStart(3, '0'),
-      name: 'Nuevo producto', detail: '', price: 0, priceOffer: 0, photo: null, category: categoria, order: maxOrder + 1, stock: true
+      name: 'Nuevo producto', detail: '', price: 0, priceOffer: 0, photo: null, category: categoria, order: maxOrder + 1, stock: false
     }).catch(err => console.error('Error agregando:', err));
   }
+  // avisa al cerrar/recargar si quedan cambios sin guardar
+  window.addEventListener('beforeunload', e => { if (Object.keys(borradores).some(tieneBorrador)) { e.preventDefault(); e.returnValue = ''; } });
 
   // reordenar dentro de la misma colección (‹ antes / › después)
   function moverProducto(id, dir) {
@@ -199,13 +270,13 @@
         '<section class="adm-seccion" id="sec-' + cat.id + '">' +
           '<h2 class="adm-seccion-titulo">' + escapeHtml(cat.nombre) + ' <span class="adm-tag">(' + items.length + ')</span>' +
             ' <button type="button" class="adm-btn-solido adm-btn-mini" data-role="add" data-cat="' + cat.id + '">+ Agregar producto</button></h2>' +
-          '<div class="adm-grilla">' + items.map(p => kvCardEditHtml(p, cats)).join('') + '</div>' +
+          '<div class="adm-grilla">' + items.map(p => kvCardEditHtml(vista(p), cats)).join('') + '</div>' +
         '</section>';
     });
     if (huerfanos.length) {
       html += '<section class="adm-seccion" id="sec-huerfanos"><h2 class="adm-seccion-titulo">Sin colección <span class="adm-tag">(' + huerfanos.length + ')</span></h2>' +
         '<p class="adm-seccion-sub">Estos productos quedaron sin colección. Cámbiales la colección con el selector 📁 de cada uno.</p>' +
-        '<div class="adm-grilla">' + huerfanos.map(p => kvCardEditHtml(p, cats)).join('') + '</div></section>';
+        '<div class="adm-grilla">' + huerfanos.map(p => kvCardEditHtml(vista(p), cats)).join('') + '</div></section>';
     }
     $('adm-categorias').innerHTML = html;
     $('adm-categorias').querySelectorAll('[data-goto]').forEach(n => n.addEventListener('click', e => {
@@ -213,40 +284,64 @@
       if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }));
     conectarProductos();
+    Object.keys(borradores).forEach(marcarDirty);   // reaplica el aviso "sin guardar" tras redibujar
+    actualizarBannerPend();
   }
 
   function conectarProductos() {
     const r = $('adm-categorias');
     r.querySelectorAll('[data-role="add"]').forEach(n => n.addEventListener('click', e => agregar(e.currentTarget.dataset.cat)));
-    r.querySelectorAll('[data-role="code"]').forEach(n => n.addEventListener('change', e => actualizar(e.target.dataset.id, 'code', e.target.value)));
-    r.querySelectorAll('[data-role="name"]').forEach(n => n.addEventListener('change', e => actualizar(e.target.dataset.id, 'name', e.target.value)));
-    r.querySelectorAll('[data-role="detail"]').forEach(n => n.addEventListener('change', e => actualizar(e.target.dataset.id, 'detail', e.target.value)));
-    r.querySelectorAll('[data-role="price"]').forEach(n => n.addEventListener('change', e => {
+    r.querySelectorAll('[data-role="code"]').forEach(n => n.addEventListener('input', e => setBorrador(e.target.dataset.id, 'code', e.target.value)));
+    r.querySelectorAll('[data-role="name"]').forEach(n => n.addEventListener('input', e => setBorrador(e.target.dataset.id, 'name', e.target.value)));
+    r.querySelectorAll('[data-role="detail"]').forEach(n => n.addEventListener('input', e => setBorrador(e.target.dataset.id, 'detail', e.target.value)));
+    r.querySelectorAll('[data-role="price"]').forEach(n => n.addEventListener('input', e => {
       const num = parseInt(String(e.target.value).replace(/[^0-9]/g, ''), 10);
-      actualizar(e.target.dataset.id, 'price', isNaN(num) ? 0 : num);
+      setBorrador(e.target.dataset.id, 'price', isNaN(num) ? 0 : num);
     }));
-    r.querySelectorAll('[data-role="priceOffer"]').forEach(n => n.addEventListener('change', e => {
+    r.querySelectorAll('[data-role="priceOffer"]').forEach(n => n.addEventListener('input', e => {
       const num = parseInt(String(e.target.value).replace(/[^0-9]/g, ''), 10);
-      actualizar(e.target.dataset.id, 'priceOffer', isNaN(num) ? 0 : num);
+      setBorrador(e.target.dataset.id, 'priceOffer', isNaN(num) ? 0 : num);
     }));
-    r.querySelectorAll('[data-role="category"]').forEach(n => n.addEventListener('change', e => actualizar(e.target.dataset.id, 'category', e.target.value)));
+    r.querySelectorAll('[data-role="category"]').forEach(n => n.addEventListener('change', e => {
+      const id = e.target.dataset.id, nuevaCat = e.target.value;
+      setBorrador(id, 'category', nuevaCat);
+      // el código sigue el correlativo de la NUEVA colección (con su prefijo)
+      const cat = kvCategorias(settings).find(c => c.id === nuevaCat);
+      const num = kvNextNumCat(products.map(vista), nuevaCat);
+      const nuevoCode = (cat && cat.prefijo ? cat.prefijo : 'PR') + '-' + String(num).padStart(3, '0');
+      setBorrador(id, 'code', nuevoCode);
+      const card = e.target.closest('.cat-card-edit');
+      const ci = card && card.querySelector('[data-role="code"]'); if (ci) ci.value = nuevoCode;
+    }));
     r.querySelectorAll('[data-role="delete"]').forEach(n => n.addEventListener('click', e => eliminar(e.target.dataset.id)));
     r.querySelectorAll('[data-role="mover"]').forEach(n => n.addEventListener('click', e => moverProducto(e.currentTarget.dataset.id, e.currentTarget.dataset.dir)));
+    r.querySelectorAll('[data-role="save"]').forEach(n => n.addEventListener('click', e => guardarProducto(e.currentTarget.dataset.id)));
     r.querySelectorAll('[data-role="stock"]').forEach(n => n.addEventListener('change', e => {
-      actualizar(e.target.dataset.id, 'stock', e.target.checked);
+      const id = e.target.dataset.id;
+      if (e.target.checked) {   // para dejarlo VISIBLE, los datos deben estar completos
+        const p = products.find(x => x.id === id);
+        const v = validarProducto(Object.assign({}, vista(p), { stock: true }), id);
+        if (v.errores.length) { e.target.checked = false; window.alert('Para dejarlo CON STOCK (visible) primero completa:\n\n• ' + v.errores.join('\n• ') + '\n\n(luego toca Guardar)'); return; }
+      }
+      setBorrador(id, 'stock', e.target.checked);
       const card = e.target.closest('.cat-card-edit');
       if (card) card.classList.toggle('sin-stock', !e.target.checked);
       const lbl = e.target.closest('.ed-stock');
-      if (lbl) { lbl.classList.toggle('is-off', !e.target.checked); const t = lbl.querySelector('.ed-stock-txt'); if (t) t.textContent = e.target.checked ? 'En stock' : 'Sin stock (oculto)'; }
+      if (lbl) { lbl.classList.toggle('is-off', !e.target.checked); const t = lbl.querySelector('.ed-stock-txt'); if (t) t.textContent = e.target.checked ? 'En stock (visible)' : 'Sin stock (oculto)'; }
     }));
     r.querySelectorAll('[data-role^="foco-"]').forEach(n => {
       n.addEventListener('input', e => aplicarFocoPreview(e.target.dataset.id));
-      n.addEventListener('change', e => actualizar(e.target.dataset.id, 'foco', focoDeCard(e.target.dataset.id)));
+      n.addEventListener('change', e => setBorrador(e.target.dataset.id, 'foco', focoDeCard(e.target.dataset.id)));
     });
-    r.querySelectorAll('[data-role="remove-photo"]').forEach(n => n.addEventListener('click', e => actualizar(e.target.dataset.id, 'photo', null)));
+    r.querySelectorAll('[data-role="remove-photo"]').forEach(n => n.addEventListener('click', e => { setBorrador(e.target.dataset.id, 'photo', null); renderProductos(); }));
     r.querySelectorAll('[data-role="upload"]').forEach(n => n.addEventListener('change', e => {
-      const file = e.target.files && e.target.files[0];
-      if (file) kvCompressPhoto(file, (data) => actualizar(e.target.dataset.id, 'photo', data), 1000, 0.88);
+      const file = e.target.files && e.target.files[0], id = e.target.dataset.id;
+      if (file) kvCompressPhoto(file, (data) => {
+        setBorrador(id, 'photo', data);
+        const card = $('adm-categorias').querySelector('.cat-card-edit[data-id="' + id + '"]');
+        const bg = card && card.querySelector('.kv-fbg');
+        if (bg) bg.style.backgroundImage = "url('" + data + "')"; else renderProductos();
+      }, 1000, 0.88);
       e.target.value = '';
     }));
   }
@@ -1196,6 +1291,8 @@
             '<input class="adm-input" data-role="cat-nombre" data-idx="' + idx + '" value="' + escapeHtml(cat.nombre || '') + '" />' +
             '<label class="adm-etiqueta">Descripción</label>' +
             '<input class="adm-input" data-role="cat-sub" data-idx="' + idx + '" value="' + escapeHtml(cat.sub || '') + '" />' +
+            '<label class="adm-etiqueta">Código de los productos (2–4 letras, ej: CO para Corazones)</label>' +
+            '<input class="adm-input" data-role="cat-pref" data-idx="' + idx + '" value="' + escapeHtml(cat.prefijo || '') + '" maxlength="4" placeholder="CO" style="max-width:130px;text-transform:uppercase;letter-spacing:0.12em;" />' +
             '<div class="adm-cat-acciones">' +
               '<label class="adm-btn-solido adm-btn-file">Cambiar foto<input type="file" accept="image/*" data-role="cat-foto" data-idx="' + idx + '" hidden /></label>' +
               '<button type="button" class="adm-btn-borde adm-btn-del-cat" data-role="cat-del" data-idx="' + idx + '">Eliminar colección</button>' +
@@ -1217,6 +1314,10 @@
     r.querySelectorAll('[data-role="cat-sub"]').forEach(n => n.addEventListener('change', e => {
       const cats = kvCategorias(settings), i = +e.target.dataset.idx;
       if (cats[i]) { cats[i].sub = e.target.value; guardarCategorias(cats); }
+    }));
+    r.querySelectorAll('[data-role="cat-pref"]').forEach(n => n.addEventListener('change', e => {
+      const cats = kvCategorias(settings), i = +e.target.dataset.idx;
+      if (cats[i]) { cats[i].prefijo = (e.target.value.trim().toUpperCase().replace(/[^A-ZÑ]/g, '').slice(0, 4)) || 'PR'; e.target.value = cats[i].prefijo; guardarCategorias(cats); }
     }));
     r.querySelectorAll('[data-role="cat-foto"]').forEach(n => n.addEventListener('change', e => {
       const i = +e.target.dataset.idx, file = e.target.files && e.target.files[0];

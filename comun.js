@@ -441,17 +441,7 @@ function kvGenerarPostIG(p, settings, focoOverride) {
         g.drawImage(logo, 44, 40, lw, lh);
         g.restore();
       }
-      // ---- etiqueta OFERTA (solo si el producto está en oferta) ----
-      const of = kvPrecioOferta(p);
-      if (of) {
-        g.save(); g.font = '700 34px "Jost", sans-serif'; g.textAlign = 'center';
-        const tw = g.measureText('OFERTA').width, pw = tw + 46, px = S - pw - 40, py = 44, ph = 60;
-        g.fillStyle = theme.dorado;
-        g.shadowColor = 'rgba(0,0,0,0.28)'; g.shadowBlur = 14;
-        if (g.roundRect) { g.beginPath(); g.roundRect(px, py, pw, ph, 30); g.fill(); } else g.fillRect(px, py, pw, ph);
-        g.shadowBlur = 0;
-        g.fillStyle = theme.moradoProf; g.fillText('OFERTA', px + pw / 2, py + 41); g.restore();
-      }
+      // (sin etiqueta "OFERTA": las imágenes que se publican salen limpias)
       return c.toDataURL('image/jpeg', 0.92);
     });
 }
@@ -515,6 +505,14 @@ function kvCardEditHtml(p, cats) {
         '</div>' +
       '</div>' +
       '<div class="ed-cuerpo">' +
+        '<details class="ed-encuadre">' +
+          '<summary class="ed-encuadre-tit">🎯 Ajustar encuadre de la foto</summary>' +
+          '<div class="ed-encuadre-body">' +
+            '<label class="ed-slider"><span>Zoom</span><input type="range" min="100" max="250" step="1" data-role="foco-zoom" data-id="' + p.id + '" value="' + f.zoom + '" /></label>' +
+            '<label class="ed-slider"><span>Horizontal</span><input type="range" min="0" max="100" step="1" data-role="foco-x" data-id="' + p.id + '" value="' + f.x + '" /></label>' +
+            '<label class="ed-slider"><span>Vertical</span><input type="range" min="0" max="100" step="1" data-role="foco-y" data-id="' + p.id + '" value="' + f.y + '" /></label>' +
+          '</div>' +
+        '</details>' +
         '<div class="ed-fila">' +
           '<input class="ed-input ed-codigo" data-role="code" data-id="' + p.id + '" value="' + escapeHtml(p.code) + '" placeholder="Código" />' +
           '<button type="button" class="ed-btn-eliminar" data-role="delete" data-id="' + p.id + '">Eliminar</button>' +
@@ -535,17 +533,15 @@ function kvCardEditHtml(p, cats) {
           '<label class="ed-coleccion-label">📁 Colección:</label>' +
           '<select class="ed-input ed-categoria" data-role="category" data-id="' + p.id + '">' + opciones + '</select>' +
         '</div>' +
-        '<div class="ed-encuadre">' +
-          '<div class="ed-encuadre-tit">🎯 Encuadre de la foto</div>' +
-          '<label class="ed-slider"><span>Zoom</span><input type="range" min="100" max="250" step="1" data-role="foco-zoom" data-id="' + p.id + '" value="' + f.zoom + '" /></label>' +
-          '<label class="ed-slider"><span>Horizontal</span><input type="range" min="0" max="100" step="1" data-role="foco-x" data-id="' + p.id + '" value="' + f.x + '" /></label>' +
-          '<label class="ed-slider"><span>Vertical</span><input type="range" min="0" max="100" step="1" data-role="foco-y" data-id="' + p.id + '" value="' + f.y + '" /></label>' +
-        '</div>' +
         '<label class="ed-stock' + (enStock ? '' : ' is-off') + '">' +
           '<input type="checkbox" data-role="stock" data-id="' + p.id + '"' + (enStock ? ' checked' : '') + ' />' +
           '<span class="ed-stock-sw"></span>' +
-          '<span class="ed-stock-txt">' + (enStock ? 'En stock' : 'Sin stock (oculto)') + '</span>' +
+          '<span class="ed-stock-txt">' + (enStock ? 'En stock (visible)' : 'Sin stock (oculto)') + '</span>' +
         '</label>' +
+        '<div class="ed-guardar">' +
+          '<span class="ed-pend">● cambios sin guardar</span>' +
+          '<button type="button" class="ed-btn-guardar" data-role="save" data-id="' + p.id + '">💾 Guardar</button>' +
+        '</div>' +
       '</div>' +
     '</div>'
   );

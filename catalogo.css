@@ -109,9 +109,10 @@ input::placeholder{color:rgba(255,255,255,0.4);}
    en todas las tarjetas (la foto ocupa el resto). */
 .fb-grid .cat-card{height:100%;}
 .fb-grid .cat-card-foto{aspect-ratio:auto;flex:1;min-height:0;}
-.fb-grid .cat-card-etiqueta{flex:0 0 auto;height:clamp(80px,14vh,104px);padding:7px 9px;justify-content:center;gap:3px;}
+.fb-grid .cat-card-etiqueta{flex:0 0 auto;min-height:clamp(96px,16vh,124px);padding:9px 9px 11px;justify-content:center;gap:4px;overflow:hidden;}
 .fb-grid .cat-card-nombre{font-size:clamp(12.5px,3.3vw,14px);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .fb-grid .cat-card-detalle{font-size:clamp(10.5px,2.7vw,11.5px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fb-grid .cat-card-pie{flex-wrap:wrap;row-gap:2px;margin-top:4px;}
 .fb-grid .cat-card-codigo{font-size:clamp(9.5px,2.4vw,10.5px);}
 .fb-grid .cat-card-precio{font-size:clamp(16.5px,4.8vw,20px);}
 
@@ -179,12 +180,12 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .adm-seccion{max-width:1180px;margin:0 auto;padding:34px 24px 10px;}
 .adm-seccion-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:30px;color:var(--kv-crema);margin:0 0 4px;}
 .adm-seccion-sub{font-size:12.5px;color:#8f7aa0;margin:0 0 18px;}
-.adm-grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;}
+.adm-grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;}
 .adm-contacto{max-width:420px;display:flex;flex-direction:column;gap:12px;}
 .adm-etiqueta{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#8f7aa0;}
 
 /* tarjeta edición */
-.cat-card-edit .cat-card-foto{aspect-ratio:6/5;}
+.cat-card-edit .cat-card-foto{aspect-ratio:4/3;}
 .ed-foto-botones{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;justify-content:center;padding:10px;background:linear-gradient(transparent,rgba(0,0,0,0.6));}
 .ed-btn-foto{font-family:'Jost',sans-serif;font-size:12px;font-weight:500;color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border:none;border-radius:999px;padding:7px 14px;cursor:pointer;}
 .ed-btn-foto-ghost{font-family:'Jost',sans-serif;font-size:12px;color:#fff;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.5);border-radius:999px;padding:7px 12px;cursor:pointer;}
@@ -310,11 +311,20 @@ body.fb-lb-open{overflow:hidden;}
 .ed-precios .ed-precio{max-width:none;}
 .ed-precio-of{color:#8fd3a6;}
 
-.ed-encuadre{margin-top:4px;padding:9px 11px;background:rgba(255,255,255,0.06);border:1px solid rgba(227,197,114,0.28);border-radius:10px;display:flex;flex-direction:column;gap:5px;}
-.ed-encuadre-tit{font-size:11px;font-weight:600;letter-spacing:0.04em;color:var(--kv-dorado-cl);margin-bottom:2px;}
-.ed-slider{display:grid;grid-template-columns:66px 1fr;align-items:center;gap:8px;}
-.ed-slider span{font-size:11px;color:var(--kv-lavanda);}
-.ed-slider input[type=range]{width:100%;accent-color:var(--kv-dorado-cl);cursor:pointer;}
+/* encuadre plegable (se abre para ajustar; así la tarjeta queda corta) */
+.ed-encuadre{margin:2px 0 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(227,197,114,0.32);border-radius:10px;overflow:hidden;}
+.ed-encuadre-tit{list-style:none;cursor:pointer;font-size:12.5px;font-weight:600;letter-spacing:0.02em;color:var(--kv-dorado-cl);padding:11px 13px;display:flex;align-items:center;justify-content:space-between;}
+.ed-encuadre-tit::-webkit-details-marker{display:none;}
+.ed-encuadre-tit::after{content:'▾';font-size:12px;transition:transform .2s;opacity:.8;}
+.ed-encuadre[open] .ed-encuadre-tit::after{transform:rotate(180deg);}
+.ed-encuadre[open] .ed-encuadre-tit{border-bottom:1px solid rgba(227,197,114,0.22);}
+.ed-encuadre-body{padding:11px 13px;display:flex;flex-direction:column;gap:12px;}
+.ed-slider{display:grid;grid-template-columns:78px 1fr;align-items:center;gap:10px;}
+.ed-slider span{font-size:12.5px;color:var(--kv-lavanda);}
+.ed-slider input[type=range]{width:100%;height:26px;accent-color:var(--kv-dorado-cl);cursor:pointer;}
+/* pulgar más grande para el dedo (móvil) */
+.ed-slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;border-radius:50%;background:var(--kv-dorado-cl);border:3px solid #2a1245;box-shadow:0 2px 6px rgba(0,0,0,.4);cursor:pointer;}
+.ed-slider input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--kv-dorado-cl);border:3px solid #2a1245;cursor:pointer;}
 
 .ed-stock{display:flex;align-items:center;gap:9px;margin-top:2px;cursor:pointer;user-select:none;}
 .ed-stock input{position:absolute;opacity:0;width:0;height:0;}
@@ -324,6 +334,36 @@ body.fb-lb-open{overflow:hidden;}
 .ed-stock input:checked + .ed-stock-sw::after{transform:translateX(18px);}
 .ed-stock-txt{font-size:12.5px;font-weight:500;color:var(--kv-crema);}
 .ed-stock.is-off .ed-stock-txt{color:#e29ab0;}
+
+/* guardar por producto + aviso de cambios sin guardar */
+.ed-guardar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);}
+.ed-pend{font-size:11.5px;font-weight:600;color:#f0b44a;opacity:0;transition:opacity .15s;}
+.cat-card-edit.ed-dirty .ed-pend{opacity:1;}
+.ed-btn-guardar{font-family:'Jost',sans-serif;font-size:12.5px;font-weight:500;color:var(--kv-lavanda);background:rgba(255,255,255,0.06);border:1px solid rgba(203,183,216,0.35);border-radius:999px;padding:8px 15px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.cat-card-edit.ed-dirty{outline:2px solid rgba(240,180,74,0.55);outline-offset:2px;border-radius:14px;}
+.cat-card-edit.ed-dirty .ed-btn-guardar{color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border-color:var(--kv-dorado-cl);font-weight:600;}
+/* barra de aviso de pendientes (arriba de Productos) */
+.adm-pend-bar{position:sticky;top:var(--adm-header-h,0);z-index:20;max-width:1180px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:rgba(60,32,14,0.96);border:1px solid rgba(240,180,74,0.5);border-radius:0 0 14px 14px;color:#f6d79a;font-size:13.5px;}
+.adm-pend-bar[hidden]{display:none;}
+.adm-pend-bar b{color:#fff;}
+
+/* ---- edición más cómoda en celular ---- */
+@media (max-width:640px){
+  .adm-grilla{grid-template-columns:1fr;gap:16px;}
+  .adm-seccion{padding:20px 14px 10px;}
+  .cat-card-edit .cat-card-foto{aspect-ratio:16/10;}
+  .ed-cuerpo{padding:14px 14px 16px;gap:11px;}
+  .ed-input{font-size:15px;padding:10px 11px;}       /* evita el zoom automático de iOS y es más fácil de tocar */
+  .ed-nombre{font-size:16px;}
+  .ed-encuadre-tit{padding:14px;font-size:14px;}
+  .ed-slider{grid-template-columns:70px 1fr;}
+  .ed-slider input[type=range]{height:34px;}
+  .ed-btn-foto,.ed-btn-foto-ghost{font-size:13px;padding:9px 16px;}
+  .ed-mini-btn{width:36px;height:36px;font-size:22px;}
+  .ed-stock-sw{width:46px;height:26px;}
+  .ed-stock-sw::after{width:22px;height:22px;}
+  .ed-stock input:checked + .ed-stock-sw::after{transform:translateX(20px);}
+}
 
 /* ============ Kit para Instagram (admin) ============ */
 .ig-fila{display:flex;align-items:center;gap:16px;padding:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(201,162,75,0.22);border-radius:14px;margin-bottom:12px;max-width:760px;}

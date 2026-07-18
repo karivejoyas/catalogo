@@ -411,10 +411,18 @@ function kvGenerarPostIG(p, settings, focoOverride) {
     .then(([foto, logo]) => {
       const c = document.createElement('canvas'); c.width = S; c.height = S;
       const g = c.getContext('2d');
-      // ---- foto COMPLETA (contain) sobre un fondo del mismo color de la foto ----
+      // ---- foto COMPLETA (contain) sin barras planas: el fondo se rellena con la misma foto difuminada ----
       if (foto) {
-        g.fillStyle = kvColorFondo(foto); g.fillRect(0, 0, S, S);
-        // encuadre de la foto sobre el fondo (por defecto completa y centrada; editable en la vista previa)
+        g.fillStyle = kvColorFondo(foto); g.fillRect(0, 0, S, S);   // base por si el navegador no soporta desenfoque
+        // 1) fondo: la misma foto ampliada (cover) y difuminada. Se dibuja un poco más grande
+        //    que el lienzo para que el desenfoque no deje un borde oscuro en los bordes.
+        const cov = Math.max(S / foto.width, S / foto.height) * 1.22;
+        const cw = foto.width * cov, ch = foto.height * cov;
+        g.save();
+        g.filter = 'blur(34px) brightness(1.03)';
+        g.drawImage(foto, (S - cw) / 2, (S - ch) / 2, cw, ch);
+        g.restore();
+        // 2) foto nítida y completa encima (con el encuadre elegido en la vista previa)
         const f = focoOverride || kvFocoIG(p), zoom = f.zoom / 100;
         const scale = Math.min(S / foto.width, S / foto.height) * zoom;  // contain * zoom
         const dw = foto.width * scale, dh = foto.height * scale;

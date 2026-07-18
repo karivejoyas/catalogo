@@ -143,7 +143,25 @@
     const cur = slides[idx];
     const curCat = cur && cur.cat ? cur.cat.id : null;
     nav.querySelectorAll('a').forEach(a => a.classList.toggle('is-active', a.dataset.cat === curCat));
+    nivelarTarjetas();
   }
+
+  /* iguala las barras moradas de la página a la más alta real (barra mínima y pareja) */
+  function nivelarTarjetas() {
+    const ets = page.querySelectorAll('.fb-grid .cat-card-etiqueta');
+    if (!ets.length) return;
+    const aplicar = () => {
+      let max = 0;
+      ets.forEach(e => { e.style.minHeight = ''; max = Math.max(max, e.getBoundingClientRect().height); });
+      ets.forEach(e => { e.style.minHeight = Math.ceil(max) + 'px'; });
+    };
+    aplicar();
+    requestAnimationFrame(aplicar);      // por si el texto se reacomodó al pintar
+    setTimeout(aplicar, 380);            // y tras la transición de entrada de la página
+  }
+  let nivelarPend;
+  window.addEventListener('resize', () => { clearTimeout(nivelarPend); nivelarPend = setTimeout(nivelarTarjetas, 120); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => nivelarTarjetas());
 
   // ---------- navegación con transición suave de página ----------
   function go(n, dir) {

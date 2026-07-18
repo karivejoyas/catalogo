@@ -141,6 +141,11 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 /* en pantallas anchas (PC/tablet) la página es más ancha para llenar el espacio */
 @media (min-width: 641px){
   .fb-page{width:min(82vw,66vh);aspect-ratio:73/100;}
+  /* barra morada compacta: la foto es la protagonista */
+  .fb-grid .cat-card-etiqueta{padding:6px 8px 8px;gap:1px;}
+  .fb-grid .cat-card-nombre{line-height:1.15;min-height:2.3em;}
+  .fb-grid .cat-card-detalle{min-height:1.25em;}
+  .fb-grid .cat-card-pie{margin-top:1px;}
 }
 
 /* PC con pantalla baja (notebooks): encabezado y etiqueta compactos para que las fotos respiren */
@@ -156,10 +161,10 @@ input::placeholder{color:rgba(255,255,255,0.4);}
   .fb-prod-eyebrow{font-size:9px;}
   .fb-prod-titulo{font-size:clamp(19px,3.2vh,28px);}
   .fb-prod-pag{margin-top:2px;font-size:9.5px;}
-  .fb-grid .cat-card-etiqueta{padding:6px 8px 8px;gap:2px;}
-  .fb-grid .cat-card-nombre{font-size:12.5px;min-height:2.4em;}
-  .fb-grid .cat-card-detalle{font-size:10px;min-height:2.5em;}
-  .fb-grid .cat-card-pie{margin-top:2px;}
+  .fb-grid .cat-card-etiqueta{padding:5px 8px 7px;gap:1px;}
+  .fb-grid .cat-card-nombre{font-size:12.5px;min-height:2.3em;}
+  .fb-grid .cat-card-detalle{font-size:10px;min-height:1.25em;}
+  .fb-grid .cat-card-pie{margin-top:1px;}
   .fb-grid .cat-card-codigo{font-size:9px;}
   .fb-grid .cat-card-precio{font-size:16px;}
   .fb-grid .cat-card-precio-old{font-size:12px;}

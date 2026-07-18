@@ -164,7 +164,7 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .adm-error{font-size:12.5px;color:#e08a9a;text-align:center;}
 
 .adm-topbar{max-width:1180px;margin:0 auto;padding:22px 24px 0;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
-.adm-marca{font-size:11px;letter-spacing:0.32em;text-transform:uppercase;color:var(--kv-lavanda);font-weight:500;}
+.adm-marca{font-size:11px;letter-spacing:0.32em;text-transform:uppercase;color:var(--kv-lavanda);font-weight:500;margin-right:auto;}
 .adm-tag{color:#8f7aa0;font-weight:400;text-transform:none;letter-spacing:normal;font-size:13px;}
 .adm-acciones{display:flex;align-items:center;gap:12px;}
 .adm-enlace{font-size:13px;color:var(--kv-dorado-cl);text-decoration:none;}
@@ -202,11 +202,26 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .ed-peso{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:var(--kv-dorado-cl);}
 .ed-btn-eliminar{font-family:'Jost',sans-serif;font-size:11px;color:#e08a9a;background:transparent;border:1px solid rgba(224,138,154,0.4);border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap;margin-left:auto;}
 
-/* ---------- admin: pestañas y editores nuevos ---------- */
+/* ---------- admin: encabezado + menú lateral (hamburguesa) ---------- */
 .adm-header{position:sticky;top:0;z-index:40;background:rgba(30,15,48,0.94);backdrop-filter:blur(8px);border-bottom:1px solid rgba(201,162,75,0.18);box-shadow:0 6px 22px rgba(0,0,0,0.28);}
-.adm-tabs{max-width:1180px;margin:0 auto;padding:18px 24px 14px;display:flex;gap:8px;flex-wrap:wrap;}
-.adm-tab{font-family:'Jost',sans-serif;font-size:13px;font-weight:500;color:var(--kv-lavanda);background:transparent;border:1px solid rgba(203,183,216,0.3);border-radius:999px;padding:9px 18px;cursor:pointer;}
-.adm-tab.is-active{color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border-color:var(--kv-dorado-cl);}
+/* botón hamburguesa */
+.adm-burger{display:flex;flex-direction:column;justify-content:center;gap:5px;width:42px;height:38px;padding:0 9px;background:rgba(255,255,255,0.05);border:1px solid rgba(203,183,216,0.3);border-radius:11px;cursor:pointer;flex:0 0 auto;}
+.adm-burger span{display:block;height:2.5px;border-radius:2px;background:var(--kv-dorado-cl);transition:transform .2s,opacity .2s;}
+.adm-burger.abierto span:nth-child(1){transform:translateY(7.5px) rotate(45deg);}
+.adm-burger.abierto span:nth-child(2){opacity:0;}
+.adm-burger.abierto span:nth-child(3){transform:translateY(-7.5px) rotate(-45deg);}
+/* fondo oscuro al abrir el menú */
+.adm-drawer-back{position:fixed;inset:0;z-index:48;background:rgba(10,4,16,0.55);}
+.adm-drawer-back[hidden]{display:none;}
+/* cajón lateral izquierdo */
+.adm-drawer{position:fixed;top:0;left:0;height:100%;height:100dvh;width:min(270px,80vw);z-index:50;background:linear-gradient(180deg,#2a1245,#1e0f30);border-right:1px solid rgba(201,162,75,0.3);box-shadow:12px 0 40px rgba(0,0,0,0.5);transform:translateX(-102%);transition:transform .26s cubic-bezier(0.33,0,0.2,1);display:flex;flex-direction:column;padding:16px 14px;overflow-y:auto;}
+.adm-drawer.abierto{transform:none;}
+.adm-drawer-tit{display:flex;align-items:center;justify-content:space-between;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;color:var(--kv-crema);padding:6px 8px 14px;border-bottom:1px solid rgba(201,162,75,0.2);margin-bottom:12px;}
+.adm-drawer-x{width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:14px;cursor:pointer;}
+.adm-tabs{display:flex;flex-direction:column;gap:8px;}
+.adm-tab{font-family:'Jost',sans-serif;font-size:14px;font-weight:500;text-align:left;color:var(--kv-lavanda);background:rgba(255,255,255,0.04);border:1px solid rgba(203,183,216,0.22);border-radius:12px;padding:13px 16px;cursor:pointer;transition:all .15s;}
+.adm-tab:hover{background:rgba(255,255,255,0.08);}
+.adm-tab.is-active{color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border-color:var(--kv-dorado-cl);font-weight:600;}
 .adm-panel[hidden]{display:none;}
 .adm-barra-sup{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
 .adm-btn-mini{padding:5px 14px;font-size:12px;margin-left:8px;vertical-align:middle;}

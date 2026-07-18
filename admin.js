@@ -29,11 +29,25 @@
     else { $('adm-app').hidden = true; $('adm-login').hidden = false; dejarDeEscuchar(); }
   });
 
+  // ---------- menú lateral (hamburguesa) ----------
+  const drawer = $('adm-drawer'), drawerBack = $('adm-drawer-back'), burger = $('adm-burger');
+  function abrirDrawer(v) {
+    if (!drawer) return;
+    drawer.classList.toggle('abierto', v);
+    if (burger) burger.classList.toggle('abierto', v);
+    if (drawerBack) drawerBack.hidden = !v;
+  }
+  if (burger) burger.addEventListener('click', () => abrirDrawer(!drawer.classList.contains('abierto')));
+  if (drawerBack) drawerBack.addEventListener('click', () => abrirDrawer(false));
+  if ($('adm-drawer-x')) $('adm-drawer-x').addEventListener('click', () => abrirDrawer(false));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') abrirDrawer(false); });
+
   // ---------- pestañas ----------
   document.querySelectorAll('.adm-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.adm-tab').forEach(t => t.classList.toggle('is-active', t === tab));
       document.querySelectorAll('.adm-panel').forEach(p => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
+      abrirDrawer(false);
       window.scrollTo({ top: 0 });
     });
   });
@@ -248,9 +262,10 @@
     const card = $('adm-categorias').querySelector('.cat-card-edit[data-id="' + id + '"]');
     const bg = card && card.querySelector('.kv-fbg');
     if (!bg) return;
-    bg.style.backgroundPosition = f.x + '% ' + f.y + '%';
+    const px = 100 - f.x, py = 100 - f.y;   // invertido: mover a la derecha = imagen a la derecha
+    bg.style.backgroundPosition = px + '% ' + py + '%';
     bg.style.transform = 'scale(' + (f.zoom / 100) + ')';
-    bg.style.transformOrigin = f.x + '% ' + f.y + '%';
+    bg.style.transformOrigin = px + '% ' + py + '%';
   }
 
   // ---------- FONDOS (productos e información) ----------

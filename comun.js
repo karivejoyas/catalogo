@@ -199,9 +199,11 @@ function kvFocoIG(p) {
 function kvFotoInner(p) {
   if (!p || !p.photo) return '';
   const f = kvFoco(p);
+  // se invierte (100 - x) para que el deslizador sea intuitivo: mover a la derecha = la imagen va a la derecha
+  const px = 100 - f.x, py = 100 - f.y;
   return '<div class="kv-fbg" style="background-image:url(\'' + p.photo + '\');' +
-         'background-position:' + f.x + '% ' + f.y + '%;' +
-         'transform:scale(' + (f.zoom / 100) + ');transform-origin:' + f.x + '% ' + f.y + '%;"></div>';
+         'background-position:' + px + '% ' + py + '%;' +
+         'transform:scale(' + (f.zoom / 100) + ');transform-origin:' + px + '% ' + py + '%;"></div>';
 }
 
 /* siguiente número correlativo global (a partir del número más alto en todos los códigos) */

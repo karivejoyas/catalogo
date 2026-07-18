@@ -135,11 +135,43 @@ const KV_SIN_FOTO = 'repeating-linear-gradient(45deg, rgba(122,47,176,0.08) 0 11
 /* ¿el producto está disponible? (sin campo = disponible) */
 function kvEnStock(p) { return !p || p.stock !== false; }
 
-/* precio de oferta válido (mayor que 0 y menor que el original), o 0 si no hay */
+/* ---------- descuento global a todo el catálogo ---------- */
+// por defecto (hasta que la admin lo configure): 20% hasta el 19-07-2026 (una semana)
+function kvDescuentoDefault() { return { pct: 20, hasta: '2026-07-19' }; }
+function kvDescuentoConfig(settings) {
+  settings = settings || {};
+  return (settings.descuentoGlobal !== undefined && settings.descuentoGlobal !== null)
+    ? settings.descuentoGlobal : kvDescuentoDefault();
+}
+// devuelve {pct, hasta} si el descuento está activo (pct>0 y no vencido), o null
+function kvDescuentoActivo(settings) {
+  const d = kvDescuentoConfig(settings);
+  const pct = Number(d && d.pct) || 0;
+  if (pct <= 0) return null;
+  const hasta = (d && d.hasta) || '';
+  if (hasta) {
+    const fin = new Date(hasta + 'T23:59:59');
+    if (!isNaN(fin.getTime()) && Date.now() > fin.getTime()) return null;   // ya venció
+  }
+  return { pct: pct, hasta: hasta };
+}
+// estado global que leen kvPrecioOferta y compañía (lo fija cada página al cargar la config)
+var _kvDesc = null;
+function kvSetDescuento(settings) { _kvDesc = kvDescuentoActivo(settings); }
+function kvDescuentoVigente() { return _kvDesc; }
+
+/* precio de oferta válido (mayor que 0 y menor que el original), o 0 si no hay.
+   considera la oferta manual del producto Y el descuento global; gana el menor precio. */
 function kvPrecioOferta(p) {
-  const o = Number(p && p.priceOffer) || 0;
   const base = Number(p && p.price) || 0;
-  return (o > 0 && o < base) ? o : 0;
+  let mejor = 0;
+  const o = Number(p && p.priceOffer) || 0;
+  if (o > 0 && o < base) mejor = o;
+  if (_kvDesc && base > 0) {
+    const g = Math.round(base * (1 - _kvDesc.pct / 100) / 10) * 10;   // redondeado a $10
+    if (g > 0 && g < base && (mejor === 0 || g < mejor)) mejor = g;
+  }
+  return mejor;
 }
 
 /* encuadre de la foto: posición X/Y (%) y zoom (%) — por defecto centrado */

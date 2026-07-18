@@ -116,6 +116,11 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-grid .cat-card-precio{font-size:clamp(16.5px,4.8vw,20px);}
 
 /* menú de colecciones (hamburguesa en móvil) */
+.fb-share{margin-right:auto;display:inline-flex;align-items:center;gap:7px;background:rgba(43,217,104,0.14);border:1px solid rgba(43,217,104,0.5);border-radius:999px;padding:7px 15px 7px 12px;color:#37d968;font-family:'Jost',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .16s;}
+.fb-share svg{width:18px;height:18px;}
+.fb-share:hover{background:#2bd968;color:#fff;border-color:#2bd968;transform:translateY(-1px);}
+.fb-share.copiado{background:#2bd968;color:#fff;border-color:#2bd968;}
+@media (max-width:560px){.fb-share span{display:none;}.fb-share{padding:8px;}}
 .fb-nav-wrap{position:relative;display:flex;align-items:center;}
 .fb-menu-btn{display:none;align-items:center;gap:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(201,162,75,0.45);border-radius:999px;padding:7px 14px;color:var(--kv-dorado-cl);font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;cursor:pointer;}
 .fb-menu-btn .fb-hamb{font-size:15px;line-height:1;}
@@ -400,6 +405,19 @@ body.fb-lb-open{overflow:hidden;}
 @keyframes kvGloboIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
 .kv-chat-pulso{animation:kvPulso 2s ease-in-out infinite;}
 @keyframes kvPulso{0%,100%{box-shadow:0 10px 28px rgba(0,0,0,0.45);}50%{box-shadow:0 10px 28px rgba(0,0,0,0.45),0 0 0 10px rgba(227,197,114,0.25);}}
+/* descuento global (admin) */
+.adm-descuento{max-width:640px;}
+.adm-desc-toggle{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--kv-crema);cursor:pointer;margin-bottom:14px;}
+.adm-desc-toggle input{width:18px;height:18px;accent-color:var(--kv-dorado-cl);cursor:pointer;}
+.adm-desc-campos{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;}
+.adm-desc-campo{display:flex;flex-direction:column;gap:6px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#8f7aa0;}
+.adm-desc-pctwrap{display:flex;align-items:center;gap:7px;color:var(--kv-crema);font-size:16px;}
+.adm-desc-pctwrap .adm-input{width:90px;}
+.adm-desc-campo .adm-input{max-width:190px;}
+.adm-desc-estado{font-size:13px;font-weight:500;}
+.adm-desc-estado.es-on{color:#7fd39a;}
+.adm-desc-estado.es-off{color:#b79ac9;}
+
 /* botón flotante de WhatsApp (junto al chat) */
 .kv-wa-btn{position:fixed;right:16px;bottom:16px;z-index:80;width:54px;height:54px;border-radius:50%;background:linear-gradient(150deg,#2bd968,#1aa851);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(0,0,0,0.4);text-decoration:none;animation:kvWaFlota 3.4s ease-in-out infinite;transition:transform .18s;}
 .kv-wa-btn[hidden]{display:none;}

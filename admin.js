@@ -58,6 +58,7 @@
     }, (err) => console.error('Error leyendo productos:', err));
     unsubSettings = settingsRef.onSnapshot((doc) => {
       settings = doc.data() || {};
+      kvSetDescuento(settings);
       poblarCampos();
       renderCatsEditorGuarded();
       renderProductosGuarded();
@@ -1051,6 +1052,39 @@
       .catch(err => console.error(err));
   });
 
+  // ---------- descuento global a todo el catálogo ----------
+  function descFmtFecha(iso) { const p = String(iso || '').split('-'); return p.length === 3 ? p[2] + '-' + p[1] + '-' + p[0] : (iso || ''); }
+  function descFechaSemana() { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().slice(0, 10); }
+  function poblarDescuento() {
+    if (!$('adm-desc-activo')) return;
+    const cfg = kvDescuentoConfig(settings);
+    const pct = Number(cfg.pct) || 0, on = pct > 0;
+    if (activo() !== $('adm-desc-activo')) $('adm-desc-activo').checked = on;
+    if (activo() !== $('adm-desc-pct')) $('adm-desc-pct').value = on ? pct : 20;
+    if (activo() !== $('adm-desc-hasta')) $('adm-desc-hasta').value = cfg.hasta || descFechaSemana();
+    const vig = kvDescuentoActivo(settings), el = $('adm-desc-estado');
+    if (vig) { el.textContent = '● Activo: −' + vig.pct + '% en todo el catálogo' + (vig.hasta ? ' hasta el ' + descFmtFecha(vig.hasta) : ''); el.className = 'adm-desc-estado es-on'; }
+    else if (on && cfg.hasta) { el.textContent = '● Venció el ' + descFmtFecha(cfg.hasta) + ' — sin descuento activo'; el.className = 'adm-desc-estado es-off'; }
+    else { el.textContent = '● Sin descuento activo'; el.className = 'adm-desc-estado es-off'; }
+  }
+  function previewDescuento() {
+    const el = $('adm-desc-estado'); if (!el) return;
+    const on = $('adm-desc-activo').checked, pct = parseInt($('adm-desc-pct').value, 10) || 0, hasta = $('adm-desc-hasta').value;
+    if (on && pct > 0) { el.textContent = 'Se aplicará −' + pct + '%' + (hasta ? ' hasta el ' + descFmtFecha(hasta) : ' (sin fecha de término)') + ' — recuerda Guardar'; el.className = 'adm-desc-estado es-on'; }
+    else { el.textContent = 'Sin descuento — recuerda Guardar'; el.className = 'adm-desc-estado es-off'; }
+  }
+  if ($('adm-desc-guardar')) {
+    ['adm-desc-activo', 'adm-desc-pct', 'adm-desc-hasta'].forEach(id => { const e = $(id); e.addEventListener('input', previewDescuento); e.addEventListener('change', previewDescuento); });
+    $('adm-desc-guardar').addEventListener('click', () => {
+      const on = $('adm-desc-activo').checked;
+      const pct = Math.max(0, Math.min(90, parseInt($('adm-desc-pct').value, 10) || 0));
+      const hasta = $('adm-desc-hasta').value || '';
+      const descuentoGlobal = (on && pct > 0) ? { pct: pct, hasta: hasta } : { pct: 0, hasta: '' };
+      settingsRef.set({ descuentoGlobal: descuentoGlobal }, { merge: true })
+        .then(() => guardado('adm-desc-ok')).catch(err => console.error(err));
+    });
+  }
+
   function descargarPostIG(id, btn) {
     const p = products.find(x => x.id === id); if (!p) return Promise.resolve();
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Generando…'; }
@@ -1222,6 +1256,7 @@
 
   // ---------- poblar campos desde settings ----------
   function poblarCampos() {
+    poblarDescuento();
     if (activo() !== $('adm-ig')) $('adm-ig').value = settings.instagram || '';
     if (activo() !== $('adm-fb')) $('adm-fb').value = settings.facebook || '';
     if (activo() !== $('adm-wa')) $('adm-wa').value = settings.whatsapp || '';

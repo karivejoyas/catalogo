@@ -116,11 +116,6 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-grid .cat-card-precio{font-size:clamp(16.5px,4.8vw,20px);}
 
 /* menú de colecciones (hamburguesa en móvil) */
-.fb-share{margin-right:auto;display:inline-flex;align-items:center;gap:7px;background:rgba(43,217,104,0.14);border:1px solid rgba(43,217,104,0.5);border-radius:999px;padding:7px 15px 7px 12px;color:#37d968;font-family:'Jost',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .16s;}
-.fb-share svg{width:18px;height:18px;}
-.fb-share:hover{background:#2bd968;color:#fff;border-color:#2bd968;transform:translateY(-1px);}
-.fb-share.copiado{background:#2bd968;color:#fff;border-color:#2bd968;}
-@media (max-width:560px){.fb-share span{display:none;}.fb-share{padding:8px;}}
 .fb-nav-wrap{position:relative;display:flex;align-items:center;}
 .fb-menu-btn{display:none;align-items:center;gap:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(201,162,75,0.45);border-radius:999px;padding:7px 14px;color:var(--kv-dorado-cl);font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;cursor:pointer;}
 .fb-menu-btn .fb-hamb{font-size:15px;line-height:1;}
@@ -176,6 +171,10 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .adm-btn-borde{font-family:'Jost',sans-serif;font-size:12px;color:var(--kv-lavanda);background:transparent;border:1px solid rgba(203,183,216,0.35);border-radius:999px;padding:9px 14px;cursor:pointer;}
 .adm-btn-solido{font-family:'Jost',sans-serif;font-size:13px;font-weight:500;color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border:none;border-radius:999px;padding:9px 18px;cursor:pointer;}
 .adm-guardado{font-size:12.5px;color:#7fd39a;}
+.adm-btn-compartir{display:inline-flex;align-items:center;gap:7px;background:rgba(43,217,104,0.14);border:1px solid rgba(43,217,104,0.5);border-radius:999px;padding:8px 15px 8px 12px;color:#2bb85c;font-family:'Jost',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:all .16s;}
+.adm-btn-compartir svg{width:17px;height:17px;}
+.adm-btn-compartir:hover{background:#2bd968;color:#fff;border-color:#2bd968;}
+.adm-btn-compartir.ok{background:#2bd968;color:#fff;border-color:#2bd968;}
 
 .adm-seccion{max-width:1180px;margin:0 auto;padding:34px 24px 10px;}
 .adm-seccion-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:30px;color:var(--kv-crema);margin:0 0 4px;}

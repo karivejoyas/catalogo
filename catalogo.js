@@ -183,19 +183,6 @@
       go(parseInt(a.dataset.i, 10));
     }));
   }
-  // ---------- compartir catálogo por WhatsApp ----------
-  const shareBtn = $('fb-share');
-  if (shareBtn) shareBtn.addEventListener('click', async () => {
-    const url = location.origin + location.pathname;
-    const texto = '✨ Mira el catálogo de Karivé Joyas 💜 Joyas artesanales hechas a mano.\n' + url;
-    // en el celular abre el menú nativo (WhatsApp y más); si no, va directo a WhatsApp
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Karivé Joyas', text: '✨ Mira el catálogo de Karivé Joyas 💜', url: url }); return; }
-      catch (e) { if (e && e.name === 'AbortError') return; }
-    }
-    window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank', 'noopener');
-  });
-
   function cerrarMenu() { nav.classList.remove('abierto'); menuBtn.classList.remove('abierto'); }
   menuBtn.addEventListener('click', () => { nav.classList.toggle('abierto'); menuBtn.classList.toggle('abierto'); });
   document.addEventListener('click', (e) => {

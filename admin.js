@@ -38,6 +38,21 @@
     });
   });
 
+  // ---------- compartir el catálogo (por WhatsApp / menú nativo / copiar link) ----------
+  const btnCompartir = $('adm-compartir');
+  if (btnCompartir) btnCompartir.addEventListener('click', async () => {
+    const url = location.origin + location.pathname.replace(/[^/]*$/, '');   // carpeta del catálogo (index.html)
+    const texto = '✨ Mira el catálogo de Karivé Joyas 💜 Joyas artesanales hechas a mano.\n' + url;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Karivé Joyas', text: '✨ Mira el catálogo de Karivé Joyas 💜', url: url }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    try { await navigator.clipboard.writeText(url); } catch (e) {}
+    const txt = $('adm-compartir-txt');
+    if (txt) { const prev = txt.textContent; btnCompartir.classList.add('ok'); txt.textContent = '✓ Link copiado'; setTimeout(() => { txt.textContent = prev; btnCompartir.classList.remove('ok'); }, 2200); }
+    window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank', 'noopener');
+  });
+
   // mantiene el menú superior fijo: mide su alto para que las barras internas se peguen justo debajo
   (function ajustarHeader() {
     const h = document.getElementById('adm-header');

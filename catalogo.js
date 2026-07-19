@@ -532,14 +532,32 @@
       if (chHist.length > 16) chHist.splice(0, chHist.length - 16);
       ocupado = false; send.disabled = false; input.focus();
     }
+    // en celular el panel es pantalla completa: se ancla al área visible real
+    // (cuando aparece el teclado, el panel se encoge y el escribir queda a la vista)
+    function ajustarVisor() {
+      if (panel.hidden) return;
+      if (window.innerWidth > 640) { panel.style.transform = ''; document.documentElement.style.removeProperty('--kv-vvh'); return; }
+      const vv = window.visualViewport;
+      if (!vv) return;
+      document.documentElement.style.setProperty('--kv-vvh', vv.height + 'px');
+      panel.style.transform = 'translateY(' + vv.offsetTop + 'px)';
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', ajustarVisor);
+      window.visualViewport.addEventListener('scroll', ajustarVisor);
+    }
     function abrir() {
       panel.hidden = false; globo.hidden = true; btn.classList.remove('kv-chat-pulso');
       try { sessionStorage.setItem('kv_chat_visto', '1'); } catch (e) {}
+      ajustarVisor();
       input.focus();
+      msgs.scrollTop = msgs.scrollHeight;
     }
-    btn.addEventListener('click', () => { if (panel.hidden) abrir(); else panel.hidden = true; });
+    function cerrar() { input.blur(); panel.hidden = true; panel.style.transform = ''; }
+    btn.addEventListener('click', () => { if (panel.hidden) abrir(); else cerrar(); });
     globo.addEventListener('click', abrir);
-    panel.querySelector('#kv-chat-x').addEventListener('click', () => { panel.hidden = true; });
+    panel.querySelector('#kv-chat-x').addEventListener('click', cerrar);
     send.addEventListener('click', enviar);
     input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); enviar(); } });
     // invitación: aparece a los 6 segundos (una vez por visita) y el botón late suavecito

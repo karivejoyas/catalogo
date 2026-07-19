@@ -526,6 +526,15 @@ body.fb-lb-open{overflow:hidden;}
 /* en móvil el globo de invitación no choca con los botones */
 @media (max-width:520px){.kv-chat-globo{left:16px;bottom:82px;}}
 
+/* en celular el chat ocupa toda la pantalla y se ajusta al teclado */
+@media (max-width:640px){
+  .kv-chat{left:0;right:0;top:0;bottom:auto;width:100%;height:var(--kv-vvh,100dvh);border-radius:0;border:none;}
+  .kv-chat-top{padding:14px 16px;}
+  .kv-chat-m{font-size:14px;}
+  .kv-chat-fila{padding:10px 12px calc(10px + env(safe-area-inset-bottom));}
+  .kv-chat-fila input{font-size:16px;} /* 16px evita el zoom automático de iOS al escribir */
+}
+
 /* puntitos de "escribiendo" */
 .kv-chat-dots{display:inline-flex;gap:5px;padding:3px 2px;}
 .kv-chat-dots span{width:7px;height:7px;border-radius:50%;background:var(--kv-lavanda,#CBB7D8);animation:kvDot 1.2s infinite;}

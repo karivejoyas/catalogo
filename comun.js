@@ -413,6 +413,8 @@ function kvGenerarPostIG(p, settings, focoOverride) {
     .then(([foto, logo]) => {
       const c = document.createElement('canvas'); c.width = S; c.height = S;
       const g = c.getContext('2d');
+      g.imageSmoothingEnabled = true;
+      g.imageSmoothingQuality = 'high';   // sin esto el navegador escala en calidad baja (foto y logo pixelados)
       // ---- foto COMPLETA (contain) sin barras planas: el fondo se rellena con la misma foto difuminada ----
       if (foto) {
         g.fillStyle = kvColorFondo(foto); g.fillRect(0, 0, S, S);   // base por si el navegador no soporta desenfoque
@@ -442,7 +444,7 @@ function kvGenerarPostIG(p, settings, focoOverride) {
         g.restore();
       }
       // (sin etiqueta "OFERTA": las imágenes que se publican salen limpias)
-      return c.toDataURL('image/jpeg', 0.92);
+      return c.toDataURL('image/jpeg', 0.95);
     });
 }
 
@@ -555,16 +557,28 @@ function kvCompressPhoto(file, cb, max, quality) {
   reader.onload = (ev) => {
     const img = new Image();
     img.onload = () => {
-      let w = img.width, h = img.height;
-      const scale = Math.min(1, max / Math.max(w, h));
-      w = Math.round(w * scale); h = Math.round(h * scale);
-      const c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      const ctx = c.getContext('2d');
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0, w, h);
-      let data;
-      try { data = c.toDataURL('image/jpeg', quality); } catch (err) { data = ev.target.result; }
+      const render = (mx, q) => {
+        let w = img.width, h = img.height;
+        const scale = Math.min(1, mx / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h);
+        try { return c.toDataURL('image/jpeg', q); } catch (err) { return ev.target.result; }
+      };
+      // la foto debe caber holgada en la base (límite de 1MB por producto):
+      // si sale muy pesada se reintenta un poco más chica hasta que quepa
+      const pasos = [
+        [max, quality],
+        [Math.round(max * 0.85), Math.min(quality, 0.8)],
+        [Math.round(max * 0.7), 0.75],
+        [900, 0.72]
+      ];
+      let data = ev.target.result;
+      for (const [mx, q] of pasos) { data = render(mx, q); if (data.length < 950000) break; }
       cb(data);
     };
     img.src = ev.target.result;

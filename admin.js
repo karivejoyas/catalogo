@@ -377,7 +377,7 @@
         const card = $('adm-categorias').querySelector('.cat-card-edit[data-id="' + id + '"]');
         const bg = card && card.querySelector('.kv-fbg');
         if (bg) bg.style.backgroundImage = "url('" + data + "')"; else renderProductos();
-      }, 1000, 0.88);
+      }, 1600, 0.87);
       e.target.value = '';
     }));
   }
@@ -992,7 +992,15 @@
     });
   }
 
-  const IA_SISTEMA_MARCA = 'Eres la community manager de Karivé Joyas, una marca chilena de joyas artesanales hechas a mano (arcilla polimérica, miyuki, mostacillas). Escribes en español de Chile, con tono cálido y cercano. La marca solo hace envíos a todo Chile (NO hay retiros) y los pedidos son por DM de Instagram.';
+  const IA_SISTEMA_MARCA = 'Eres la community manager de Karivé Joyas, una marca chilena de joyas artesanales hechas a mano (arcilla polimérica, miyuki, mostacillas). Escribes en español de Chile, con tono cálido y cercano. La marca solo hace envíos a todo Chile (NO hay retiros) y los pedidos son por DM de Instagram.\n\n' +
+    'GUÍA DE ESTILO (basada en lo que mejor funciona en cuentas de joyería artesanal exitosas — síguela siempre):\n' +
+    '- Parte con un GANCHO breve que conecte con una emoción o un momento de uso (ej: "Ese detalle que transforma un look sencillo…", "Para regalarte o sorprender a alguien especial…", o una pregunta directa). NUNCA partas con fórmulas planas tipo "Descubre nuestra nueva colección".\n' +
+    '- Vende el SIGNIFICADO, no la ficha técnica: qué transmite la pieza, cómo se siente usarla, para qué ocasión sirve (regalo, uso diario, fecha especial).\n' +
+    '- Destaca el valor de lo hecho a mano: cada pieza es única, hay dedicación y detalle detrás, es apoyar un emprendimiento chileno.\n' +
+    '- Tono de emprendimiento profesional y serio, pero cercano y humano. Emojis con moderación (3 a 6 en todo el post), nada recargado.\n' +
+    '- Cierra siempre con una llamada a la acción clara antes de las líneas fijas.\n' +
+    '- LÍNEAS FIJAS DE LA MARCA (van siempre al final del post, cada una en su propia línea, y NUNCA las borres ni las cambies):\n' +
+    '💜 Hecho a mano con mucho amor\n📩 Pedidos por DM\n🚚 Envíos a todo Chile';
 
   // datos reales de los productos elegidos, para que la IA los mencione por su nombre
   function igIAContexto(prods) {
@@ -1024,7 +1032,7 @@
           '- SÍ puedes hablar del TIPO o TEMA de las joyas que se ven (por ejemplo: si son corazones, flores, mariposas…) y describir ese estilo de forma general y bonita.\n' +
           '- NO menciones nombres de productos, NI precios, NI enumeres los colores uno por uno (nada de "el corazón rojo, el verde, el azul…"). Habla del conjunto, no de piezas individuales.\n' +
           '- Invita a ver el catálogo completo así: una línea que diga "🔗 Míralo en el link de nuestra bio" y, en la línea de abajo, el enlace tal cual: ' + KV_CATALOGO_URL + '\n' +
-          '- Termina con "📩 Pedidos por DM" y "🚚 Envíos a todo Chile".\n' +
+          '- Termina con las 3 líneas fijas de la marca (💜 Hecho a mano con mucho amor / 📩 Pedidos por DM / 🚚 Envíos a todo Chile), cada una en su línea.\n' +
           '- Texto bien espaciado (frases cortas con saltos de línea), cálido y natural.\n\n' +
           igIAContextoGeneral(prods) + (tags.length ? '\n\nAgrega al final, en su propia línea, estos hashtags tal cual:\n' + tags.join(' ') : '') +
           '\n\nResponde SOLO con la descripción, sin comentarios.', images: imgs }
@@ -1047,7 +1055,7 @@
       const texto = await iaLlamar([
         { role: 'system', content: IA_SISTEMA_MARCA + '\n\n' + igIAContexto(prods) + '\n\nREGLAS DE FORMATO (respétalas siempre):\n' +
           '- Devuelve el texto BIEN ESPACIADO, como un post real de Instagram: frases cortas, con saltos de línea y una línea en blanco entre bloques. NUNCA lo dejes todo pegado en un solo párrafo.\n' +
-          '- Conserva el cierre "📩 Pedidos por DM" y "🚚 Envíos a todo Chile", cada uno en su propia línea.\n' +
+          '- Conserva SIEMPRE las 3 líneas fijas del cierre, cada una en su propia línea: "💜 Hecho a mano con mucho amor", "📩 Pedidos por DM" y "🚚 Envíos a todo Chile". Si alguna falta en el texto actual, agrégala. NUNCA las borres aunque el pedido parezca implicarlo.\n' +
           '- Si el texto actual trae hashtags al final, déjalos en su propia línea al final (a menos que te pidan quitarlos).\n' +
           '- Modifica SOLO lo que la usuaria pide; el resto de la estructura la mantienes.' },
         { role: 'user', content: 'Este es el texto actual del post (respétale la estructura y el espaciado):\n---\n' + actual + '\n---\n\nHaz esto que te pido: ' + pedido + '\n\nUsa los nombres reales de los productos cuando corresponda. Responde SOLO con la descripción final, ya formateada con sus saltos de línea, sin explicaciones ni comentarios.' }

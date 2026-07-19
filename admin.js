@@ -125,15 +125,41 @@
     const card = cont && cont.querySelector('.cat-card-edit[data-id="' + id + '"]');
     if (card) card.classList.toggle('ed-dirty', tieneBorrador(id));
   }
+  // aviso de cambios sin guardar: chip en la barra de colecciones, con desplegable de códigos
   function actualizarBannerPend() {
-    const bar = $('adm-pend-bar'); if (!bar) return;
+    const slot = $('adm-pend-slot'); if (!slot) return;
     const ids = Object.keys(borradores).filter(tieneBorrador);
-    if (!ids.length) { bar.hidden = true; bar.innerHTML = ''; return; }
-    const codes = ids.map(id => { const p = products.find(x => x.id === id); return vista(p || {}).code || id; });
-    bar.innerHTML = '⚠ Tienes cambios <b>sin guardar</b> en: <b>' + codes.map(escapeHtml).join(', ') + '</b> ' +
-      '<button type="button" id="adm-pend-todo" class="adm-btn-solido adm-btn-mini">Guardar todo</button>';
-    bar.hidden = false;
+    const ddPrevio = slot.querySelector('details');
+    const abierto = !!(ddPrevio && ddPrevio.open);
+    if (!ids.length) { slot.innerHTML = ''; return; }
+    const cats = kvCategorias(settings);
+    const grupos = {};
+    ids.forEach(id => {
+      const p = products.find(x => x.id === id); if (!p) return;
+      const m = vista(p);
+      const cat = cats.find(c => c.id === m.category);
+      const nom = cat ? cat.nombre : 'Sin colección';
+      (grupos[nom] = grupos[nom] || []).push({ id: id, code: m.code || '(sin código)' });
+    });
+    const noms = Object.keys(grupos);
+    let panel = '';
+    noms.forEach(n => {
+      panel += '<div class="adm-pend-grupo"><b>' + escapeHtml(n) + ':</b> ' +
+        grupos[n].map(x => '<span class="adm-pend-cod" data-goto-card="' + x.id + '">' + escapeHtml(x.code) + '</span>').join('') + '</div>';
+    });
+    slot.innerHTML =
+      '<details class="adm-pend-dd"' + (abierto ? ' open' : '') + '>' +
+        '<summary>⚠ Sin guardar en ' + noms.map(escapeHtml).join(', ') + ' <b>(' + ids.length + ')</b></summary>' +
+        '<div class="adm-pend-panel">' +
+          '<div class="adm-pend-hint">Toca un código para ir al producto:</div>' + panel +
+          '<button type="button" id="adm-pend-todo" class="adm-btn-solido adm-btn-mini">💾 Guardar todo</button>' +
+        '</div>' +
+      '</details>';
     const btn = $('adm-pend-todo'); if (btn) btn.addEventListener('click', guardarTodo);
+    slot.querySelectorAll('[data-goto-card]').forEach(n => n.addEventListener('click', () => {
+      const card = document.querySelector('.cat-card-edit[data-id="' + n.dataset.gotoCard + '"]');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }));
   }
 
   // valida un producto ya combinado con su borrador -> {errores:[], avisos:[]}
@@ -262,7 +288,7 @@
     let nav = '<div class="adm-secnav">';
     cats.forEach(cat => { const n = products.filter(p => p.category === cat.id).length; nav += '<button type="button" class="adm-secnav-btn" data-goto="sec-' + cat.id + '">' + escapeHtml(cat.nombre) + ' <span>' + n + '</span></button>'; });
     if (huerfanos.length) nav += '<button type="button" class="adm-secnav-btn" data-goto="sec-huerfanos">Sin colección <span>' + huerfanos.length + '</span></button>';
-    nav += '</div>';
+    nav += '<span class="adm-pend-slot" id="adm-pend-slot"></span></div>';
     let html = nav;
     cats.forEach(cat => {
       const items = products.filter(p => p.category === cat.id);

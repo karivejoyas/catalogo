@@ -192,7 +192,17 @@
     if (!silencioso && v.avisos.length) {
       if (!window.confirm('⚠ Revisa esto:\n\n• ' + v.avisos.join('\n• ') + '\n\n¿Guardar de todas formas?')) return false;
     }
-    itemsCol.doc(id).update(b).then(() => { delete borradores[id]; actualizarBannerPend(); }).catch(err => console.error('Error guardando:', err));
+    // limpieza optimista: la tarjeta queda "guardada" al instante; si falla, se restaura el borrador
+    delete borradores[id];
+    marcarDirty(id);
+    actualizarBannerPend();
+    itemsCol.doc(id).update(b).catch(err => {
+      console.error('Error guardando:', err);
+      borradores[id] = Object.assign({}, b, borradores[id] || {});
+      marcarDirty(id);
+      actualizarBannerPend();
+      window.alert('No se pudo guardar (revisa tu conexión) y el cambio sigue pendiente. Intenta de nuevo.');
+    });
     return true;
   }
   function guardarTodo() {

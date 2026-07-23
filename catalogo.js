@@ -153,7 +153,10 @@
     const aplicar = () => {
       let max = 0;
       ets.forEach(e => { e.style.minHeight = ''; max = Math.max(max, e.getBoundingClientRect().height); });
-      ets.forEach(e => { e.style.minHeight = Math.ceil(max) + 'px'; });
+      const m = Math.ceil(max);
+      ets.forEach(e => { e.style.minHeight = m + 'px'; });
+      // le avisa a la foto cuánto mide la etiqueta, para que ocupe justo el espacio de arriba
+      page.querySelectorAll('.fb-grid .cat-card').forEach(c => c.style.setProperty('--kv-etiq', m + 'px'));
     };
     aplicar();
     requestAnimationFrame(aplicar);      // por si el texto se reacomodó al pintar

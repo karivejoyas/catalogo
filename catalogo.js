@@ -388,8 +388,9 @@
       '<div class="kv-cart-sec-tit">Envío</div>' +
       inp('direccion', 'Dirección (calle y número, depto…) *') +
       inp('comuna', 'Comuna *') +
-      '<select class="kv-cart-inp" data-campo="region"><option value="">Región *</option>' +
-        KV_REGIONES.map(r => '<option value="' + r + '"' + (f.region === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select>' +
+      '<div class="kv-cart-selwrap"><select class="kv-cart-inp kv-cart-sel' + (f.region ? '' : ' vacio') + '" data-campo="region">' +
+        '<option value="" disabled' + (f.region ? '' : ' selected') + '>Región *</option>' +
+        KV_REGIONES.map(r => '<option value="' + r + '"' + (f.region === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select><span class="kv-cart-selflecha">▾</span></div>' +
       inp('notas', 'Nota para tu pedido (opcional)');
     // resumen
     h += '<div class="kv-cart-sec-tit">Resumen</div><div class="kv-cart-resumen">';
@@ -405,8 +406,9 @@
       h += '<div><b>' + escapeHtml(t.titular) + '</b></div>' +
         (t.rut ? '<div>RUT: ' + escapeHtml(t.rut) + '</div>' : '') +
         '<div>' + escapeHtml(t.banco) + (t.tipo ? ' · ' + escapeHtml(t.tipo) : '') + '</div>' +
-        '<div>N° de cuenta: <b>' + escapeHtml(t.numero) + '</b> <button type="button" class="kv-cart-copy" data-copy="' + escapeHtml(t.numero) + '">copiar</button></div>' +
-        (t.correo ? '<div>' + escapeHtml(t.correo) + '</div>' : '');
+        '<div>N° de cuenta: <b>' + escapeHtml(t.numero) + '</b></div>' +
+        (t.correo ? '<div>' + escapeHtml(t.correo) + '</div>' : '') +
+        '<button type="button" class="kv-cart-copiartodo" data-role="copiar-transf">📋 Copiar todos los datos</button>';
     } else {
       h += '<div>Escríbenos por WhatsApp o DM y te damos los datos de transferencia 💜</div>';
     }
@@ -471,9 +473,13 @@
         if (n.dataset.campo === 'region') carroRender();   // recalcula el envío
       });
     });
-    carritoEl.querySelectorAll('.kv-cart-copy').forEach(n => n.addEventListener('click', () => {
-      try { navigator.clipboard.writeText(n.dataset.copy); n.textContent = '✓ copiado'; } catch (e) {}
-    }));
+    const cpt = carritoEl.querySelector('[data-role="copiar-transf"]');
+    if (cpt) cpt.addEventListener('click', () => {
+      // todos los datos juntos: las apps de los bancos los reconocen y rellenan solos
+      const t = kvTransferencia(settings);
+      const txt = [t.titular, t.rut ? 'RUT: ' + t.rut : '', t.banco, t.tipo, t.numero, t.correo].filter(Boolean).join('\n');
+      try { navigator.clipboard.writeText(txt); cpt.textContent = '✓ Datos copiados — pégalos en tu banco'; } catch (e) {}
+    });
     const comp = carritoEl.querySelector('#kv-cart-comp');
     if (comp) comp.addEventListener('change', e => {
       const file = e.target.files && e.target.files[0];

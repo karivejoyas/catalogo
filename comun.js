@@ -471,12 +471,12 @@ function kvCardHtml(p) {
         (!p.photo ? '<span class="cat-card-sinfoto">✦</span>' : '') +
         oferta +
         '<span class="cat-card-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="8" x2="11" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>' +
-        '<button type="button" class="cat-card-add" data-role="cart-add" data-id="' + p.id + '" aria-label="Agregar ' + escapeHtml(p.name) + ' al carrito">🛒<span class="cat-card-add-txt"> Agregar</span></button>' +
       '</div>' +
       '<div class="cat-card-etiqueta">' +
         '<div class="cat-card-nombre"><span>' + escapeHtml(p.name) + '</span></div>' +
         '<div class="cat-card-detalle">' + escapeHtml(p.detail || '') + '</div>' +
         '<div class="cat-card-pie"><span class="cat-card-codigo">' + escapeHtml(p.code) + '</span>' + kvPrecioHtml(p) + '</div>' +
+        '<button type="button" class="cat-card-addbtn" data-role="cart-add" data-id="' + p.id + '">🛒 Agregar al carrito</button>' +
       '</div>' +
     '</div>'
   );

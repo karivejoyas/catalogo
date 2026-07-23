@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260745" />
+<link rel="stylesheet" href="catalogo.css?v=20260746" />
 </head>
 <body>
 
@@ -45,6 +45,7 @@
     <div class="adm-drawer-tit">Menú <button class="adm-drawer-x" id="adm-drawer-x" aria-label="Cerrar menú">✕</button></div>
     <div class="adm-tabs" id="adm-tabs">
       <button class="adm-tab is-active" data-tab="productos">Productos</button>
+      <button class="adm-tab" data-tab="pedidos">🛍 Pedidos <span class="adm-ped-badge" id="adm-ped-badge" hidden></span></button>
       <button class="adm-tab" data-tab="descuento">Descuentos</button>
       <button class="adm-tab" data-tab="diseno">Diseño y colores</button>
       <button class="adm-tab" data-tab="portada">Portada e info</button>
@@ -63,6 +64,32 @@
       </div>
     </div>
     <div id="adm-categorias"></div>
+    <div style="height:60px;"></div>
+  </div>
+
+  <!-- ===== PEDIDOS ===== -->
+  <div class="adm-panel" data-panel="pedidos" hidden>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">🛍 Pedidos</h2>
+      <p class="adm-seccion-sub">Aquí llegan las compras del carrito. Revisa el comprobante, avanza el estado y, al marcar <b>Enviado</b>, la clienta recibe un correo con su número de seguimiento.</p>
+      <div id="adm-pedidos-lista"><p class="adm-seccion-sub">Cargando pedidos…</p></div>
+    </section>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Datos de transferencia</h2>
+      <p class="adm-seccion-sub">Estos datos se le muestran a la clienta al finalizar su compra. <b>Complétalos para activar el carrito.</b></p>
+      <div class="adm-ped-conf">
+        <input id="adm-tr-titular" class="adm-input" placeholder="Nombre del titular *" />
+        <input id="adm-tr-rut" class="adm-input" placeholder="RUT del titular" />
+        <input id="adm-tr-banco" class="adm-input" placeholder="Banco (ej: BancoEstado) *" />
+        <input id="adm-tr-tipo" class="adm-input" placeholder="Tipo de cuenta (ej: CuentaRUT)" />
+        <input id="adm-tr-numero" class="adm-input" placeholder="Número de cuenta *" />
+        <input id="adm-tr-correo" class="adm-input" placeholder="Correo para avisos de transferencia" />
+      </div>
+      <div class="adm-guardar-fila">
+        <button id="adm-tr-guardar" class="adm-btn-solido">Guardar datos</button>
+        <span id="adm-tr-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      </div>
+    </section>
     <div style="height:60px;"></div>
   </div>
 
@@ -410,8 +437,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260745"></script>
-<script src="comun.js?v=20260745"></script>
-<script src="admin.js?v=20260745"></script>
+<script src="firebase-config.js?v=20260746"></script>
+<script src="comun.js?v=20260746"></script>
+<script src="admin.js?v=20260746"></script>
 </body>
 </html>

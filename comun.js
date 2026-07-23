@@ -471,6 +471,7 @@ function kvCardHtml(p) {
         (!p.photo ? '<span class="cat-card-sinfoto">✦</span>' : '') +
         oferta +
         '<span class="cat-card-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="8" x2="11" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>' +
+        '<button type="button" class="cat-card-add" data-role="cart-add" data-id="' + p.id + '" aria-label="Agregar ' + escapeHtml(p.name) + ' al carrito">🛒<span class="cat-card-add-txt"> Agregar</span></button>' +
       '</div>' +
       '<div class="cat-card-etiqueta">' +
         '<div class="cat-card-nombre"><span>' + escapeHtml(p.name) + '</span></div>' +
@@ -547,6 +548,44 @@ function kvCardEditHtml(p, cats) {
       '</div>' +
     '</div>'
   );
+}
+
+/* ============================================================
+   PEDIDOS (carrito de compras)
+   ============================================================ */
+var KV_REGIONES = [
+  'Arica y Parinacota', 'Tarapacá', 'Antofagasta', 'Atacama', 'Coquimbo',
+  'Valparaíso', 'Metropolitana de Santiago', "O'Higgins", 'Maule', 'Ñuble',
+  'Biobío', 'La Araucanía', 'Los Ríos', 'Los Lagos', 'Aysén', 'Magallanes'
+];
+var KV_REGION_RM = 'Metropolitana de Santiago';
+function kvEnvioCosto(region) { return region === KV_REGION_RM ? 2990 : 3990; }
+
+var KV_PEDIDO_ESTADOS = [
+  { id: 'nuevo',      nombre: 'Nuevo',            emoji: '🆕' },
+  { id: 'verificado', nombre: 'Pago verificado',  emoji: '✅' },
+  { id: 'preparando', nombre: 'Preparando',       emoji: '📦' },
+  { id: 'enviado',    nombre: 'Enviado',          emoji: '🚚' }
+];
+function kvPedidoEstado(id) {
+  return KV_PEDIDO_ESTADOS.find(e => e.id === id) || KV_PEDIDO_ESTADOS[0];
+}
+
+/* datos de transferencia configurados en el admin (con textos de ejemplo si faltan) */
+function kvTransferencia(settings) {
+  const t = (settings && settings.pedidos && settings.pedidos.transferencia) || {};
+  return {
+    titular: t.titular || '',
+    rut: t.rut || '',
+    banco: t.banco || '',
+    tipo: t.tipo || '',
+    numero: t.numero || '',
+    correo: t.correo || ''
+  };
+}
+function kvTransferenciaLista(settings) {
+  const t = kvTransferencia(settings);
+  return !!(t.titular && t.banco && t.numero);
 }
 
 function kvCompressPhoto(file, cb, max, quality) {

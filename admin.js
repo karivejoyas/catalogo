@@ -9,7 +9,9 @@
 
   const itemsCol = kvDb.collection('catalog').doc('products').collection('items');
   const settingsRef = kvDb.collection('catalog').doc('settings');
-  let unsubItems = null, unsubSettings = null;
+  const pedidosCol = kvDb.collection('catalog').doc('pedidos').collection('items');
+  let unsubItems = null, unsubSettings = null, unsubPedidos = null;
+  let pedidos = [];
 
   const guardado = (id) => { const n = $(id); if (!n) return; n.hidden = false; setTimeout(() => { n.hidden = true; }, 2000); };
   const activo = () => document.activeElement;
@@ -93,10 +95,15 @@
       renderProductosGuarded();
       renderIG();
     }, (err) => console.error('Error leyendo configuración:', err));
+    unsubPedidos = pedidosCol.onSnapshot((snap) => {
+      pedidos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderPedidos();
+    }, (err) => console.error('Error leyendo pedidos:', err));
   }
   function dejarDeEscuchar() {
     if (unsubItems) { unsubItems(); unsubItems = null; }
     if (unsubSettings) { unsubSettings(); unsubSettings = null; }
+    if (unsubPedidos) { unsubPedidos(); unsubPedidos = null; }
     products = [];
   }
   function sembrar() {
@@ -1464,5 +1471,136 @@
     const bye = Object.assign({}, KV_DESPEDIDA_DEFAULT, settings.despedida || {});
     if (activo() !== $('adm-bye-titulo')) $('adm-bye-titulo').value = bye.titulo || '';
     if (activo() !== $('adm-bye-msg')) $('adm-bye-msg').value = bye.mensaje || '';
+
+    const tr = kvTransferencia(settings);
+    [['adm-tr-titular', 'titular'], ['adm-tr-rut', 'rut'], ['adm-tr-banco', 'banco'], ['adm-tr-tipo', 'tipo'], ['adm-tr-numero', 'numero'], ['adm-tr-correo', 'correo']].forEach(([id, k]) => {
+      const inp = $(id); if (inp && activo() !== inp) inp.value = tr[k] || '';
+    });
+  }
+
+  // ============================================================
+  //  PEDIDOS (panel estilo tienda)
+  // ============================================================
+  $('adm-tr-guardar').addEventListener('click', () => {
+    const transferencia = {
+      titular: $('adm-tr-titular').value.trim(),
+      rut: $('adm-tr-rut').value.trim(),
+      banco: $('adm-tr-banco').value.trim(),
+      tipo: $('adm-tr-tipo').value.trim(),
+      numero: $('adm-tr-numero').value.trim(),
+      correo: $('adm-tr-correo').value.trim()
+    };
+    const ped = Object.assign({}, settings.pedidos || {}, { transferencia: transferencia });
+    settingsRef.set({ pedidos: ped }, { merge: true }).then(() => guardado('adm-tr-ok')).catch(err => console.error(err));
+  });
+
+  const pedidosAbiertos = {};   // id -> true (detalle expandido)
+  function pedFecha(iso) {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' }) + ' ' + d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return String(iso).slice(0, 16); }
+  }
+  function renderPedidos() {
+    const badge = $('adm-ped-badge');
+    const nuevos = pedidos.filter(p => (p.estado || 'nuevo') === 'nuevo').length;
+    if (badge) { badge.textContent = nuevos; badge.hidden = nuevos === 0; }
+    const cont = $('adm-pedidos-lista'); if (!cont) return;
+    if (!pedidos.length) {
+      cont.innerHTML = '<p class="adm-seccion-sub">Aún no hay pedidos. Cuando una clienta compre desde el carrito del catálogo, aparecerá aquí. 🛒</p>';
+      return;
+    }
+    const lista = pedidos.slice().sort((a, b) => (b.num || 0) - (a.num || 0));
+    cont.innerHTML = lista.map(p => {
+      const est = kvPedidoEstado(p.estado);
+      const abierto = !!pedidosAbiertos[p.id];
+      const items = (p.items || []).map(it => '<div class="ped-item"><span>' + it.qty + '× ' + escapeHtml(it.name) + ' <i>' + escapeHtml(it.code || '') + '</i></span><span>' + formatCLP((it.precio || 0) * it.qty) + '</span></div>').join('');
+      const dir = p.direccion || {}; const cli = p.cliente || {};
+      const telLimpio = String(cli.telefono || '').replace(/[^0-9]/g, '');
+      return '<div class="ped-card' + (abierto ? ' abierto' : '') + '" data-id="' + p.id + '">' +
+        '<button type="button" class="ped-head" data-role="ped-toggle" data-id="' + p.id + '">' +
+          '<span class="ped-num">#' + (p.num || '—') + '</span>' +
+          '<span class="ped-quien"><b>' + escapeHtml(cli.nombre || 'Sin nombre') + '</b><span>' + pedFecha(p.fecha) + ' · ' + (p.items || []).reduce((s, i) => s + i.qty, 0) + ' art.</span></span>' +
+          '<span class="ped-total">' + formatCLP(p.total || 0) + '</span>' +
+          '<span class="ped-estado ped-est-' + est.id + '">' + est.emoji + ' ' + est.nombre + '</span>' +
+        '</button>' +
+        (abierto ?
+        '<div class="ped-body">' +
+          '<div class="ped-cols">' +
+            '<div><div class="ped-sub">Artículos</div>' + items +
+              '<div class="ped-item ped-envio"><span>Envío (' + escapeHtml((p.envio || {}).region || '') + ')</span><span>' + formatCLP((p.envio || {}).costo || 0) + '</span></div>' +
+              '<div class="ped-item ped-tot"><span>Total</span><span>' + formatCLP(p.total || 0) + '</span></div>' +
+              (p.notas ? '<div class="ped-nota">📝 ' + escapeHtml(p.notas) + '</div>' : '') +
+            '</div>' +
+            '<div><div class="ped-sub">Cliente y envío</div>' +
+              '<div class="ped-dato">' + escapeHtml(cli.nombre || '') + '</div>' +
+              '<div class="ped-dato">📍 ' + escapeHtml(dir.calle || '') + ', ' + escapeHtml(dir.comuna || '') + '<br>' + escapeHtml(dir.region || '') + '</div>' +
+              '<div class="ped-dato">✉️ <a href="mailto:' + escapeHtml(cli.correo || '') + '">' + escapeHtml(cli.correo || '') + '</a></div>' +
+              '<div class="ped-dato">📱 <a target="_blank" rel="noopener" href="https://wa.me/' + telLimpio + '">' + escapeHtml(cli.telefono || '') + '</a></div>' +
+              '<div class="ped-sub" style="margin-top:10px;">Comprobante</div>' +
+              (p.comprobante ? '<a class="ped-comp" href="' + p.comprobante + '" target="_blank" rel="noopener" style="background-image:url(\'' + p.comprobante + '\')" title="Ver comprobante grande"></a>' : '<div class="ped-dato">⚠ Sin comprobante</div>') +
+            '</div>' +
+          '</div>' +
+          '<div class="ped-acciones">' +
+            (est.id === 'nuevo' ? '<button class="adm-btn-solido adm-btn-mini" data-role="ped-estado" data-id="' + p.id + '" data-est="verificado">✅ Pago verificado</button>' : '') +
+            (est.id === 'verificado' ? '<button class="adm-btn-solido adm-btn-mini" data-role="ped-estado" data-id="' + p.id + '" data-est="preparando">📦 Empezar a preparar</button>' : '') +
+            (est.id === 'preparando' ?
+              '<div class="ped-envio-form">' +
+                '<input class="adm-input" id="ped-courier-' + p.id + '" placeholder="Courier" value="' + escapeHtml(p.courier || 'Bluexpress') + '" />' +
+                '<input class="adm-input" id="ped-track-' + p.id + '" placeholder="N° de seguimiento" value="' + escapeHtml(p.tracking || '') + '" />' +
+                '<input class="adm-input" id="ped-turl-' + p.id + '" placeholder="Link de seguimiento (pégalo aquí)" value="' + escapeHtml(p.trackingUrl || '') + '" />' +
+                '<button class="adm-btn-solido adm-btn-mini" data-role="ped-enviar" data-id="' + p.id + '">🚚 Marcar enviado y avisar por correo</button>' +
+              '</div>' : '') +
+            (est.id === 'enviado' ?
+              '<div class="ped-enviado-info">🚚 ' + escapeHtml(p.courier || 'Bluexpress') + (p.tracking ? ' · ' + escapeHtml(p.tracking) : '') +
+              (p.trackingUrl ? ' · <a href="' + escapeHtml(p.trackingUrl) + '" target="_blank" rel="noopener">ver seguimiento</a>' : '') + '</div>' : '') +
+            (est.id !== 'nuevo' ? '<button class="adm-btn-borde adm-btn-mini" data-role="ped-estado" data-id="' + p.id + '" data-est="' + KV_PEDIDO_ESTADOS[Math.max(0, KV_PEDIDO_ESTADOS.findIndex(e => e.id === est.id) - 1)].id + '">↩ Retroceder</button>' : '') +
+            '<button class="adm-btn-borde adm-btn-mini ped-borrar" data-role="ped-borrar" data-id="' + p.id + '">Eliminar</button>' +
+          '</div>' +
+        '</div>' : '') +
+      '</div>';
+    }).join('');
+    conectarPedidos(cont);
+  }
+  function conectarPedidos(cont) {
+    cont.querySelectorAll('[data-role="ped-toggle"]').forEach(n => n.addEventListener('click', () => {
+      pedidosAbiertos[n.dataset.id] = !pedidosAbiertos[n.dataset.id];
+      renderPedidos();
+    }));
+    cont.querySelectorAll('[data-role="ped-estado"]').forEach(n => n.addEventListener('click', () => {
+      pedidosCol.doc(n.dataset.id).update({ estado: n.dataset.est }).catch(err => console.error(err));
+    }));
+    cont.querySelectorAll('[data-role="ped-borrar"]').forEach(n => n.addEventListener('click', () => {
+      if (!window.confirm('¿Eliminar este pedido del panel? (no avisa a la clienta)')) return;
+      pedidosCol.doc(n.dataset.id).delete().catch(err => console.error(err));
+    }));
+    cont.querySelectorAll('[data-role="ped-enviar"]').forEach(n => n.addEventListener('click', () => pedMarcarEnviado(n.dataset.id, n)));
+  }
+  async function pedMarcarEnviado(id, btn) {
+    const p = pedidos.find(x => x.id === id); if (!p) return;
+    const courier = ($('ped-courier-' + id).value || 'Bluexpress').trim();
+    const tracking = $('ped-track-' + id).value.trim();
+    const trackingUrl = $('ped-turl-' + id).value.trim();
+    if (!tracking && !window.confirm('No pusiste número de seguimiento. ¿Avisar igual a la clienta?')) return;
+    const url = String(settings.igPubUrl || '').trim();
+    const clave = pubClave();
+    btn.disabled = true; btn.textContent = 'Enviando correo…';
+    let correoOk = false;
+    if (url && clave && (p.cliente || {}).correo) {
+      try {
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ accion: 'pedido-envio', clave: clave, num: p.num, correo: p.cliente.correo, nombre: p.cliente.nombre, courier: courier, tracking: tracking, trackingUrl: trackingUrl })
+        });
+        const d = await r.json();
+        correoOk = !!(d && d.ok);
+        if (!correoOk) console.warn('Correo de envío:', d && d.error);
+      } catch (e) { console.warn('Correo de envío falló:', e); }
+    }
+    pedidosCol.doc(id).update({ estado: 'enviado', courier: courier, tracking: tracking, trackingUrl: trackingUrl, enviadoFecha: new Date().toISOString() })
+      .catch(err => console.error(err));
+    if (!correoOk) window.alert('El pedido quedó marcado como ENVIADO, pero el correo a la clienta no se pudo mandar (revisa la URL del publicador y tu clave secreta en "Instagram y Facebook", o avísale por WhatsApp).');
   }
 })();

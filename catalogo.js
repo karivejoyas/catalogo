@@ -209,8 +209,10 @@
 
   // ---------- lightbox (producto ampliado) ----------
   const lb = $('fb-lightbox');
+  let lbProd = null;   // producto mostrado (para "Agregar al carrito")
   function abrirLightbox(p) {
     if (!p) return;
+    lbProd = p;
     const foto = $('fb-lb-foto');
     foto.innerHTML = kvFotoInner(p);
     foto.classList.toggle('sin-foto', !p.photo);
@@ -231,8 +233,10 @@
   const lbAbierto = () => !lb.hidden;
   lb.querySelectorAll('[data-role="close"]').forEach(n => n.addEventListener('click', cerrarLightbox));
 
-  // click / teclado sobre una tarjeta -> abrir lightbox
+  // click / teclado sobre una tarjeta -> agregar al carrito o abrir lightbox
   page.addEventListener('click', (e) => {
+    const add = e.target.closest('[data-role="cart-add"]');
+    if (add) { e.stopPropagation(); carroAgregar(add.dataset.id); return; }
     const card = e.target.closest('.cat-card-click');
     if (!card) return;
     const p = products.find(x => x.id === card.dataset.id);
@@ -245,6 +249,294 @@
     e.preventDefault();
     abrirLightbox(products.find(x => x.id === card.dataset.id));
   });
+
+  // ============================================================
+  //  CARRITO DE COMPRAS
+  // ============================================================
+  const CARRO_KEY = 'kv_carrito';
+  let carro = {};
+  try { carro = JSON.parse(localStorage.getItem(CARRO_KEY) || '{}') || {}; } catch (e) { carro = {}; }
+  let carroVista = 'carro';          // 'carro' | 'checkout' | 'ok'
+  let carroComprobante = null;       // dataURL del comprobante adjunto
+  let carroPedidoOk = null;          // {num, total} tras enviar
+  let carroEnviando = false;
+  const carroForm = { nombre: '', correo: '', telefono: '', direccion: '', comuna: '', region: '', notas: '' };
+
+  function carroGuardar() {
+    try { localStorage.setItem(CARRO_KEY, JSON.stringify(carro)); } catch (e) {}
+    carroBadge();
+  }
+  function carroCantidad() { return Object.values(carro).reduce((a, b) => a + (b || 0), 0); }
+  function carroItems() {
+    // solo productos que siguen existiendo y con stock
+    return Object.keys(carro).map(id => {
+      const p = products.find(x => x.id === id && kvEnStock(x));
+      return p ? { p: p, qty: carro[id] } : null;
+    }).filter(Boolean);
+  }
+  function carroSubtotal() { return carroItems().reduce((s, it) => s + (kvPrecioOferta(it.p) || it.p.price || 0) * it.qty, 0); }
+  function carroBadge() {
+    const el = $('kv-cart-count'); if (!el) return;
+    const n = carroCantidad();
+    el.textContent = n > 99 ? '99+' : n;
+    el.hidden = n === 0;
+  }
+  function carroAgregar(id, n) {
+    const p = products.find(x => x.id === id && kvEnStock(x));
+    if (!p) return;
+    carro[id] = (carro[id] || 0) + (n || 1);
+    carroGuardar();
+    carroToast('✓ ' + (p.name || 'Producto') + ' agregado al carrito');
+    if (!carritoEl.hidden) carroRender();
+  }
+  let toastTimer = null;
+  function carroToast(txt) {
+    let t = $('kv-toast');
+    if (!t) { t = document.createElement('div'); t.id = 'kv-toast'; t.className = 'kv-toast'; document.body.appendChild(t); }
+    t.textContent = txt;
+    t.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('visible'), 2200);
+  }
+
+  // ---- panel del carrito ----
+  const carritoEl = document.createElement('div');
+  carritoEl.className = 'kv-cart';
+  carritoEl.id = 'kv-cart';
+  carritoEl.hidden = true;
+  document.body.appendChild(carritoEl);
+
+  function carroAbrir() { carritoEl.hidden = false; carroVista = carroPedidoOk ? 'ok' : 'carro'; carroRender(); carroAjustarVisor(); }
+  function carroCerrar() { carritoEl.hidden = true; carritoEl.style.transform = ''; }
+  $('kv-cart-btn').addEventListener('click', () => { if (carritoEl.hidden) carroAbrir(); else carroCerrar(); });
+  $('fb-lb-cart').addEventListener('click', () => { if (lbProd) { carroAgregar(lbProd.id); cerrarLightbox(); } });
+
+  // como el chat: en celular ocupa el área visible real (se acomoda al teclado)
+  function carroAjustarVisor() {
+    if (carritoEl.hidden) return;
+    if (window.innerWidth > 640) { carritoEl.style.transform = ''; return; }
+    const vv = window.visualViewport;
+    if (!vv) return;
+    document.documentElement.style.setProperty('--kv-vvh', vv.height + 'px');
+    carritoEl.style.transform = 'translateY(' + vv.offsetTop + 'px)';
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', carroAjustarVisor);
+    window.visualViewport.addEventListener('scroll', carroAjustarVisor);
+  }
+
+  function carroMiniFoto(p) {
+    return p.photo ? '<div class="kv-cart-mini" style="background-image:url(\'' + p.photo + '\')"></div>' : '<div class="kv-cart-mini sin">✦</div>';
+  }
+
+  function carroRender() {
+    const items = carroItems();
+    let html = '<div class="kv-cart-top"><span>' +
+      (carroVista === 'checkout' ? '📋 Finalizar compra' : carroVista === 'ok' ? '💜 ¡Pedido recibido!' : '🛒 Tu carrito') +
+      '</span><button class="kv-cart-x" data-role="cart-close" aria-label="Cerrar">✕</button></div>';
+
+    if (carroVista === 'ok' && carroPedidoOk) {
+      html += carroHtmlOk();
+    } else if (carroVista === 'checkout') {
+      html += carroHtmlCheckout(items);
+    } else {
+      html += carroHtmlLista(items);
+    }
+    carritoEl.innerHTML = html;
+    carroConectar();
+  }
+
+  function carroHtmlLista(items) {
+    if (!items.length) {
+      return '<div class="kv-cart-vacio">Tu carrito está vacío 🛒<br><span>Toca el botón 🛒 de cualquier joya para agregarla.</span></div>' +
+        '<div class="kv-cart-pie"><button class="kv-cart-btn2 sec" data-role="cart-close">Seguir mirando</button></div>';
+    }
+    let h = '<div class="kv-cart-lista">';
+    items.forEach(it => {
+      const precio = kvPrecioOferta(it.p) || it.p.price || 0;
+      h += '<div class="kv-cart-item">' + carroMiniFoto(it.p) +
+        '<div class="kv-cart-item-info"><b>' + escapeHtml(it.p.name) + '</b><span>' + escapeHtml(it.p.code || '') + ' · ' + formatCLP(precio) + '</span></div>' +
+        '<div class="kv-cart-qty">' +
+          '<button data-role="qty" data-id="' + it.p.id + '" data-d="-1" aria-label="Quitar uno">−</button>' +
+          '<span>' + it.qty + '</span>' +
+          '<button data-role="qty" data-id="' + it.p.id + '" data-d="1" aria-label="Agregar uno">+</button>' +
+        '</div></div>';
+    });
+    h += '</div>';
+    h += '<div class="kv-cart-pie">' +
+      '<div class="kv-cart-tot"><span>Subtotal</span><b>' + formatCLP(carroSubtotal()) + '</b></div>' +
+      '<div class="kv-cart-envio-nota">+ envío: $2.990 RM · $3.990 resto de Chile</div>' +
+      '<button class="kv-cart-btn2" data-role="cart-checkout">Continuar con la compra →</button>' +
+      '<button class="kv-cart-btn2 sec" data-role="cart-close">Seguir mirando</button>' +
+      '</div>';
+    return h;
+  }
+
+  function carroHtmlCheckout(items) {
+    const sub = carroSubtotal();
+    const envio = carroForm.region ? kvEnvioCosto(carroForm.region) : null;
+    const total = sub + (envio || 0);
+    const t = kvTransferencia(settings);
+    const f = carroForm;
+    const inp = (campo, ph, tipo, extra) =>
+      '<input class="kv-cart-inp" data-campo="' + campo + '" type="' + (tipo || 'text') + '" placeholder="' + ph + '" value="' + escapeHtml(f[campo] || '') + '"' + (extra || '') + ' />';
+    let h = '<div class="kv-cart-scroll">';
+    h += '<div class="kv-cart-sec-tit">Tus datos</div>' +
+      inp('nombre', 'Nombre y apellido *') +
+      inp('correo', 'Correo electrónico *', 'email') +
+      inp('telefono', 'Teléfono (ej: +56 9 1234 5678) *', 'tel') +
+      '<div class="kv-cart-sec-tit">Envío</div>' +
+      inp('direccion', 'Dirección (calle y número, depto…) *') +
+      inp('comuna', 'Comuna *') +
+      '<select class="kv-cart-inp" data-campo="region"><option value="">Región *</option>' +
+        KV_REGIONES.map(r => '<option value="' + r + '"' + (f.region === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select>' +
+      inp('notas', 'Nota para tu pedido (opcional)');
+    // resumen
+    h += '<div class="kv-cart-sec-tit">Resumen</div><div class="kv-cart-resumen">';
+    items.forEach(it => {
+      const precio = kvPrecioOferta(it.p) || it.p.price || 0;
+      h += '<div><span>' + it.qty + '× ' + escapeHtml(it.p.name) + '</span><span>' + formatCLP(precio * it.qty) + '</span></div>';
+    });
+    h += '<div><span>Envío' + (f.region ? ' (' + escapeHtml(f.region === KV_REGION_RM ? 'RM' : f.region) + ')' : '') + '</span><span>' + (envio != null ? formatCLP(envio) : 'elige región') + '</span></div>';
+    h += '<div class="kv-cart-resumen-tot"><span>Total a transferir</span><span>' + formatCLP(total) + '</span></div></div>';
+    // transferencia
+    h += '<div class="kv-cart-sec-tit">Transfiere a</div><div class="kv-cart-transf">';
+    if (kvTransferenciaLista(settings)) {
+      h += '<div><b>' + escapeHtml(t.titular) + '</b></div>' +
+        (t.rut ? '<div>RUT: ' + escapeHtml(t.rut) + '</div>' : '') +
+        '<div>' + escapeHtml(t.banco) + (t.tipo ? ' · ' + escapeHtml(t.tipo) : '') + '</div>' +
+        '<div>N° de cuenta: <b>' + escapeHtml(t.numero) + '</b> <button type="button" class="kv-cart-copy" data-copy="' + escapeHtml(t.numero) + '">copiar</button></div>' +
+        (t.correo ? '<div>' + escapeHtml(t.correo) + '</div>' : '');
+    } else {
+      h += '<div>Escríbenos por WhatsApp o DM y te damos los datos de transferencia 💜</div>';
+    }
+    h += '</div>';
+    // comprobante
+    h += '<div class="kv-cart-sec-tit">Comprobante de transferencia *</div>' +
+      '<label class="kv-cart-file' + (carroComprobante ? ' listo' : '') + '">' +
+        (carroComprobante ? '✓ Comprobante adjunto — tocar para cambiar' : '📎 Adjuntar foto o captura del comprobante') +
+        '<input type="file" accept="image/*" id="kv-cart-comp" style="display:none;" />' +
+      '</label>' +
+      (carroComprobante ? '<div class="kv-cart-comp-mini" style="background-image:url(\'' + carroComprobante + '\')"></div>' : '');
+    h += '<div class="kv-cart-error" id="kv-cart-error" hidden></div>';
+    h += '</div>';   // fin scroll
+    h += '<div class="kv-cart-pie">' +
+      '<button class="kv-cart-btn2" data-role="cart-enviar"' + (carroEnviando ? ' disabled' : '') + '>' + (carroEnviando ? 'Enviando pedido…' : '✨ Enviar pedido') + '</button>' +
+      '<button class="kv-cart-btn2 sec" data-role="cart-volver">← Volver al carrito</button>' +
+      '</div>';
+    return h;
+  }
+
+  function carroHtmlOk() {
+    const ok = carroPedidoOk;
+    const waNum = carroWhatsappNum();
+    return '<div class="kv-cart-ok">' +
+      '<div class="kv-cart-ok-num">Pedido #' + ok.num + '</div>' +
+      '<p>¡Gracias por tu compra! 💜<br>Te enviamos un correo de confirmación.<br>Cuando verifiquemos tu pago, prepararemos tu pedido y te avisaremos cuando vaya en camino.</p>' +
+      (waNum ? '<a class="kv-cart-btn2 wa" target="_blank" rel="noopener" href="' + carroWhatsappLink(ok) + '">Enviar mi pedido también por WhatsApp</a>' : '') +
+      '<button class="kv-cart-btn2 sec" data-role="cart-fin">Listo</button>' +
+      '</div>';
+  }
+
+  function carroWhatsappNum() {
+    const c = kvContactos(settings).find(x => x.tipo === 'whatsapp');
+    if (!c || !c.url) return null;
+    const m = String(c.url).match(/(\d{8,15})/);
+    return m ? m[1] : null;
+  }
+  function carroWhatsappLink(ok) {
+    const num = carroWhatsappNum();
+    const txt = 'Hola Karivé 💜 Soy ' + carroForm.nombre + ', acabo de hacer el pedido #' + ok.num + ' por ' + formatCLP(ok.total) + ' en el catálogo. ¡Quedo atenta!';
+    return 'https://wa.me/' + num + '?text=' + encodeURIComponent(txt);
+  }
+
+  function carroConectar() {
+    carritoEl.querySelectorAll('[data-role="cart-close"]').forEach(n => n.addEventListener('click', carroCerrar));
+    carritoEl.querySelectorAll('[data-role="qty"]').forEach(n => n.addEventListener('click', () => {
+      const id = n.dataset.id, d = parseInt(n.dataset.d, 10);
+      carro[id] = (carro[id] || 0) + d;
+      if (carro[id] <= 0) delete carro[id];
+      carroGuardar(); carroRender();
+    }));
+    const chk = carritoEl.querySelector('[data-role="cart-checkout"]');
+    if (chk) chk.addEventListener('click', () => { carroVista = 'checkout'; carroRender(); });
+    const vol = carritoEl.querySelector('[data-role="cart-volver"]');
+    if (vol) vol.addEventListener('click', () => { carroVista = 'carro'; carroRender(); });
+    const fin = carritoEl.querySelector('[data-role="cart-fin"]');
+    if (fin) fin.addEventListener('click', () => { carroPedidoOk = null; carroCerrar(); });
+    carritoEl.querySelectorAll('.kv-cart-inp').forEach(n => {
+      const ev = n.tagName === 'SELECT' ? 'change' : 'input';
+      n.addEventListener(ev, () => {
+        carroForm[n.dataset.campo] = n.value;
+        if (n.dataset.campo === 'region') carroRender();   // recalcula el envío
+      });
+    });
+    carritoEl.querySelectorAll('.kv-cart-copy').forEach(n => n.addEventListener('click', () => {
+      try { navigator.clipboard.writeText(n.dataset.copy); n.textContent = '✓ copiado'; } catch (e) {}
+    }));
+    const comp = carritoEl.querySelector('#kv-cart-comp');
+    if (comp) comp.addEventListener('change', e => {
+      const file = e.target.files && e.target.files[0];
+      if (file) kvCompressPhoto(file, data => { carroComprobante = data; carroRender(); }, 1100, 0.8);
+    });
+    const env = carritoEl.querySelector('[data-role="cart-enviar"]');
+    if (env) env.addEventListener('click', carroEnviarPedido);
+  }
+
+  function carroError(msg) {
+    const el = carritoEl.querySelector('#kv-cart-error');
+    if (el) { el.textContent = msg; el.hidden = false; el.scrollIntoView({ block: 'nearest' }); }
+  }
+
+  async function carroEnviarPedido() {
+    if (carroEnviando) return;
+    const items = carroItems();
+    const f = carroForm;
+    if (!items.length) { carroError('Tu carrito quedó vacío.'); return; }
+    if (!f.nombre.trim()) { carroError('Escribe tu nombre.'); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.correo.trim())) { carroError('Revisa tu correo electrónico.'); return; }
+    if (!f.telefono.trim()) { carroError('Escribe tu teléfono.'); return; }
+    if (!f.direccion.trim() || !f.comuna.trim()) { carroError('Completa tu dirección y comuna.'); return; }
+    if (!f.region) { carroError('Elige tu región para calcular el envío.'); return; }
+    if (!carroComprobante) { carroError('Adjunta el comprobante de tu transferencia para confirmar el pedido.'); return; }
+    const url = String(settings.igPubUrl || '').trim();
+    if (!url) { carroError('La tienda aún no puede recibir pedidos en línea. Escríbenos por WhatsApp 💜'); return; }
+
+    const envio = kvEnvioCosto(f.region);
+    const pedido = {
+      cliente: { nombre: f.nombre.trim(), correo: f.correo.trim(), telefono: f.telefono.trim() },
+      direccion: { calle: f.direccion.trim(), comuna: f.comuna.trim(), region: f.region },
+      items: items.map(it => ({ id: it.p.id, code: it.p.code || '', name: it.p.name || '', precio: kvPrecioOferta(it.p) || it.p.price || 0, qty: it.qty })),
+      subtotal: carroSubtotal(),
+      envio: { region: f.region, costo: envio },
+      total: carroSubtotal() + envio,
+      notas: f.notas.trim()
+    };
+    carroEnviando = true; carroRender();
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ accion: 'pedido', pedido: pedido, comprobante: (carroComprobante.split(',')[1] || '') })
+      });
+      const d = await r.json();
+      if (!d || !d.ok || !d.num) throw new Error((d && d.error) || 'No se pudo registrar el pedido');
+      // registrar en la base para el panel de admin (si las reglas lo permiten)
+      try {
+        await kvDb.collection('catalog').doc('pedidos').collection('items').add(Object.assign({}, pedido, {
+          num: d.num, estado: 'nuevo', fecha: new Date().toISOString(), comprobante: carroComprobante,
+          courier: '', tracking: '', trackingUrl: ''
+        }));
+      } catch (e2) { console.warn('Pedido enviado por correo; no se pudo registrar en la base:', e2); }
+      carroPedidoOk = { num: d.num, total: pedido.total };
+      carro = {}; carroComprobante = null; carroGuardar();
+      carroVista = 'ok'; carroEnviando = false; carroRender();
+    } catch (err) {
+      carroEnviando = false; carroRender();
+      carroError('No pudimos enviar tu pedido (' + err.message + '). Revisa tu conexión e intenta de nuevo, o escríbenos por WhatsApp 💜');
+    }
+  }
+  carroBadge();
 
   // ---------- controles ----------
   $('fb-prev').addEventListener('click', () => go(idx - 1, 'prev'));
@@ -290,6 +582,8 @@
     pintar();
     precargar();
     if (waActualizar) waActualizar();
+    carroBadge();
+    if (!carritoEl.hidden) carroRender();   // refresca precios/stock si cambia el catálogo
   }
 
   // pinta la portada de inmediato (con valores por defecto) para no esperar

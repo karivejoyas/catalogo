@@ -591,6 +591,20 @@ body.fb-lb-open{overflow:hidden;}
 
 /* (el botón de agregar vive dentro de la etiqueta de la tarjeta: .cat-card-addbtn) */
 
+/* celular: página más alta y etiqueta compacta para que la foto respire */
+@media (max-width:640px){
+  .fb-page{width:min(97vw,58vh);aspect-ratio:56/100;}
+  .fb-grid{gap:9px;}
+  .fb-grid .cat-card-etiqueta{padding:6px 8px 7px;gap:1px;}
+  .fb-grid .cat-card-nombre{font-size:12.5px;line-height:1.12;min-height:2.24em;}
+  .fb-grid .cat-card-detalle{font-size:9.5px;line-height:1.15;min-height:1.15em;}
+  .fb-grid .cat-card-pie{margin-top:1px;gap:5px;}
+  .fb-grid .cat-card-codigo{font-size:9px;}
+  .fb-grid .cat-card-precio{font-size:15.5px;}
+  .fb-grid .cat-card-precio-old{font-size:11.5px;}
+  .cat-card-addbtn{margin-top:4px;padding:5px 8px;font-size:11.5px;box-shadow:0 3px 10px rgba(20,6,36,0.22);}
+}
+
 /* botón agregar en el lightbox */
 .fb-lb-cart{width:100%;margin-top:10px;font-family:'Jost',sans-serif;font-size:14.5px;font-weight:600;color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border:none;border-radius:999px;padding:12px 18px;cursor:pointer;transition:transform .15s, box-shadow .15s;}
 .fb-lb-cart:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,0.3);}

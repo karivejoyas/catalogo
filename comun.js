@@ -206,12 +206,19 @@ function kvFotoInner(p) {
          'transform:scale(' + (f.zoom / 100) + ');transform-origin:' + px + '% ' + py + '%;"></div>';
 }
 
-/* foto para las tarjetas del catálogo: la joya SIEMPRE completa y centrada,
+/* foto para la vista ampliada: la joya SIEMPRE completa y centrada,
    con los bordes rellenos por la misma foto difuminada (como los posts de IG) */
 function kvFotoContain(p) {
   if (!p || !p.photo) return '';
   return '<div class="kv-fbg kv-fbg-blur" style="background-image:url(\'' + p.photo + '\');"></div>' +
          '<div class="kv-fbg kv-fbg-entera" style="background-image:url(\'' + p.photo + '\');"></div>';
+}
+
+/* foto para las tarjetas del catálogo: grande y SIEMPRE centrada
+   (recorte simétrico desde el centro, sin depender del encuadre manual) */
+function kvFotoCard(p) {
+  if (!p || !p.photo) return '';
+  return '<div class="kv-fbg" style="background-image:url(\'' + p.photo + '\');"></div>';
 }
 
 /* siguiente número correlativo global (a partir del número más alto en todos los códigos) */
@@ -475,7 +482,7 @@ function kvCardHtml(p) {
   return (
     '<div class="cat-card cat-card-click" data-id="' + p.id + '" role="button" tabindex="0" aria-label="Ver ' + escapeHtml(p.name) + '">' +
       '<div class="cat-card-foto' + (!p.photo ? ' sin-foto' : '') + '">' +
-        kvFotoContain(p) +
+        kvFotoCard(p) +
         (!p.photo ? '<span class="cat-card-sinfoto">✦</span>' : '') +
         oferta +
         '<span class="cat-card-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="8" x2="11" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>' +

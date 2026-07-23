@@ -111,9 +111,9 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 /* la foto ocupa el espacio sobre la etiqueta (+24px que asoman tras el vidrio),
    así el encuadre queda proporcionado y el producto centrado */
 .fb-grid .cat-card-foto{position:absolute;left:0;right:0;top:0;height:calc(100% - var(--kv-etiq,118px) + 24px);aspect-ratio:auto;flex:none;min-height:0;}
-/* la joya completa y centrada: fondo difuminado + foto entera encima */
-.fb-grid .cat-card-foto .kv-fbg-blur{background-size:cover;background-position:center;filter:blur(16px) brightness(1.03);transform:scale(1.2);}
-.fb-grid .cat-card-foto .kv-fbg-entera{background-size:contain;background-position:center;background-repeat:no-repeat;}
+/* capas para mostrar la joya completa (vista ampliada): fondo difuminado + foto entera */
+.kv-fbg-blur{background-size:cover;background-position:center;filter:blur(16px) brightness(1.03);transform:scale(1.2);}
+.kv-fbg-entera{background-size:contain;background-position:center;background-repeat:no-repeat;transform:none;}
 /* etiqueta "liquid glass": flota sobre la foto, translúcida y con desenfoque (estilo iOS);
    se oscurece hacia abajo para que el texto siempre se lea bien */
 .fb-grid .cat-card-etiqueta{position:absolute;left:0;right:0;bottom:0;z-index:2;flex:0 0 auto;padding:7px 9px 8px;justify-content:center;gap:1px;background:linear-gradient(180deg, rgba(114,63,168,0.4), rgba(58,27,94,0.72));-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);border-top:1px solid rgba(255,255,255,0.24);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12);}
@@ -597,9 +597,9 @@ body.fb-lb-open{overflow:hidden;}
 
 /* (el botón de agregar vive dentro de la etiqueta de la tarjeta: .cat-card-addbtn) */
 
-/* celular: página más alta y etiqueta compacta para que la foto respire */
+/* celular: etiqueta compacta para que la foto respire
+   (el alto de la página se mantiene: si se alarga, en iPhone se corta abajo) */
 @media (max-width:640px){
-  .fb-page{width:min(97vw,58vh);aspect-ratio:56/100;}
   .fb-grid{gap:9px;}
   .fb-grid .cat-card-etiqueta{padding:6px 8px 7px;gap:1px;}
   .fb-grid .cat-card-nombre{font-size:12.5px;line-height:1.12;min-height:2.24em;}

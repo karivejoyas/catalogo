@@ -217,7 +217,7 @@
     if (!p) return;
     lbProd = p;
     const foto = $('fb-lb-foto');
-    foto.innerHTML = kvFotoInner(p);
+    foto.innerHTML = kvFotoContain(p);   // la joya completa, con bordes difuminados
     foto.classList.toggle('sin-foto', !p.photo);
     $('fb-lb-codigo').textContent = p.code || '';
     $('fb-lb-nombre').textContent = p.name || '';

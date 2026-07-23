@@ -111,8 +111,12 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 /* la foto ocupa el espacio sobre la etiqueta (+24px que asoman tras el vidrio),
    así el encuadre queda proporcionado y el producto centrado */
 .fb-grid .cat-card-foto{position:absolute;left:0;right:0;top:0;height:calc(100% - var(--kv-etiq,118px) + 24px);aspect-ratio:auto;flex:none;min-height:0;}
-/* etiqueta "liquid glass": flota sobre la foto, translúcida y con desenfoque (estilo iOS) */
-.fb-grid .cat-card-etiqueta{position:absolute;left:0;right:0;bottom:0;z-index:2;flex:0 0 auto;padding:7px 9px 8px;justify-content:center;gap:1px;background:linear-gradient(165deg, rgba(122,72,178,0.44), rgba(70,34,112,0.5));-webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);border-top:1px solid rgba(255,255,255,0.24);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12);}
+/* la joya completa y centrada: fondo difuminado + foto entera encima */
+.fb-grid .cat-card-foto .kv-fbg-blur{background-size:cover;background-position:center;filter:blur(16px) brightness(1.03);transform:scale(1.2);}
+.fb-grid .cat-card-foto .kv-fbg-entera{background-size:contain;background-position:center;background-repeat:no-repeat;}
+/* etiqueta "liquid glass": flota sobre la foto, translúcida y con desenfoque (estilo iOS);
+   se oscurece hacia abajo para que el texto siempre se lea bien */
+.fb-grid .cat-card-etiqueta{position:absolute;left:0;right:0;bottom:0;z-index:2;flex:0 0 auto;padding:7px 9px 8px;justify-content:center;gap:1px;background:linear-gradient(180deg, rgba(114,63,168,0.4), rgba(58,27,94,0.72));-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);border-top:1px solid rgba(255,255,255,0.24);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12);}
 @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
   .fb-grid .cat-card-etiqueta{background:linear-gradient(150deg, var(--kv-morado), var(--kv-morado-prof));}
 }

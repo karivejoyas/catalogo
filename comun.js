@@ -21,12 +21,12 @@ const KV_INFO_DEFAULT = {
 
 const KV_HOWTO_DEFAULT = {
   titulo: '¿Cómo comprar?',
-  p1t: '1 · Elige tus favoritos', p1d: 'Recorre el catálogo y guarda los códigos de los que más te gusten.',
-  p2t: '2 · Escríbenos',          p2d: 'Mándanos los códigos por Instagram o WhatsApp.',
-  p3t: '3 · Confirmamos tu pedido',p3d: 'Te avisamos el stock y el total con el envío.',
-  p4t: '4 · Realiza el pago',     p4d: 'Por transferencia o link de pago; te enviamos los datos.',
-  p5t: '5 · Enviamos con amor',   p5d: 'Preparamos tu pedido a mano y te compartimos el seguimiento.',
-  p6t: '6 · ¡Luce tu Karivé!',    p6d: 'Etiquétanos en tus historias. Nos encanta verte brillar ✦'
+  p1t: '1 · Agrega al carrito',      p1d: 'Toca "🛒 Agregar al carrito" en tus joyas favoritas.',
+  p2t: '2 · Completa tus datos',     p2d: 'Abre el carrito, pon tu dirección y elige tu región: el envío se calcula solo.',
+  p3t: '3 · Transfiere el total',    p3d: 'Copia nuestros datos con un toque y transfiere desde tu banco.',
+  p4t: '4 · Adjunta el comprobante', p4d: 'Envía tu pedido y recibe al instante tu número y confirmación al correo.',
+  p5t: '5 · Enviamos con amor',      p5d: 'Preparamos tu joya a mano y te avisamos con el seguimiento del envío.',
+  p6t: '6 · ¿Dudas o prefieres otra vía?', p6d: 'También puedes comprar como siempre: escríbenos por WhatsApp o DM y te ayudamos 💜'
 };
 const KV_DESPEDIDA_DEFAULT = {
   titulo: '¡Gracias por tu visita!',
@@ -214,12 +214,6 @@ function kvFotoContain(p) {
          '<div class="kv-fbg kv-fbg-entera" style="background-image:url(\'' + p.photo + '\');"></div>';
 }
 
-/* foto para las tarjetas del catálogo: grande y SIEMPRE centrada
-   (recorte simétrico desde el centro, sin depender del encuadre manual) */
-function kvFotoCard(p) {
-  if (!p || !p.photo) return '';
-  return '<div class="kv-fbg" style="background-image:url(\'' + p.photo + '\');"></div>';
-}
 
 /* siguiente número correlativo global (a partir del número más alto en todos los códigos) */
 function kvNextNum(products) {
@@ -482,7 +476,7 @@ function kvCardHtml(p) {
   return (
     '<div class="cat-card cat-card-click" data-id="' + p.id + '" role="button" tabindex="0" aria-label="Ver ' + escapeHtml(p.name) + '">' +
       '<div class="cat-card-foto' + (!p.photo ? ' sin-foto' : '') + '">' +
-        kvFotoCard(p) +
+        kvFotoInner(p) +
         (!p.photo ? '<span class="cat-card-sinfoto">✦</span>' : '') +
         oferta +
         '<span class="cat-card-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="8" x2="11" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>' +

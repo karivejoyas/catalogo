@@ -104,31 +104,27 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .cat-card-codigo{font-size:9.5px;font-weight:400;letter-spacing:0.16em;text-transform:uppercase;color:var(--kv-lavanda);}
 .cat-card-precio{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:var(--kv-dorado-cl);}
 
-/* tarjeta dentro del grid 2x2 del flipbook: ocupa toda su celda.
-   La etiqueta morada tiene altura fija para que quede a la misma altura
-   en todas las tarjetas (la foto ocupa el resto). */
-.fb-grid .cat-card{height:100%;position:relative;}
-/* la foto ocupa el espacio sobre la etiqueta (+24px que asoman tras el vidrio),
-   así el encuadre queda proporcionado y el producto centrado */
-.fb-grid .cat-card-foto{position:absolute;left:0;right:0;top:0;height:calc(100% - var(--kv-etiq,118px) + 24px);aspect-ratio:auto;flex:none;min-height:0;}
 /* capas para mostrar la joya completa (vista ampliada): fondo difuminado + foto entera */
 .kv-fbg-blur{background-size:cover;background-position:center;filter:blur(16px) brightness(1.03);transform:scale(1.2);}
 .kv-fbg-entera{background-size:contain;background-position:center;background-repeat:no-repeat;transform:none;}
-/* etiqueta "liquid glass": flota sobre la foto, translúcida y con desenfoque (estilo iOS);
-   se oscurece hacia abajo para que el texto siempre se lea bien */
-.fb-grid .cat-card-etiqueta{position:absolute;left:0;right:0;bottom:0;z-index:2;flex:0 0 auto;padding:7px 9px 8px;justify-content:center;gap:1px;background:linear-gradient(180deg, rgba(114,63,168,0.4), rgba(58,27,94,0.72));-webkit-backdrop-filter:blur(22px) saturate(1.5);backdrop-filter:blur(22px) saturate(1.5);border-top:1px solid rgba(255,255,255,0.24);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12);}
-@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
-  .fb-grid .cat-card-etiqueta{background:linear-gradient(150deg, var(--kv-morado), var(--kv-morado-prof));}
-}
-.fb-grid .cat-card-nombre{font-size:clamp(12.5px,3.3vw,14px);line-height:1.15;min-height:2.3em;display:flex;align-items:center;justify-content:center;text-align:center;text-shadow:0 1px 8px rgba(30,10,50,0.55);}
+
+/* tarjeta del catálogo = MISMA estructura que el admin: foto 4/3 (mismo encuadre
+   y zoom que se ve al editar) arriba, y el "cuadro morado" con la info debajo,
+   sin tapar la foto. El grupo se centra en su celda. */
+.fb-grid{align-content:center;grid-auto-rows:min-content;grid-template-rows:none;}
+.fb-grid .cat-card{height:auto;background:linear-gradient(162deg, #5f3196, #3a1b5e);border-radius:16px;}
+.fb-grid .cat-card-foto{width:100%;aspect-ratio:4/3;flex:0 0 auto;border-radius:16px 16px 0 0;background-color:#EFEAF5;}
+/* "cuadro morado" translúcido tipo liquid glass, pegado bajo la foto */
+.fb-grid .cat-card-etiqueta{position:relative;flex:0 0 auto;padding:8px 10px 9px;justify-content:flex-start;gap:1px;background:linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0));border-top:1px solid rgba(255,255,255,0.16);box-shadow:inset 0 1px 0 rgba(255,255,255,0.1);}
+.fb-grid .cat-card-nombre{font-size:clamp(12.5px,3.3vw,14px);line-height:1.15;min-height:2.3em;display:flex;align-items:center;justify-content:center;text-align:center;}
 .fb-grid .cat-card-nombre>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.fb-grid .cat-card-detalle{font-size:clamp(10.5px,2.7vw,11.5px);line-height:1.2;min-height:1.2em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#EDE4F5;text-shadow:0 1px 6px rgba(30,10,50,0.5);}
-.fb-grid .cat-card-pie{flex-wrap:nowrap;gap:6px;margin-top:1px;}
+.fb-grid .cat-card-detalle{font-size:clamp(10px,2.6vw,11px);line-height:1.2;min-height:1.2em;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;color:#E1D4EF;}
+.fb-grid .cat-card-pie{flex-wrap:nowrap;gap:6px;margin-top:2px;}
 .fb-grid .cat-card-codigo{font-size:clamp(9.5px,2.4vw,10.5px);color:#E7DCF2;}
 .fb-grid .cat-card-precio{font-size:clamp(16.5px,4.8vw,20px);}
-/* botón agregar dentro de la etiqueta */
-.cat-card-addbtn{width:100%;margin-top:6px;border:none;border-radius:999px;padding:7px 10px;font-family:'Jost',sans-serif;font-size:clamp(11.5px,3vw,12.5px);font-weight:600;color:var(--kv-morado-osc);background:rgba(250,245,236,0.92);cursor:pointer;transition:background .15s, transform .12s;box-shadow:0 4px 14px rgba(20,6,36,0.25);}
-.cat-card-addbtn:hover{background:var(--kv-dorado-cl);transform:translateY(-1px);}
+/* botón agregar */
+.cat-card-addbtn{width:100%;margin-top:7px;border:none;border-radius:999px;padding:8px 10px;font-family:'Jost',sans-serif;font-size:clamp(11.5px,3vw,12.5px);font-weight:600;color:var(--kv-morado-osc);background:var(--kv-dorado-cl);cursor:pointer;transition:background .15s, transform .12s;box-shadow:0 4px 14px rgba(20,6,36,0.28);}
+.cat-card-addbtn:hover{filter:brightness(1.05);transform:translateY(-1px);}
 .cat-card-addbtn:active{transform:scale(0.98);}
 .cat-card-edit .cat-card-addbtn{display:none;}
 
@@ -311,22 +307,26 @@ body.fb-lb-open{overflow:hidden;}
 .fb-lightbox{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
 .fb-lightbox[hidden]{display:none;}
 .fb-lb-backdrop{position:absolute;inset:0;background:rgba(10,4,16,0.82);animation:fbFade .2s ease;}
-.fb-lb-card{position:relative;z-index:2;max-width:min(540px,92vw);max-height:92vh;width:100%;background:var(--kv-crema);border-radius:18px;overflow:auto;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fbPop .25s cubic-bezier(0.16,1,0.3,1);}
+.fb-lb-card{position:relative;z-index:2;max-width:min(540px,92vw);height:min(92vh,720px);width:100%;background:linear-gradient(170deg, rgba(96,50,148,0.82), rgba(42,18,62,0.94));-webkit-backdrop-filter:blur(26px) saturate(1.4);backdrop-filter:blur(26px) saturate(1.4);border:1px solid rgba(255,255,255,0.2);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fbPop .25s cubic-bezier(0.16,1,0.3,1);}
+@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
+  .fb-lb-card{background:linear-gradient(170deg, #4A2578, var(--kv-morado-osc));}
+}
 @keyframes fbFade{from{opacity:0}to{opacity:1}}
 @keyframes fbPop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
 .fb-lb-x{position:absolute;top:10px;right:10px;z-index:3;width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,0,0,0.5);color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .fb-lb-x:hover{background:rgba(0,0,0,0.72);}
-.fb-lb-foto{position:relative;overflow:hidden;width:100%;aspect-ratio:1/1;background-color:#EFEAF5;flex:0 0 auto;}
-.fb-lb-info{padding:18px 22px 22px;text-align:center;display:flex;flex-direction:column;gap:6px;}
-.fb-lb-codigo{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--kv-dorado);}
-.fb-lb-nombre{font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:600;color:var(--kv-morado-prof);margin:0;line-height:1.1;}
-.fb-lb-detalle{font-size:14px;font-weight:300;color:#6e5b7e;margin:0;}
-.fb-lb-precio{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;color:var(--kv-morado);margin-top:2px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
-.fb-lb-precio-old{font-size:20px;font-weight:600;color:#9a86ab;text-decoration:line-through;}
-.fb-lb-precio-of{color:var(--kv-morado);}
+.fb-lb-foto{position:relative;overflow:hidden;width:100%;aspect-ratio:auto;flex:1 1 auto;min-height:180px;background:transparent;}
+.fb-lb-info{padding:14px 22px calc(16px + env(safe-area-inset-bottom));text-align:center;display:flex;flex-direction:column;gap:6px;flex:0 0 auto;border-top:1px solid rgba(255,255,255,0.16);}
+.fb-lb-codigo{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--kv-dorado-cl);}
+.fb-lb-nombre{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--kv-crema);margin:0;line-height:1.1;}
+.fb-lb-detalle{font-size:14px;font-weight:300;color:var(--kv-lavanda);margin:0;}
+.fb-lb-precio{font-family:'Cormorant Garamond',serif;font-size:29px;font-weight:700;color:var(--kv-dorado-cl);margin-top:2px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;}
+.fb-lb-precio-old{font-size:19px;font-weight:600;color:var(--kv-lavanda);text-decoration:line-through;opacity:0.85;}
+.fb-lb-precio-of{color:var(--kv-dorado-cl);}
 .fb-lb-oferta-pill{font-family:'Jost',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--kv-morado-prof);background:var(--kv-dorado-cl);padding:3px 10px;border-radius:999px;}
-.fb-lb-cerrar{margin-top:12px;align-self:center;font-family:'Jost',sans-serif;font-size:13px;font-weight:500;color:var(--kv-morado-prof);background:transparent;border:1px solid rgba(90,42,130,0.4);border-radius:999px;padding:9px 24px;cursor:pointer;}
-.fb-lb-cerrar:hover{background:rgba(90,42,130,0.08);}
+.fb-lb-cerrar{margin-top:8px;align-self:center;font-family:'Jost',sans-serif;font-size:13px;font-weight:500;color:var(--kv-crema);background:transparent;border:1px solid rgba(250,245,236,0.4);border-radius:999px;padding:8px 24px;cursor:pointer;}
+.fb-lb-cerrar:hover{background:rgba(255,255,255,0.08);}
+.fb-lb-cart{margin-top:8px;}
 .adm-fondo-tipos{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;}
 .adm-fondo-tipos label{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;color:var(--kv-lavanda);cursor:pointer;}
 .adm-fondo-tipos input[type=radio]{width:16px;height:16px;accent-color:var(--kv-dorado-cl);cursor:pointer;}
@@ -406,7 +406,7 @@ body.fb-lb-open{overflow:hidden;}
 @media (max-width:640px){
   .adm-grilla{grid-template-columns:1fr;gap:16px;}
   .adm-seccion{padding:20px 14px 10px;}
-  .cat-card-edit .cat-card-foto{aspect-ratio:16/10;}
+  .cat-card-edit .cat-card-foto{aspect-ratio:4/3;}   /* igual que el catálogo público */
   .ed-cuerpo{padding:14px 14px 16px;gap:11px;}
   .ed-input{font-size:15px;padding:10px 11px;}       /* evita el zoom automático de iOS y es más fácil de tocar */
   .ed-nombre{font-size:16px;}

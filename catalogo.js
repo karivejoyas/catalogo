@@ -217,19 +217,9 @@
     if (!p) return;
     lbProd = p;
     const foto = $('fb-lb-foto');
-    // la foto se muestra completa y el recuadro se adapta a la proporción REAL
-    // de la imagen, así no quedan bordes/barras alrededor
-    foto.innerHTML = p.photo ? '<div class="kv-fbg" style="background-image:url(\'' + p.photo + '\')"></div>' : '';
-    foto.style.aspectRatio = '1 / 1';
-    if (p.photo) {
-      const im = new Image();
-      im.onload = () => {
-        if (lbProd !== p || !im.naturalWidth) return;
-        const r = im.naturalWidth / im.naturalHeight;
-        foto.style.aspectRatio = Math.max(0.7, Math.min(1.4, r)).toFixed(4);  // acotado para que el recuadro no quede exagerado
-      };
-      im.src = p.photo;
-    }
+    // se muestra EXACTAMENTE como en la tarjeta: mismo recorte 4/3 con el encuadre,
+    // así todos los recuadros quedan del mismo tamaño y el producto centrado igual
+    foto.innerHTML = kvFotoInner(p);
     foto.classList.toggle('sin-foto', !p.photo);
     $('fb-lb-codigo').textContent = p.code || '';
     $('fb-lb-nombre').textContent = p.name || '';

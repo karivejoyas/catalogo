@@ -116,7 +116,7 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-grid .cat-card{height:auto;background:transparent;border-radius:16px;overflow:hidden;}
 .fb-grid .cat-card-foto{width:100%;aspect-ratio:4/3;flex:0 0 auto;background-color:#EFEAF5;}
 /* "cuadro morado" liquid glass: translúcido, difumina el fondo lila detrás (estilo iOS), debajo de la foto */
-.fb-grid .cat-card-etiqueta{position:relative;flex:0 0 auto;padding:8px 10px 9px;justify-content:flex-start;gap:1px;background:linear-gradient(180deg, rgba(98,52,150,0.5), rgba(58,27,94,0.6));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid rgba(255,255,255,0.2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12);}
+.fb-grid .cat-card-etiqueta{position:relative;flex:0 0 auto;padding:8px 10px 9px;justify-content:flex-start;gap:1px;background:linear-gradient(180deg, rgba(98,52,150,0.5), rgba(58,27,94,0.6));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid rgba(255,255,255,0.2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12);border-radius:0 0 16px 16px;}
 @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
   .fb-grid .cat-card-etiqueta{background:linear-gradient(180deg, #5f3196, #3a1b5e);}
 }
@@ -320,10 +320,9 @@ body.fb-lb-open{overflow:hidden;}
 @keyframes fbPop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
 .fb-lb-x{position:absolute;top:10px;right:10px;z-index:3;width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,0,0,0.5);color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .fb-lb-x:hover{background:rgba(0,0,0,0.72);}
-/* la foto muestra la imagen REAL (cover sobre un recuadro con la misma proporción → sin bordes);
-   el aspect-ratio lo fija el JS según la foto */
-.fb-lb-foto{position:relative;overflow:hidden;width:100%;aspect-ratio:1/1;flex:0 0 auto;background:rgba(255,255,255,0.04);margin:10px 10px 0;border-radius:16px;}
-.fb-lb-foto .kv-fbg{background-size:cover;background-position:center;}
+/* la foto ampliada = igual que la tarjeta: recuadro fijo 4/3, mismo encuadre (cover) y centrado.
+   Todos los productos quedan del mismo tamaño estándar. */
+.fb-lb-foto{position:relative;overflow:hidden;width:100%;aspect-ratio:4/3;flex:0 0 auto;background-color:#EFEAF5;margin:10px 10px 0;border-radius:14px;}
 .fb-lb-info{padding:14px 22px calc(16px + env(safe-area-inset-bottom));text-align:center;display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
 .fb-lb-codigo{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--kv-dorado-cl);}
 .fb-lb-nombre{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--kv-crema);margin:0;line-height:1.1;}

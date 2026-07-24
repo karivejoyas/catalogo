@@ -321,9 +321,9 @@ body.fb-lb-open{overflow:hidden;}
 .fb-lb-x{position:absolute;top:10px;right:10px;z-index:3;width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,0,0,0.5);color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .fb-lb-x:hover{background:rgba(0,0,0,0.72);}
 /* la foto ampliada = igual que la tarjeta: recuadro fijo 4/3, mismo encuadre (cover) y centrado.
-   Todos los productos quedan del mismo tamaño estándar. */
-.fb-lb-foto{position:relative;overflow:hidden;width:100%;aspect-ratio:4/3;flex:0 0 auto;background-color:#EFEAF5;margin:10px 10px 0;border-radius:14px;}
-.fb-lb-info{padding:14px 22px calc(16px + env(safe-area-inset-bottom));text-align:center;display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
+   Flota dentro del cuadro morado, con esquinas ovaladas y aire alrededor. */
+.fb-lb-foto{position:relative;overflow:hidden;width:calc(100% - 26px);aspect-ratio:4/3;flex:0 0 auto;background-color:#EFEAF5;margin:13px 13px 3px;border-radius:18px;box-shadow:0 6px 18px rgba(16,4,32,0.32);}
+.fb-lb-info{padding:11px 22px calc(16px + env(safe-area-inset-bottom));text-align:center;display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
 .fb-lb-codigo{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--kv-dorado-cl);}
 .fb-lb-nombre{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--kv-crema);margin:0;line-height:1.1;}
 .fb-lb-detalle{font-size:14px;font-weight:300;color:var(--kv-lavanda);margin:0;}

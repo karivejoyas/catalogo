@@ -111,12 +111,16 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 /* tarjeta del catálogo = MISMA estructura que el admin: foto 4/3 (mismo encuadre
    y zoom que se ve al editar) arriba, y el "cuadro morado" con la info debajo,
    sin tapar la foto. El grupo se centra en su celda. */
-.fb-grid{align-content:center;grid-auto-rows:min-content;grid-template-rows:none;}
-.fb-grid .cat-card{height:auto;background:linear-gradient(162deg, #5f3196, #3a1b5e);border-radius:16px;}
-.fb-grid .cat-card-foto{width:100%;aspect-ratio:4/3;flex:0 0 auto;border-radius:16px 16px 0 0;background-color:#EFEAF5;}
-/* "cuadro morado" translúcido tipo liquid glass, pegado bajo la foto */
-.fb-grid .cat-card-etiqueta{position:relative;flex:0 0 auto;padding:8px 10px 9px;justify-content:flex-start;gap:1px;background:linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0));border-top:1px solid rgba(255,255,255,0.16);box-shadow:inset 0 1px 0 rgba(255,255,255,0.1);}
-.fb-grid .cat-card-nombre{font-size:clamp(12.5px,3.3vw,14px);line-height:1.15;min-height:2.3em;display:flex;align-items:center;justify-content:center;text-align:center;}
+/* productos alineados ARRIBA (si hay 1 o 2 no quedan al medio/abajo) */
+.fb-grid{align-content:start;grid-auto-rows:min-content;grid-template-rows:none;}
+.fb-grid .cat-card{height:auto;background:transparent;border-radius:16px;overflow:hidden;}
+.fb-grid .cat-card-foto{width:100%;aspect-ratio:4/3;flex:0 0 auto;background-color:#EFEAF5;}
+/* "cuadro morado" liquid glass: translúcido, difumina el fondo lila detrás (estilo iOS), debajo de la foto */
+.fb-grid .cat-card-etiqueta{position:relative;flex:0 0 auto;padding:8px 10px 9px;justify-content:flex-start;gap:1px;background:linear-gradient(180deg, rgba(98,52,150,0.5), rgba(58,27,94,0.6));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid rgba(255,255,255,0.2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12);}
+@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
+  .fb-grid .cat-card-etiqueta{background:linear-gradient(180deg, #5f3196, #3a1b5e);}
+}
+.fb-grid .cat-card-nombre{font-size:clamp(12.5px,3.3vw,14px);line-height:1.15;min-height:2.3em;display:flex;align-items:center;justify-content:center;text-align:center;text-shadow:0 1px 6px rgba(24,8,44,0.5);}
 .fb-grid .cat-card-nombre>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .fb-grid .cat-card-detalle{font-size:clamp(10px,2.6vw,11px);line-height:1.2;min-height:1.2em;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;color:#E1D4EF;}
 .fb-grid .cat-card-pie{flex-wrap:nowrap;gap:6px;margin-top:2px;}
@@ -306,17 +310,21 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 body.fb-lb-open{overflow:hidden;}
 .fb-lightbox{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
 .fb-lightbox[hidden]{display:none;}
-.fb-lb-backdrop{position:absolute;inset:0;background:rgba(10,4,16,0.82);animation:fbFade .2s ease;}
-.fb-lb-card{position:relative;z-index:2;max-width:min(540px,92vw);height:min(92vh,720px);width:100%;background:linear-gradient(170deg, rgba(96,50,148,0.82), rgba(42,18,62,0.94));-webkit-backdrop-filter:blur(26px) saturate(1.4);backdrop-filter:blur(26px) saturate(1.4);border:1px solid rgba(255,255,255,0.2);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fbPop .25s cubic-bezier(0.16,1,0.3,1);}
+.fb-lb-backdrop{position:absolute;inset:0;background:rgba(10,4,16,0.58);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:fbFade .2s ease;}
+/* recuadro liquid glass que se adapta al alto de su contenido (foto real + info) */
+.fb-lb-card{position:relative;z-index:2;max-width:min(430px,92vw);width:100%;max-height:94vh;background:linear-gradient(172deg, rgba(102,56,158,0.55), rgba(46,20,74,0.72));-webkit-backdrop-filter:blur(30px) saturate(1.6);backdrop-filter:blur(30px) saturate(1.6);border:1px solid rgba(255,255,255,0.24);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.14);animation:fbPop .25s cubic-bezier(0.16,1,0.3,1);}
 @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
-  .fb-lb-card{background:linear-gradient(170deg, #4A2578, var(--kv-morado-osc));}
+  .fb-lb-card{background:linear-gradient(172deg, #4A2578, var(--kv-morado-osc));}
 }
 @keyframes fbFade{from{opacity:0}to{opacity:1}}
 @keyframes fbPop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
 .fb-lb-x{position:absolute;top:10px;right:10px;z-index:3;width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,0,0,0.5);color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .fb-lb-x:hover{background:rgba(0,0,0,0.72);}
-.fb-lb-foto{position:relative;overflow:hidden;width:100%;aspect-ratio:auto;flex:1 1 auto;min-height:180px;background:transparent;}
-.fb-lb-info{padding:14px 22px calc(16px + env(safe-area-inset-bottom));text-align:center;display:flex;flex-direction:column;gap:6px;flex:0 0 auto;border-top:1px solid rgba(255,255,255,0.16);}
+/* la foto muestra la imagen REAL (cover sobre un recuadro con la misma proporción → sin bordes);
+   el aspect-ratio lo fija el JS según la foto */
+.fb-lb-foto{position:relative;overflow:hidden;width:100%;aspect-ratio:1/1;flex:0 0 auto;background:rgba(255,255,255,0.04);margin:10px 10px 0;border-radius:16px;}
+.fb-lb-foto .kv-fbg{background-size:cover;background-position:center;}
+.fb-lb-info{padding:14px 22px calc(16px + env(safe-area-inset-bottom));text-align:center;display:flex;flex-direction:column;gap:6px;flex:0 0 auto;}
 .fb-lb-codigo{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--kv-dorado-cl);}
 .fb-lb-nombre{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--kv-crema);margin:0;line-height:1.1;}
 .fb-lb-detalle{font-size:14px;font-weight:300;color:var(--kv-lavanda);margin:0;}

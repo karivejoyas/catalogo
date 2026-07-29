@@ -161,6 +161,9 @@ input::placeholder{color:rgba(255,255,255,0.4);}
   .fb-grid .cat-card-nombre{line-height:1.15;min-height:2.3em;}
   .fb-grid .cat-card-detalle{min-height:1.25em;}
   .fb-grid .cat-card-pie{margin-top:1px;}
+  /* la foto se ajusta al ALTO de la pantalla (en TODO computador/notebook),
+     así las 2 filas y sus botones siempre caben sin cortarse */
+  .fb-grid .cat-card-foto{aspect-ratio:auto;height:clamp(110px,23vh,240px);}
 }
 
 /* PC con pantalla baja (notebooks): encabezado y etiqueta compactos para que las fotos respiren */
@@ -174,8 +177,8 @@ input::placeholder{color:rgba(255,255,255,0.4);}
   .fb-prod-inner{padding:8px 14px 12px;}
   .fb-prod-head{margin-bottom:5px;}
   .fb-prod-titulo{font-size:clamp(18px,3vh,26px);}
-  /* la foto se ajusta al alto de la pantalla para que SIEMPRE quepan las 2 filas */
-  .fb-grid .cat-card-foto{aspect-ratio:auto;height:clamp(96px,23vh,225px);}
+  /* en pantallas bajas la foto se compacta un poco más para dar margen */
+  .fb-grid .cat-card-foto{height:clamp(96px,21vh,210px);}
   .fb-grid .cat-card-etiqueta{padding:5px 8px 7px;gap:1px;}
   .fb-grid .cat-card-nombre{font-size:12.5px;min-height:2.3em;}
   .fb-grid .cat-card-detalle{font-size:10px;min-height:1.25em;}

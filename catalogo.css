@@ -27,9 +27,12 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 
 .fb-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px clamp(12px,3vw,28px);flex:0 0 auto;}
 .fb-logo img{display:block;height:56px;width:auto;filter:drop-shadow(0 0 6px rgba(255,255,255,0.3)) brightness(1.25);}
-.fb-nav{display:flex;gap:clamp(10px,2vw,22px);}
-.fb-nav a{font-size:11.5px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:var(--kv-lavanda);text-decoration:none;white-space:nowrap;transition:color .2s;}
-.fb-nav a:hover,.fb-nav a.is-active{color:var(--kv-dorado-cl);}
+/* el menú de colecciones es SIEMPRE un desplegable con hamburguesa (PC y celular):
+   así el encabezado ocupa poco alto y ese espacio se lo llevan las fotos de los productos */
+.fb-nav{display:none;position:absolute;top:calc(100% + 8px);right:0;flex-direction:column;gap:0;background:#241238;border:1px solid rgba(201,162,75,0.4);border-radius:12px;padding:6px;min-width:210px;z-index:50;box-shadow:0 18px 44px rgba(0,0,0,0.55);}
+.fb-nav.abierto{display:flex;}
+.fb-nav a{padding:11px 14px;border-radius:8px;font-size:12px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--kv-lavanda);text-decoration:none;white-space:nowrap;transition:color .2s, background .15s;}
+.fb-nav a:hover,.fb-nav a.is-active{color:var(--kv-dorado-cl);background:rgba(227,197,114,0.14);}
 
 .fb-stage{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(4px,1.5vw,20px);padding:4px clamp(6px,2vw,20px);}
 .fb-page-wrap{height:100%;display:flex;align-items:center;justify-content:center;}
@@ -85,7 +88,7 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 /* -- página: productos (2x2) -- */
 .fb-prod{position:relative;height:100%;overflow:hidden;background:linear-gradient(var(--kv-lila-fondo), #c3b5d6);}
 .fb-prod-bg{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0;}
-.fb-prod-inner{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:clamp(10px,2vh,22px) clamp(12px,3vw,22px) clamp(12px,2vh,20px);}
+.fb-prod-inner{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:clamp(8px,1.4vh,16px) clamp(12px,3vw,22px) clamp(12px,2vh,20px);}
 .fb-prod-head{text-align:center;margin-bottom:clamp(6px,1.2vh,12px);}
 .fb-prod-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(22px,3.4vh,34px);line-height:1.05;margin:0;color:var(--kv-morado-prof);}
 /* número de página: badge en la esquina superior, no ocupa alto en el flujo */
@@ -134,8 +137,9 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 
 /* menú de colecciones (hamburguesa en móvil) */
 .fb-nav-wrap{position:relative;display:flex;align-items:center;}
-.fb-menu-btn{display:none;align-items:center;gap:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(201,162,75,0.45);border-radius:999px;padding:7px 14px;color:var(--kv-dorado-cl);font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;cursor:pointer;}
-.fb-menu-btn .fb-hamb{font-size:15px;line-height:1;}
+.fb-menu-btn{display:inline-flex;align-items:center;gap:8px;max-width:min(46vw,320px);background:rgba(255,255,255,0.06);border:1px solid rgba(201,162,75,0.45);border-radius:999px;padding:7px 14px;color:var(--kv-dorado-cl);font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.04em;cursor:pointer;}
+.fb-menu-btn .fb-hamb{font-size:15px;line-height:1;flex:0 0 auto;}
+.fb-menu-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .fb-menu-btn.abierto{background:rgba(227,197,114,0.16);}
 
 /* páginas: ¿cómo comprar? y despedida */
@@ -163,7 +167,7 @@ input::placeholder{color:rgba(255,255,255,0.4);}
   .fb-grid .cat-card-pie{margin-top:1px;}
   /* la foto se ajusta al ALTO de la pantalla (en TODO computador/notebook),
      así las 2 filas y sus botones siempre caben sin cortarse */
-  .fb-grid .cat-card-foto{aspect-ratio:auto;height:clamp(110px,23vh,240px);}
+  .fb-grid .cat-card-foto{aspect-ratio:auto;height:clamp(110px,27vh,260px);}
 }
 
 /* PC con pantalla baja (notebooks): encabezado y etiqueta compactos para que las fotos respiren */
@@ -178,7 +182,7 @@ input::placeholder{color:rgba(255,255,255,0.4);}
   .fb-prod-head{margin-bottom:5px;}
   .fb-prod-titulo{font-size:clamp(18px,3vh,26px);}
   /* en pantallas bajas la foto se compacta un poco más para dar margen */
-  .fb-grid .cat-card-foto{height:clamp(96px,21vh,210px);}
+  .fb-grid .cat-card-foto{height:clamp(96px,25vh,235px);}
   .fb-grid .cat-card-etiqueta{padding:5px 8px 7px;gap:1px;}
   .fb-grid .cat-card-nombre{font-size:12.5px;min-height:2.3em;}
   .fb-grid .cat-card-detalle{font-size:10px;min-height:1.25em;}
@@ -191,11 +195,7 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 @media (max-width: 640px){
   .fb-arrow{display:none;}
   .fb-topbar{gap:8px;}
-  .fb-menu-btn{display:inline-flex;}
-  .fb-nav{display:none;position:absolute;top:calc(100% + 8px);right:0;flex-direction:column;gap:0;background:#241238;border:1px solid rgba(201,162,75,0.4);border-radius:12px;padding:6px;min-width:210px;z-index:50;box-shadow:0 18px 44px rgba(0,0,0,0.55);}
-  .fb-nav.abierto{display:flex;}
-  .fb-nav a{padding:11px 14px;border-radius:8px;letter-spacing:0.1em;}
-  .fb-nav a:hover,.fb-nav a.is-active{background:rgba(227,197,114,0.14);}
+  .fb-menu-btn{max-width:56vw;}
 }
 
 /* ============================================================

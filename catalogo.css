@@ -85,11 +85,11 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 /* -- página: productos (2x2) -- */
 .fb-prod{position:relative;height:100%;overflow:hidden;background:linear-gradient(var(--kv-lila-fondo), #c3b5d6);}
 .fb-prod-bg{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0;}
-.fb-prod-inner{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:clamp(14px,2.6vh,26px) clamp(12px,3vw,22px);}
-.fb-prod-head{text-align:center;margin-bottom:clamp(8px,1.8vh,16px);}
-.fb-prod-eyebrow{font-size:10px;font-weight:600;letter-spacing:0.3em;text-transform:uppercase;color:var(--kv-morado);}
-.fb-prod-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(24px,4vh,38px);line-height:1;margin:2px 0 0;color:var(--kv-morado-prof);}
-.fb-prod-pag{display:inline-block;margin-top:4px;font-size:10.5px;letter-spacing:0.14em;color:var(--kv-morado);}
+.fb-prod-inner{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:clamp(10px,2vh,22px) clamp(12px,3vw,22px) clamp(12px,2vh,20px);}
+.fb-prod-head{text-align:center;margin-bottom:clamp(6px,1.2vh,12px);}
+.fb-prod-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(22px,3.4vh,34px);line-height:1.05;margin:0;color:var(--kv-morado-prof);}
+/* número de página: badge en la esquina superior, no ocupa alto en el flujo */
+.fb-prod-pag{position:absolute;top:10px;right:14px;z-index:3;font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:0.12em;color:var(--kv-morado-prof);background:rgba(255,255,255,0.5);border:1px solid rgba(90,42,130,0.18);border-radius:999px;padding:3px 9px;}
 .fb-grid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:clamp(8px,1.6vw,14px);}
 
 /* tarjeta (reusada en flipbook y admin) */

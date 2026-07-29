@@ -123,13 +123,15 @@
     }
     // products
     const cards = s.items.map(kvCardHtml).join('');
+    // el número de página va en una esquina (no ocupa alto); solo el nombre encabeza
     const paginacion = s.pageTotal > 1 ? '<span class="fb-prod-pag">' + s.pageNum + ' / ' + s.pageTotal + '</span>' : '';
     const fp = kvFondoProd(settings);
     return (
       '<div class="fb-prod" style="' + fp.base + '">' +
         (fp.imgUrl ? '<div class="fb-prod-bg" style="background-image:url(\'' + fp.imgUrl + '\');opacity:' + fp.imgOp + ';"></div>' : '') +
+        paginacion +
         '<div class="fb-prod-inner">' +
-          '<div class="fb-prod-head"><span class="fb-prod-eyebrow">Colección</span><h2 class="fb-prod-titulo">' + escapeHtml(s.cat.nombre) + '</h2>' + paginacion + '</div>' +
+          '<div class="fb-prod-head"><h2 class="fb-prod-titulo">' + escapeHtml(s.cat.nombre) + '</h2></div>' +
           '<div class="fb-grid">' + cards + '</div>' +
         '</div>' +
       '</div>'

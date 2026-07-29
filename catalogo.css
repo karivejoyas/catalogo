@@ -171,11 +171,11 @@ input::placeholder{color:rgba(255,255,255,0.4);}
   .fb-footer{padding:2px 0 5px;gap:14px;}
   .fb-arrow-mini{font-size:20px;}
   .fb-counter{font-size:11px;}
-  .fb-prod-inner{padding:10px 14px 12px;}
-  .fb-prod-head{margin-bottom:6px;}
-  .fb-prod-eyebrow{font-size:9px;}
-  .fb-prod-titulo{font-size:clamp(19px,3.2vh,28px);}
-  .fb-prod-pag{margin-top:2px;font-size:9.5px;}
+  .fb-prod-inner{padding:8px 14px 12px;}
+  .fb-prod-head{margin-bottom:5px;}
+  .fb-prod-titulo{font-size:clamp(18px,3vh,26px);}
+  /* la foto se ajusta al alto de la pantalla para que SIEMPRE quepan las 2 filas */
+  .fb-grid .cat-card-foto{aspect-ratio:auto;height:clamp(96px,23vh,225px);}
   .fb-grid .cat-card-etiqueta{padding:5px 8px 7px;gap:1px;}
   .fb-grid .cat-card-nombre{font-size:12.5px;min-height:2.3em;}
   .fb-grid .cat-card-detalle{font-size:10px;min-height:1.25em;}

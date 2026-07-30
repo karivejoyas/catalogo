@@ -10,8 +10,10 @@
   const itemsCol = kvDb.collection('catalog').doc('products').collection('items');
   const settingsRef = kvDb.collection('catalog').doc('settings');
   const pedidosCol = kvDb.collection('catalog').doc('pedidos').collection('items');
-  let unsubItems = null, unsubSettings = null, unsubPedidos = null;
+  const visitasCol = kvDb.collection('catalog').doc('visitas').collection('items');
+  let unsubItems = null, unsubSettings = null, unsubPedidos = null, unsubVisitas = null;
   let pedidos = [];
+  let visitas = [];
 
   const guardado = (id) => { const n = $(id); if (!n) return; n.hidden = false; setTimeout(() => { n.hidden = true; }, 2000); };
   const activo = () => document.activeElement;
@@ -99,11 +101,16 @@
       pedidos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderPedidos();
     }, (err) => console.error('Error leyendo pedidos:', err));
+    unsubVisitas = visitasCol.orderBy('ultima', 'desc').limit(300).onSnapshot((snap) => {
+      visitas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderVisitas();
+    }, (err) => console.error('Error leyendo visitas:', err));
   }
   function dejarDeEscuchar() {
     if (unsubItems) { unsubItems(); unsubItems = null; }
     if (unsubSettings) { unsubSettings(); unsubSettings = null; }
     if (unsubPedidos) { unsubPedidos(); unsubPedidos = null; }
+    if (unsubVisitas) { unsubVisitas(); unsubVisitas = null; }
     products = [];
   }
   function sembrar() {
@@ -1602,5 +1609,54 @@
     pedidosCol.doc(id).update({ estado: 'enviado', courier: courier, tracking: tracking, trackingUrl: trackingUrl, enviadoFecha: new Date().toISOString() })
       .catch(err => console.error(err));
     if (!correoOk) window.alert('El pedido quedó marcado como ENVIADO, pero el correo a la clienta no se pudo mandar (revisa la URL del publicador y tu clave secreta en "Instagram y Facebook", o avísale por WhatsApp).');
+  }
+
+  // ---------- VISITAS ----------
+  const VIS_ICONO_DISP = { 'Móvil': '📱', 'Tablet': '📲', 'Escritorio': '💻' };
+  const VIS_ICONO_ORIGEN = { 'Instagram': '📷', 'Facebook': '👍', 'WhatsApp': '💬', 'Google': '🔎', 'Directo': '🔗', 'Otro': '🌐' };
+  function renderVisitas() {
+    const statsEl = $('adm-vis-stats');
+    if (statsEl) {
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      const semana = Date.now() - 7 * 24 * 3600 * 1000;
+      const esHoy = v => { const f = new Date(v.creada || v.ultima || 0); return f.getTime() >= hoy.getTime(); };
+      const esSemana = v => new Date(v.creada || v.ultima || 0).getTime() >= semana;
+      const total = visitas.length;
+      const nHoy = visitas.filter(esHoy).length;
+      const nSemana = visitas.filter(esSemana).length;
+      const nCarrito = visitas.filter(v => v.agregoCarrito).length;
+      const nPedido = visitas.filter(v => v.hizoPedido).length;
+      statsEl.innerHTML =
+        '<div class="vis-stat"><b>' + total + '</b><span>Visitas (últimas 300)</span></div>' +
+        '<div class="vis-stat"><b>' + nHoy + '</b><span>Hoy</span></div>' +
+        '<div class="vis-stat"><b>' + nSemana + '</b><span>Últimos 7 días</span></div>' +
+        '<div class="vis-stat"><b>' + nCarrito + '</b><span>Agregaron al carrito</span></div>' +
+        '<div class="vis-stat"><b>' + nPedido + '</b><span>Hicieron un pedido</span></div>';
+    }
+    const cont = $('adm-visitas-lista'); if (!cont) return;
+    if (!visitas.length) {
+      cont.innerHTML = '<p class="adm-seccion-sub">Aún no hay visitas registradas. Aparecerán aquí a medida que la gente vea el catálogo. 👀</p>';
+      return;
+    }
+    cont.innerHTML = '<div class="vis-lista">' + visitas.map(v => {
+      const ubic = [v.ciudad, v.region].filter(Boolean).join(', ') || (v.pais ? v.pais : 'Ubicación no disponible');
+      const colecciones = (v.colecciones || []).map(c => '<span class="vis-chip">' + escapeHtml(c) + '</span>').join('');
+      const nProd = (v.productos || []).length;
+      return '<div class="vis-card">' +
+        '<div class="vis-fila-top">' +
+          '<span class="vis-fecha">' + pedFecha(v.ultima || v.creada) + '</span>' +
+          '<span class="vis-dispo">' + (VIS_ICONO_DISP[v.dispositivo] || '💻') + ' ' + escapeHtml(v.dispositivo || '') + ' · ' + escapeHtml(v.so || '') + ' · ' + escapeHtml(v.navegador || '') + '</span>' +
+          '<button type="button" class="vis-borrar" data-role="vis-borrar" data-id="' + v.id + '" title="Eliminar">✕</button>' +
+        '</div>' +
+        '<div class="vis-fila">📍 ' + escapeHtml(ubic) + '</div>' +
+        '<div class="vis-fila">' + (VIS_ICONO_ORIGEN[v.origenTipo] || '🌐') + ' Llegó desde: ' + escapeHtml(v.origenTipo || 'Directo') + (v.origenHost ? ' (' + escapeHtml(v.origenHost) + ')' : '') + '</div>' +
+        (colecciones ? '<div class="vis-fila">Colecciones vistas: ' + colecciones + '</div>' : '') +
+        (nProd ? '<div class="vis-fila">🔍 Vio ' + nProd + ' producto' + (nProd === 1 ? '' : 's') + '</div>' : '') +
+        (v.agregoCarrito || v.hizoPedido ? '<div class="vis-fila vis-destacado">' + (v.agregoCarrito ? '🛒 Agregó al carrito&nbsp; ' : '') + (v.hizoPedido ? '✅ Hizo un pedido' : '') + '</div>' : '') +
+      '</div>';
+    }).join('') + '</div>';
+    cont.querySelectorAll('[data-role="vis-borrar"]').forEach(n => n.addEventListener('click', () => {
+      visitasCol.doc(n.dataset.id).delete().catch(err => console.error(err));
+    }));
   }
 })();

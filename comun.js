@@ -599,6 +599,39 @@ function kvTransferenciaLista(settings) {
   return !!(t.titular && t.banco && t.numero);
 }
 
+/* ---------- visitas (analítica anónima: sin IP exacta ni datos personales) ---------- */
+function kvVisitaDispositivo() {
+  const ua = navigator.userAgent || '';
+  const plat = navigator.platform || '';
+  const esIOS = /iPhone|iPad|iPod/.test(ua) || (plat === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const esTablet = /iPad/.test(ua) || (plat === 'MacIntel' && navigator.maxTouchPoints > 1) || (/Android/.test(ua) && !/Mobile/.test(ua));
+  const esMovil = !esTablet && (/Mobi|Android|iPhone/.test(ua) || esIOS);
+  const dispositivo = esTablet ? 'Tablet' : (esMovil ? 'Móvil' : 'Escritorio');
+  let so = 'Otro';
+  if (esIOS) so = 'iOS';
+  else if (/Android/.test(ua)) so = 'Android';
+  else if (/Win/.test(plat)) so = 'Windows';
+  else if (/Mac/.test(plat)) so = 'Mac';
+  else if (/Linux/.test(plat)) so = 'Linux';
+  let navegador = 'Otro';
+  if (/Edg\//.test(ua)) navegador = 'Edge';
+  else if (/OPR\//.test(ua) || /Opera/.test(ua)) navegador = 'Opera';
+  else if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) navegador = 'Chrome';
+  else if (/Firefox\//.test(ua)) navegador = 'Firefox';
+  else if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) navegador = 'Safari';
+  return { dispositivo: dispositivo, so: so, navegador: navegador };
+}
+function kvVisitaOrigen(ref) {
+  if (!ref) return { tipo: 'Directo', host: '' };
+  let host = '';
+  try { host = new URL(ref).hostname.replace(/^www\./, ''); } catch (e) { return { tipo: 'Otro', host: '' }; }
+  if (/instagram\.com/.test(host)) return { tipo: 'Instagram', host: host };
+  if (/facebook\.com|fb\.com/.test(host)) return { tipo: 'Facebook', host: host };
+  if (/whatsapp\.com/.test(host)) return { tipo: 'WhatsApp', host: host };
+  if (/google\./.test(host)) return { tipo: 'Google', host: host };
+  return { tipo: 'Otro', host: host };
+}
+
 function kvCompressPhoto(file, cb, max, quality) {
   if (!file) return;
   max = max || 700;

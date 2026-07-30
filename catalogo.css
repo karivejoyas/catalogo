@@ -736,3 +736,19 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 .ped-enviado-info{font-family:'Jost',sans-serif;font-size:13px;color:#c0cdff;}
 .ped-enviado-info a{color:var(--kv-dorado-cl);}
 .ped-borrar{margin-left:auto;color:#e08a9a;border-color:rgba(224,138,154,0.5);}
+
+/* ---------- panel admin: visitas ---------- */
+.vis-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
+.vis-stat{background:rgba(255,255,255,0.04);border:1px solid rgba(201,162,75,0.25);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;}
+.vis-stat b{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--kv-dorado-cl);}
+.vis-stat span{font-size:11px;color:var(--kv-lavanda);}
+.vis-lista{display:flex;flex-direction:column;gap:10px;}
+.vis-card{background:rgba(255,255,255,0.04);border:1px solid rgba(201,162,75,0.22);border-radius:12px;padding:11px 14px;font-family:'Jost',sans-serif;}
+.vis-fila-top{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+.vis-fecha{font-size:12px;font-weight:600;color:var(--kv-crema);flex:0 0 auto;}
+.vis-dispo{font-size:12px;color:var(--kv-lavanda);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vis-borrar{flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:none;background:rgba(255,255,255,0.08);color:#c0aed4;font-size:11px;cursor:pointer;}
+.vis-borrar:hover{background:rgba(224,138,154,0.25);color:#ffb3c0;}
+.vis-fila{font-size:12.5px;color:var(--kv-lavanda);margin-top:3px;line-height:1.5;}
+.vis-chip{display:inline-block;background:rgba(227,197,114,0.14);border:1px solid rgba(227,197,114,0.35);color:#f0d9a0;border-radius:999px;padding:1px 9px;font-size:11px;margin:0 4px 3px 0;}
+.vis-destacado{color:#a9e6b8;font-weight:500;}

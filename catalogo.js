@@ -144,6 +144,7 @@
     const curCat = cur && cur.cat ? cur.cat.id : null;
     nav.querySelectorAll('a').forEach(a => a.classList.toggle('is-active', a.dataset.cat === curCat));
     nivelarTarjetas();
+    if (cur && cur.cat && (cur.type === 'hero' || cur.type === 'products')) visitaVioColeccion(cur.cat.nombre);
   }
 
   /* cada tarjeta mide lo justo para su contenido (ya no se fuerza a todas
@@ -201,6 +202,7 @@
   function abrirLightbox(p) {
     if (!p) return;
     lbProd = p;
+    visitaVioProducto(p.name);
     const foto = $('fb-lb-foto');
     // se muestra EXACTAMENTE como en la tarjeta: mismo recorte 4/3 con el encuadre,
     // así todos los recuadros quedan del mismo tamaño y el producto centrado igual
@@ -241,6 +243,67 @@
   });
 
   // ============================================================
+  //  VISITAS (analítica anónima para el panel admin: NO se guarda
+  //  la IP exacta ni ningún dato personal — solo ciudad/región
+  //  aproximada, tipo de dispositivo, de dónde llegó y qué miró)
+  // ============================================================
+  const visitasCol = kvDb.collection('catalog').doc('visitas').collection('items');
+  let visitaId;
+  try {
+    visitaId = sessionStorage.getItem('kv_visita_id');
+    if (!visitaId) { visitaId = 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); sessionStorage.setItem('kv_visita_id', visitaId); }
+  } catch (e) { visitaId = 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  const visitaColecciones = new Set();
+  const visitaProductos = new Set();
+  let visitaCarritoMarcado = false, visitaPedidoMarcado = false, visitaIniciada = false;
+
+  function visitaGuardar(extra) {
+    visitasCol.doc(visitaId).set(Object.assign({ ultima: new Date().toISOString() }, extra || {}), { merge: true }).catch(() => {});
+  }
+  function visitaIniciar() {
+    if (visitaIniciada) return;
+    visitaIniciada = true;
+    const dev = kvVisitaDispositivo();
+    const org = kvVisitaOrigen(document.referrer);
+    visitaGuardar({
+      creada: new Date().toISOString(),
+      dispositivo: dev.dispositivo, so: dev.so, navegador: dev.navegador,
+      origenTipo: org.tipo, origenHost: org.host,
+      pais: '', region: '', ciudad: ''
+    });
+    // ubicación aproximada por IP (mejor esfuerzo; nunca se guarda la IP en sí)
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 2500);
+      fetch('https://get.geojs.io/v1/ip/geo.json', { signal: ctrl.signal }).then(r => r.json()).then(g => {
+        clearTimeout(t);
+        if (g) visitaGuardar({ pais: g.country || '', region: g.region || '', ciudad: g.city || '' });
+      }).catch(() => {});
+    } catch (e) {}
+  }
+  function visitaVioColeccion(nombre) {
+    if (!nombre || visitaColecciones.has(nombre)) return;
+    visitaColecciones.add(nombre);
+    visitaGuardar({ colecciones: firebase.firestore.FieldValue.arrayUnion(nombre) });
+  }
+  function visitaVioProducto(nombre) {
+    if (!nombre || visitaProductos.has(nombre)) return;
+    visitaProductos.add(nombre);
+    visitaGuardar({ productos: firebase.firestore.FieldValue.arrayUnion(nombre) });
+  }
+  function visitaMarcarCarrito() {
+    if (visitaCarritoMarcado) return;
+    visitaCarritoMarcado = true;
+    visitaGuardar({ agregoCarrito: true });
+  }
+  function visitaMarcarPedido() {
+    if (visitaPedidoMarcado) return;
+    visitaPedidoMarcado = true;
+    visitaGuardar({ hizoPedido: true });
+  }
+  visitaIniciar();
+
+  // ============================================================
   //  CARRITO DE COMPRAS
   // ============================================================
   const CARRO_KEY = 'kv_carrito';
@@ -276,6 +339,7 @@
     if (!p) return;
     carro[id] = (carro[id] || 0) + (n || 1);
     carroGuardar();
+    visitaMarcarCarrito();
     carroToast('✓ ' + (p.name || 'Producto') + ' agregado al carrito');
     if (!carritoEl.hidden) carroRender();
   }
@@ -525,6 +589,7 @@
         }));
       } catch (e2) { console.warn('Pedido enviado por correo; no se pudo registrar en la base:', e2); }
       carroPedidoOk = { num: d.num, total: pedido.total };
+      visitaMarcarPedido();
       carro = {}; carroComprobante = null; carroGuardar();
       carroVista = 'ok'; carroEnviando = false; carroRender();
     } catch (err) {

@@ -123,16 +123,13 @@
     }
     // products
     const cards = s.items.map(kvCardHtml).join('');
-    // el número de página va en una esquina (no ocupa alto); el nombre de la
-    // colección ya se ve en el botón ☰ de arriba, así que aquí no se repite
-    // (todo ese espacio queda libre para que las fotos sean grandes)
     const paginacion = s.pageTotal > 1 ? '<span class="fb-prod-pag">' + s.pageNum + ' / ' + s.pageTotal + '</span>' : '';
     const fp = kvFondoProd(settings);
     return (
       '<div class="fb-prod" style="' + fp.base + '">' +
         (fp.imgUrl ? '<div class="fb-prod-bg" style="background-image:url(\'' + fp.imgUrl + '\');opacity:' + fp.imgOp + ';"></div>' : '') +
-        paginacion +
         '<div class="fb-prod-inner">' +
+          '<div class="fb-prod-head"><h2 class="fb-prod-titulo">' + escapeHtml(s.cat.nombre) + '</h2>' + paginacion + '</div>' +
           '<div class="fb-grid">' + cards + '</div>' +
         '</div>' +
       '</div>'
@@ -146,9 +143,6 @@
     const cur = slides[idx];
     const curCat = cur && cur.cat ? cur.cat.id : null;
     nav.querySelectorAll('a').forEach(a => a.classList.toggle('is-active', a.dataset.cat === curCat));
-    // el botón hamburguesa muestra la colección activa (reemplaza el título repetido dentro de la página)
-    const txt = $('fb-menu-txt');
-    if (txt) txt.textContent = cur && cur.cat ? cur.cat.nombre : 'Seleccionar colección';
     nivelarTarjetas();
   }
 

@@ -89,10 +89,9 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .fb-prod{position:relative;height:100%;overflow:hidden;background:linear-gradient(var(--kv-lila-fondo), #c3b5d6);}
 .fb-prod-bg{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0;}
 .fb-prod-inner{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:clamp(8px,1.4vh,16px) clamp(12px,3vw,22px) clamp(12px,2vh,20px);}
-.fb-prod-head{text-align:center;margin-bottom:clamp(6px,1.2vh,12px);}
-.fb-prod-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(22px,3.4vh,34px);line-height:1.05;margin:0;color:var(--kv-morado-prof);}
-/* número de página: badge en la esquina superior, no ocupa alto en el flujo */
-.fb-prod-pag{position:absolute;top:10px;right:14px;z-index:3;font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:0.12em;color:var(--kv-morado-prof);background:rgba(255,255,255,0.5);border:1px solid rgba(90,42,130,0.18);border-radius:999px;padding:3px 9px;}
+.fb-prod-head{text-align:center;margin-bottom:clamp(5px,1vh,10px);flex:0 0 auto;}
+.fb-prod-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(20px,3vh,30px);line-height:1.05;margin:0;color:var(--kv-morado-prof);}
+.fb-prod-pag{display:block;margin-top:2px;font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:0.14em;color:var(--kv-morado);}
 .fb-grid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:clamp(8px,1.6vw,14px);}
 
 /* tarjeta (reusada en flipbook y admin) */
@@ -114,10 +113,13 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 /* tarjeta del catálogo = MISMA estructura que el admin: foto 4/3 (mismo encuadre
    y zoom que se ve al editar) arriba, y el "cuadro morado" con la info debajo,
    sin tapar la foto. El grupo se centra en su celda. */
-/* productos alineados ARRIBA (si hay 1 o 2 no quedan al medio/abajo) */
-.fb-grid{align-content:start;grid-auto-rows:min-content;grid-template-rows:none;}
-.fb-grid .cat-card{height:auto;background:transparent;border-radius:16px;overflow:hidden;}
-.fb-grid .cat-card-foto{width:100%;aspect-ratio:4/3;flex:0 0 auto;background-color:#EFEAF5;}
+/* Las 2 filas se reparten SIEMPRE el espacio disponible (1fr cada una), así el
+   contenido nunca puede desbordarse ni cortarse. Si hay 1 o 2 productos, ocupan
+   la fila de arriba. La foto pide 4/3 (igual que el admin) pero puede encogerse
+   si la pantalla es baja: es lo único que cede, nunca el precio ni el botón. */
+.fb-grid{align-content:stretch;}
+.fb-grid .cat-card{height:100%;min-height:0;background:transparent;border-radius:16px;overflow:hidden;}
+.fb-grid .cat-card-foto{width:100%;aspect-ratio:4/3;flex:0 1 auto;min-height:0;background-color:#EFEAF5;}
 /* "cuadro morado" liquid glass: translúcido, difumina el fondo lila detrás (estilo iOS), debajo de la foto */
 .fb-grid .cat-card-etiqueta{position:relative;flex:0 0 auto;padding:8px 10px 9px;justify-content:flex-start;gap:1px;background:linear-gradient(180deg, rgba(98,52,150,0.5), rgba(58,27,94,0.6));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid rgba(255,255,255,0.2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12);border-radius:0 0 16px 16px;}
 @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
@@ -159,15 +161,14 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 
 /* en pantallas anchas (PC/tablet) la página es más ancha para llenar el espacio */
 @media (min-width: 641px){
-  .fb-page{width:min(82vw,66vh);aspect-ratio:73/100;}
+  /* la página aprovecha mejor el alto disponible: fotos ~10% más grandes
+     manteniendo el encuadre 4/3 igual que en el admin */
+  .fb-page{width:min(86vw,72vh);aspect-ratio:76/100;}
   /* barra morada compacta: la foto es la protagonista */
   .fb-grid .cat-card-etiqueta{padding:6px 8px 8px;gap:1px;}
   .fb-grid .cat-card-nombre{line-height:1.15;min-height:2.3em;}
   .fb-grid .cat-card-detalle{min-height:1.25em;}
   .fb-grid .cat-card-pie{margin-top:1px;}
-  /* la foto se ajusta al ALTO de la pantalla (en TODO computador/notebook),
-     así las 2 filas y sus botones siempre caben sin cortarse */
-  .fb-grid .cat-card-foto{aspect-ratio:auto;height:clamp(110px,27vh,260px);}
 }
 
 /* PC con pantalla baja (notebooks): encabezado y etiqueta compactos para que las fotos respiren */
@@ -180,9 +181,7 @@ input::placeholder{color:rgba(255,255,255,0.4);}
   .fb-counter{font-size:11px;}
   .fb-prod-inner{padding:8px 14px 12px;}
   .fb-prod-head{margin-bottom:5px;}
-  .fb-prod-titulo{font-size:clamp(18px,3vh,26px);}
-  /* en pantallas bajas la foto se compacta un poco más para dar margen */
-  .fb-grid .cat-card-foto{height:clamp(96px,25vh,235px);}
+  .fb-prod-titulo{font-size:clamp(18px,2.6vh,24px);}
   .fb-grid .cat-card-etiqueta{padding:5px 8px 7px;gap:1px;}
   .fb-grid .cat-card-nombre{font-size:12.5px;min-height:2.3em;}
   .fb-grid .cat-card-detalle{font-size:10px;min-height:1.25em;}

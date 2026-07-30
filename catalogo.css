@@ -88,11 +88,13 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 /* -- página: productos (2x2) -- */
 .fb-prod{position:relative;height:100%;overflow:hidden;background:linear-gradient(var(--kv-lila-fondo), #c3b5d6);}
 .fb-prod-bg{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0;}
-.fb-prod-inner{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:clamp(8px,1.4vh,16px) clamp(12px,3vw,22px) clamp(12px,2vh,20px);}
+/* red de seguridad: si el contenido no cabe (pantalla muy baja), se puede
+   desplazar en vez de cortarse invisible; en el uso normal no hace falta scroll */
+.fb-prod-inner{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:clamp(8px,1.4vh,16px) clamp(12px,3vw,22px) clamp(12px,2vh,20px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 .fb-prod-head{text-align:center;margin-bottom:clamp(5px,1vh,10px);flex:0 0 auto;}
 .fb-prod-titulo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:clamp(20px,3vh,30px);line-height:1.05;margin:0;color:var(--kv-morado-prof);}
 .fb-prod-pag{display:block;margin-top:2px;font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:0.14em;color:var(--kv-morado);}
-.fb-grid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:clamp(8px,1.6vw,14px);}
+.fb-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:clamp(8px,1.6vw,14px);}
 
 /* tarjeta (reusada en flipbook y admin) */
 .cat-card{display:flex;flex-direction:column;background:#fff;border-radius:13px;overflow:hidden;box-shadow:0 10px 26px rgba(42,18,62,0.22);}
@@ -113,12 +115,10 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 /* tarjeta del catálogo = MISMA estructura que el admin: foto 4/3 (mismo encuadre
    y zoom que se ve al editar) arriba, y el "cuadro morado" con la info debajo,
    sin tapar la foto. El grupo se centra en su celda. */
-/* Las 2 filas se reparten SIEMPRE el espacio disponible (1fr cada una), así el
-   contenido nunca puede desbordarse ni cortarse. Si hay 1 o 2 productos, ocupan
-   la fila de arriba. La foto pide 4/3 (igual que el admin) pero puede encogerse
-   si la pantalla es baja: es lo único que cede, nunca el precio ni el botón. */
-.fb-grid{align-content:stretch;}
-.fb-grid .cat-card{height:100%;min-height:0;background:transparent;border-radius:16px;overflow:hidden;}
+/* productos alineados ARRIBA (si hay 1 o 2 no quedan al medio/abajo);
+   cada tarjeta mide lo que necesita su contenido, nunca se estira */
+.fb-grid{align-content:start;grid-auto-rows:min-content;grid-template-rows:none;}
+.fb-grid .cat-card{height:auto;min-height:0;background:transparent;border-radius:16px;overflow:hidden;}
 .fb-grid .cat-card-foto{width:100%;aspect-ratio:4/3;flex:0 1 auto;min-height:0;background-color:#EFEAF5;}
 /* "cuadro morado" liquid glass: translúcido, difumina el fondo lila detrás (estilo iOS), debajo de la foto */
 .fb-grid .cat-card-etiqueta{position:relative;flex:0 0 auto;padding:8px 10px 9px;justify-content:flex-start;gap:1px;background:linear-gradient(180deg, rgba(98,52,150,0.5), rgba(58,27,94,0.6));-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border-top:1px solid rgba(255,255,255,0.2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12);border-radius:0 0 16px 16px;}
@@ -314,7 +314,8 @@ body.fb-lb-open{overflow:hidden;}
 .fb-lightbox[hidden]{display:none;}
 .fb-lb-backdrop{position:absolute;inset:0;background:rgba(10,4,16,0.58);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:fbFade .2s ease;}
 /* recuadro liquid glass que se adapta al alto de su contenido (foto real + info) */
-.fb-lb-card{position:relative;z-index:2;max-width:min(430px,92vw);width:100%;max-height:94vh;background:linear-gradient(172deg, rgba(102,56,158,0.55), rgba(46,20,74,0.72));-webkit-backdrop-filter:blur(30px) saturate(1.6);backdrop-filter:blur(30px) saturate(1.6);border:1px solid rgba(255,255,255,0.24);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.14);animation:fbPop .25s cubic-bezier(0.16,1,0.3,1);}
+/* si la foto + info no caben en 94vh, se puede desplazar (nunca tapa el botón Cerrar) */
+.fb-lb-card{position:relative;z-index:2;max-width:min(430px,92vw);width:100%;max-height:94vh;background:linear-gradient(172deg, rgba(102,56,158,0.55), rgba(46,20,74,0.72));-webkit-backdrop-filter:blur(30px) saturate(1.6);backdrop-filter:blur(30px) saturate(1.6);border:1px solid rgba(255,255,255,0.24);border-radius:22px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.14);animation:fbPop .25s cubic-bezier(0.16,1,0.3,1);}
 @supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){
   .fb-lb-card{background:linear-gradient(172deg, #4A2578, var(--kv-morado-osc));}
 }

@@ -10,6 +10,7 @@
 
   let products = [];
   let settings = {};
+  let settingsListos = false;    // ¿ya llegó la configuración desde la base?
   let slides = [];
   let idx = 0;
   let pend1 = null, pend2 = null;
@@ -28,6 +29,15 @@
     slides = [{ type: 'cover' }, { type: 'info' }, { type: 'howto' }];
     const cats = kvCategorias(settings);
     const visibles = products.filter(kvEnStock);
+    // "Lo más visto" va primero: lo que más miran las clientas (lo calcula el admin)
+    const masVistos = kvMasVistos(settings, visibles);
+    if (masVistos.length) {
+      pushCategoria({
+        id: '__masvistos__', nombre: 'Lo más visto',
+        sub: 'Lo que más están mirando nuestras clientas ✨',
+        imagen: masVistos[0].photo || ''
+      }, masVistos);
+    }
     cats.forEach(cat => pushCategoria(cat, visibles.filter(p => p.category === cat.id)));
     // productos cuya colección fue eliminada: se muestran en "Otros"
     const huerfanos = visibles.filter(p => !cats.some(c => c.id === p.category));
@@ -303,6 +313,23 @@
     visitaCarritoMarcado = true;
     visitaGuardar({ agregoCarrito: true });
   }
+  /* Si la clienta alcanzó a escribir sus datos en el checkout pero no terminó,
+     se guardan para poder escribirle y recuperar el carrito. Solo se guarda
+     cuando el correo está bien escrito. */
+  let visitaContactoUlt = '', visitaContactoTimer = null;
+  function visitaGuardarContacto() {
+    clearTimeout(visitaContactoTimer);
+    visitaContactoTimer = setTimeout(() => {
+      const f = carroForm;
+      const mail = String(f.correo || '').trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return;
+      const firma = mail + '|' + f.nombre + '|' + f.telefono;
+      if (firma === visitaContactoUlt) return;
+      visitaContactoUlt = firma;
+      visitaGuardar({ contacto: { nombre: String(f.nombre || '').trim(), correo: mail, telefono: String(f.telefono || '').trim() } });
+    }, 900);
+  }
+
   let visitaCarritoTimer = null;
   function visitaActualizarCarrito() {
     clearTimeout(visitaCarritoTimer);
@@ -472,6 +499,8 @@
   let carroComprobante = null;       // dataURL del comprobante adjunto
   let carroPedidoOk = null;          // {num, total} tras enviar
   let carroEnviando = false;
+  const PEDIDO_PEND_KEY = 'kv_pedido_pendiente';   // pedido guardado mientras se paga en Mercado Pago
+  let carroMedio = 'transferencia';  // 'transferencia' | 'mercadopago'
   let carroCupon = null;             // cupón aplicado {codigo, tipo, valor…}
   let carroCuponTxt = '';            // lo que la clienta escribió en la casilla
   let carroCuponError = '';
@@ -649,31 +678,49 @@
     });
     if (dcto > 0) h += '<div class="kv-cart-resumen-dcto"><span>Cupón ' + escapeHtml(carroCupon.codigo) + '</span><span>−' + formatCLP(dcto) + '</span></div>';
     h += '<div><span>Envío' + (f.region ? ' (' + escapeHtml(f.region === KV_REGION_RM ? 'RM' : f.region) + ')' : '') + '</span><span>' + (envio != null ? formatCLP(envio) : 'elige región') + '</span></div>';
-    h += '<div class="kv-cart-resumen-tot"><span>Total a transferir</span><span>' + formatCLP(total) + '</span></div></div>';
-    // transferencia
-    h += '<div class="kv-cart-sec-tit">Transfiere a</div><div class="kv-cart-transf">';
-    if (kvTransferenciaLista(settings)) {
-      h += '<div><b>' + escapeHtml(t.titular) + '</b></div>' +
-        (t.rut ? '<div>RUT: ' + escapeHtml(t.rut) + '</div>' : '') +
-        '<div>' + escapeHtml(t.banco) + (t.tipo ? ' · ' + escapeHtml(t.tipo) : '') + '</div>' +
-        '<div>N° de cuenta: <b>' + escapeHtml(t.numero) + '</b></div>' +
-        (t.correo ? '<div>' + escapeHtml(t.correo) + '</div>' : '') +
-        '<button type="button" class="kv-cart-copiartodo" data-role="copiar-transf">📋 Copiar todos los datos</button>';
-    } else {
-      h += '<div>Escríbenos por WhatsApp o DM y te damos los datos de transferencia 💜</div>';
+    h += '<div class="kv-cart-resumen-tot"><span>Total a pagar</span><span>' + formatCLP(total) + '</span></div></div>';
+    // medio de pago (si Mercado Pago está activo, se puede elegir)
+    const mp = kvMercadoPago(settings);
+    if (mp.activo) {
+      h += '<div class="kv-cart-sec-tit">¿Cómo quieres pagar?</div>' +
+        '<div class="kv-cart-medios">' +
+          '<button type="button" class="kv-cart-medio' + (carroMedio === 'transferencia' ? ' is-active' : '') + '" data-role="medio" data-medio="transferencia">' +
+            '<b>🏦 Transferencia</b><span>Sin recargo</span></button>' +
+          '<button type="button" class="kv-cart-medio' + (carroMedio === 'mercadopago' ? ' is-active' : '') + '" data-role="medio" data-medio="mercadopago">' +
+            '<b>💳 Tarjeta</b><span>Débito o crédito</span></button>' +
+        '</div>';
     }
-    h += '</div>';
-    // comprobante
-    h += '<div class="kv-cart-sec-tit">Comprobante de transferencia *</div>' +
-      '<label class="kv-cart-file' + (carroComprobante ? ' listo' : '') + '">' +
-        (carroComprobante ? '✓ Comprobante adjunto — tocar para cambiar' : '📎 Adjuntar foto o captura del comprobante') +
-        '<input type="file" accept="image/*" id="kv-cart-comp" style="display:none;" />' +
-      '</label>' +
-      (carroComprobante ? '<div class="kv-cart-comp-mini" style="background-image:url(\'' + carroComprobante + '\')"></div>' : '');
+    if (carroMedio === 'mercadopago' && mp.activo) {
+      h += '<div class="kv-cart-mp">' +
+        '<div>Al enviar tu pedido te llevamos a <b>Mercado Pago</b> para pagar con tarjeta de forma segura. No necesitas adjuntar comprobante.</div>' +
+        (mp.prueba ? '<div class="kv-cart-mp-prueba">⚠ Modo de prueba: no se cobra dinero real.</div>' : '') +
+      '</div>';
+    } else {
+      // transferencia
+      h += '<div class="kv-cart-sec-tit">Transfiere a</div><div class="kv-cart-transf">';
+      if (kvTransferenciaLista(settings)) {
+        h += '<div><b>' + escapeHtml(t.titular) + '</b></div>' +
+          (t.rut ? '<div>RUT: ' + escapeHtml(t.rut) + '</div>' : '') +
+          '<div>' + escapeHtml(t.banco) + (t.tipo ? ' · ' + escapeHtml(t.tipo) : '') + '</div>' +
+          '<div>N° de cuenta: <b>' + escapeHtml(t.numero) + '</b></div>' +
+          (t.correo ? '<div>' + escapeHtml(t.correo) + '</div>' : '') +
+          '<button type="button" class="kv-cart-copiartodo" data-role="copiar-transf">📋 Copiar todos los datos</button>';
+      } else {
+        h += '<div>Escríbenos por WhatsApp o DM y te damos los datos de transferencia 💜</div>';
+      }
+      h += '</div>';
+      // comprobante
+      h += '<div class="kv-cart-sec-tit">Comprobante de transferencia *</div>' +
+        '<label class="kv-cart-file' + (carroComprobante ? ' listo' : '') + '">' +
+          (carroComprobante ? '✓ Comprobante adjunto — tocar para cambiar' : '📎 Adjuntar foto o captura del comprobante') +
+          '<input type="file" accept="image/*" id="kv-cart-comp" style="display:none;" />' +
+        '</label>' +
+        (carroComprobante ? '<div class="kv-cart-comp-mini" style="background-image:url(\'' + carroComprobante + '\')"></div>' : '');
+    }
     h += '<div class="kv-cart-error" id="kv-cart-error" hidden></div>';
     h += '</div>';   // fin scroll
     h += '<div class="kv-cart-pie">' +
-      '<button class="kv-cart-btn2" data-role="cart-enviar"' + (carroEnviando ? ' disabled' : '') + '>' + (carroEnviando ? 'Enviando pedido…' : '✨ Enviar pedido') + '</button>' +
+      '<button class="kv-cart-btn2" data-role="cart-enviar"' + (carroEnviando ? ' disabled' : '') + '>' + (carroEnviando ? 'Enviando pedido…' : (carroMedio === 'mercadopago' && kvMercadoPago(settings).activo ? '💳 Pagar con tarjeta →' : '✨ Enviar pedido')) + '</button>' +
       '<button class="kv-cart-btn2 sec" data-role="cart-volver">← Volver al carrito</button>' +
       '</div>';
     return h;
@@ -727,6 +774,7 @@
       const ev = n.tagName === 'SELECT' ? 'change' : 'input';
       n.addEventListener(ev, () => {
         carroForm[n.dataset.campo] = n.value;
+        visitaGuardarContacto();                           // por si abandona el pedido a medias
         if (n.dataset.campo === 'region') carroRender();   // recalcula el envío
       });
     });
@@ -737,6 +785,11 @@
       const txt = [t.titular, t.rut ? 'RUT: ' + t.rut : '', t.banco, t.tipo, t.numero, t.correo].filter(Boolean).join('\n');
       try { navigator.clipboard.writeText(txt); cpt.textContent = '✓ Datos copiados — pégalos en tu banco'; } catch (e) {}
     });
+    // elegir medio de pago
+    carritoEl.querySelectorAll('[data-role="medio"]').forEach(n => n.addEventListener('click', () => {
+      carroMedio = n.dataset.medio;
+      carroRender();
+    }));
     // cupón: aplicar / quitar
     const cupInp = carritoEl.querySelector('#kv-cupon-inp');
     if (cupInp) cupInp.addEventListener('input', e => { carroCuponTxt = e.target.value; });
@@ -776,7 +829,8 @@
     if (!f.telefono.trim()) { carroError('Escribe tu teléfono.'); return; }
     if (!f.direccion.trim() || !f.comuna.trim()) { carroError('Completa tu dirección y comuna.'); return; }
     if (!f.region) { carroError('Elige tu región para calcular el envío.'); return; }
-    if (!carroComprobante) { carroError('Adjunta el comprobante de tu transferencia para confirmar el pedido.'); return; }
+    const conTarjeta = carroMedio === 'mercadopago' && kvMercadoPago(settings).activo;
+    if (!conTarjeta && !carroComprobante) { carroError('Adjunta el comprobante de tu transferencia para confirmar el pedido.'); return; }
     const url = String(settings.igPubUrl || '').trim();
     if (!url) { carroError('La tienda aún no puede recibir pedidos en línea. Escríbenos por WhatsApp 💜'); return; }
 
@@ -791,9 +845,32 @@
       cupon: dcto > 0 ? { codigo: carroCupon.codigo, descuento: dcto } : null,
       envio: { region: f.region, costo: envio },
       total: Math.max(0, sub - dcto) + envio,
-      notas: f.notas.trim()
+      notas: f.notas.trim(),
+      medioPago: conTarjeta ? 'mercadopago' : 'transferencia'
     };
     carroEnviando = true; carroRender();
+
+    // ---- pago con tarjeta: se guarda el pedido y se va a Mercado Pago ----
+    if (conTarjeta) {
+      try {
+        const ref = 'kv-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        const r = await fetch(url, {
+          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ accion: 'mp-preferencia', pedido: pedido, referencia: ref, volverA: location.origin + location.pathname })
+        });
+        const d = await r.json();
+        if (!d || !d.ok || !d.url) throw new Error((d && d.error) || 'No se pudo iniciar el pago');
+        // se guarda el pedido para retomarlo al volver de Mercado Pago
+        try { localStorage.setItem(PEDIDO_PEND_KEY, JSON.stringify({ pedido: pedido, referencia: ref, cuando: Date.now() })); } catch (e) {}
+        location.href = d.url;
+        return;
+      } catch (err) {
+        carroEnviando = false; carroRender();
+        carroError('No pudimos abrir el pago con tarjeta (' + err.message + '). Prueba con transferencia o escríbenos por WhatsApp 💜');
+        return;
+      }
+    }
+
     try {
       const r = await fetch(url, {
         method: 'POST',
@@ -821,6 +898,68 @@
     }
   }
   carroBadge();
+
+  /* ---- vuelta desde Mercado Pago ----
+     La página vuelve con ?pago=... y el id del pago. OJO: eso viene por la URL
+     y NO es prueba de que se pagó (se puede escribir a mano). El pedido queda
+     como "pago por verificar" y el panel lo confirma contra Mercado Pago. */
+  let pagoRetomado = false, pagoEsperaTimer = null;
+  async function retomarPagoMP(yaEsperamos) {
+    if (pagoRetomado || !settingsListos) return;
+    const q = new URLSearchParams(location.search);
+    const estado = q.get('pago');
+    if (!estado) return;
+    // Sin la URL del publicador el pedido quedaría sin número. A veces los
+    // ajustes llegan en un segundo aviso, así que se espera un poco antes de
+    // rendirse (pero igual se registra, para no perder nunca el pedido).
+    if (!String(settings.igPubUrl || '').trim() && !yaEsperamos) {
+      clearTimeout(pagoEsperaTimer);
+      pagoEsperaTimer = setTimeout(() => retomarPagoMP(true), 5000);
+      return;
+    }
+    pagoRetomado = true;
+    clearTimeout(pagoEsperaTimer);
+    let pend = null;
+    try { pend = JSON.parse(localStorage.getItem(PEDIDO_PEND_KEY) || 'null'); } catch (e) {}
+    history.replaceState(null, '', location.pathname);   // limpia la URL
+    if (!pend || !pend.pedido) return;
+    try { localStorage.removeItem(PEDIDO_PEND_KEY); } catch (e) {}
+    if (estado !== 'ok') {
+      carritoEl.hidden = false;
+      carroVista = 'checkout'; carroRender();
+      carroError(estado === 'pendiente'
+        ? 'Tu pago quedó pendiente en Mercado Pago. Si se aprueba te avisamos por correo.'
+        : 'El pago no se completó. Puedes intentar de nuevo o pagar por transferencia 💜');
+      return;
+    }
+    const pagoId = q.get('payment_id') || q.get('collection_id') || '';
+    const url = String(settings.igPubUrl || '').trim();
+    const pedido = Object.assign({}, pend.pedido, { pagoId: pagoId, pagoRef: pend.referencia || '' });
+    let num = null;
+    if (url) {
+      try {
+        const r = await fetch(url, {
+          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ accion: 'pedido', pedido: pedido, comprobante: '' })
+        });
+        const d = await r.json();
+        if (d && d.ok && d.num) num = d.num;
+      } catch (e) { console.warn('No se pudo avisar el pedido:', e); }
+    }
+    try {
+      await kvDb.collection('catalog').doc('pedidos').collection('items').add(Object.assign({}, pedido, {
+        num: num || 0, estado: 'nuevo', fecha: new Date().toISOString(), comprobante: '',
+        pagoEstado: 'por-verificar', courier: '', tracking: '', trackingUrl: ''
+      }));
+    } catch (e) { console.warn('No se pudo registrar el pedido:', e); }
+    visitaMarcarPedido();
+    carro = {}; carroComprobante = null;
+    carroCupon = null; carroCuponTxt = ''; carroCuponError = '';
+    carroGuardar();
+    carroPedidoOk = { num: num || '—', total: pedido.total };
+    carritoEl.hidden = false;
+    carroVista = 'ok'; carroRender();
+  }
 
   // ---------- controles ----------
   $('fb-prev').addEventListener('click', () => go(idx - 1, 'prev'));
@@ -870,6 +1009,7 @@
     carroBadge();
     if (!carritoEl.hidden) carroRender();   // refresca precios/stock si cambia el catálogo
     bienQuizasMostrar();
+    retomarPagoMP();                        // por si viene de pagar con tarjeta
   }
 
   // pinta la portada de inmediato (con valores por defecto) para no esperar
@@ -1175,6 +1315,7 @@
 
   kvDb.collection('catalog').doc('settings').onSnapshot((doc) => {
     llegoSettings = true;
+    settingsListos = true;
     settings = doc.data() || {};
     rebuild();
   }, (err) => console.error('Error leyendo la configuración:', err));

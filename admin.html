@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260767" />
+<link rel="stylesheet" href="catalogo.css?v=20260768" />
 </head>
 <body>
 
@@ -115,6 +115,25 @@
         <span id="adm-tr-ok" class="adm-guardado" hidden>✓ Guardado</span>
       </div>
     </section>
+
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">💳 Pago con tarjeta (Mercado Pago)</h2>
+      <p class="adm-seccion-sub">Permite pagar con débito o crédito además de la transferencia. <b>Tu clave secreta de Mercado Pago NO se guarda aquí</b>: va solo dentro de tu script de Google, que es privado.</p>
+      <div class="adm-aviso-spam" style="margin-bottom:16px;">
+        <b>Antes de activarlo necesitas:</b>
+        <p>1. Crear tu cuenta en mercadopago.cl y entrar a <b>Tus integraciones → Credenciales</b>.<br>
+        2. Copiar el <b>Access Token</b> y pegarlo en tu script de Google, en la línea <b>MP_TOKEN</b>.<br>
+        3. En el script, ejecutar una vez la función <b>probarMercadoPago</b> para comprobar que el token sirve.<br>
+        4. Probar una compra con el token que empieza en <b>TEST-</b> antes de usar el real.</p>
+      </div>
+      <label class="adm-desc-toggle"><input type="checkbox" id="adm-mp-activo" /> <span>Ofrecer pago con tarjeta en el catálogo</span></label>
+      <label class="adm-desc-toggle"><input type="checkbox" id="adm-mp-prueba" /> <span>Estoy en modo de prueba (avisar a la clienta que no se cobra de verdad)</span></label>
+      <div class="adm-guardar-fila">
+        <button id="adm-mp-guardar" class="adm-btn-solido">Guardar</button>
+        <span id="adm-mp-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      </div>
+      <p class="adm-focogen-estado">⚠ Cuando llega un pedido pagado con tarjeta, <b>aprieta siempre "Verificar pago con Mercado Pago"</b> antes de preparar el envío: así confirmas que el dinero llegó de verdad.</p>
+    </section>
     <div style="height:60px;"></div>
   </div>
 
@@ -124,6 +143,26 @@
       <h2 class="adm-seccion-titulo">👀 Visitas</h2>
       <p class="adm-seccion-sub">Estadística anónima de quienes navegan el catálogo: ciudad aproximada (no la dirección IP), tipo de dispositivo, de dónde llegaron y qué colecciones o productos miraron. No identifica a la persona.</p>
       <div class="vis-stats" id="adm-vis-stats"></div>
+    </section>
+
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">🔥 Lo más visto</h2>
+      <p class="adm-seccion-sub">Ranking de los productos que más abren tus clientas. Si lo activas, aparece como una colección al principio del catálogo.</p>
+      <label class="adm-desc-toggle"><input type="checkbox" id="adm-mv-activo" /> <span>Mostrar "Lo más visto" en el catálogo</span></label>
+      <div class="adm-mv-fila">
+        <label class="adm-etiqueta">Cuántos productos mostrar</label>
+        <select id="adm-mv-cuantos" class="adm-input" style="max-width:120px;">
+          <option value="4">4</option><option value="8" selected>8</option><option value="12">12</option>
+        </select>
+        <button id="adm-mv-guardar" class="adm-btn-solido">Guardar y publicar</button>
+        <span id="adm-mv-ok" class="adm-guardado" hidden>✓ Publicado</span>
+      </div>
+      <p class="adm-focogen-estado" id="adm-mv-estado"></p>
+      <div id="adm-mv-lista"></div>
+    </section>
+
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Detalle de cada visita</h2>
       <div id="adm-visitas-lista"><p class="adm-seccion-sub">Cargando visitas…</p></div>
     </section>
     <div style="height:60px;"></div>
@@ -531,8 +570,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260767"></script>
-<script src="comun.js?v=20260767"></script>
-<script src="admin.js?v=20260767"></script>
+<script src="firebase-config.js?v=20260768"></script>
+<script src="comun.js?v=20260768"></script>
+<script src="admin.js?v=20260768"></script>
 </body>
 </html>

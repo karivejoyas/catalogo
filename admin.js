@@ -90,6 +90,7 @@
       if (products.length === 0) { sembrar(); return; }
       if (window.__focogenRefrescar) window.__focogenRefrescar();
       renderProductosGuarded();
+      renderMasVistos();        // el ranking necesita los datos de los productos
       renderIG();
     }, (err) => console.error('Error leyendo productos:', err));
     unsubSettings = settingsRef.onSnapshot((doc) => {
@@ -98,6 +99,8 @@
       kvSetFocoMovilGeneral(settings);
       if (window.__focogenRefrescar) window.__focogenRefrescar();
       poblarMarketing();
+      poblarPagos();
+      renderMasVistos();
       poblarCampos();
       renderCatsEditorGuarded();
       renderProductosGuarded();
@@ -108,10 +111,12 @@
       renderPedidos();
       renderCupones();          // los usos de cada cupón se cuentan desde los pedidos
       renderSuscritos();        // marca quién ya compró
+      renderMasVistos();        // las compras pesan en el ranking
     }, (err) => console.error('Error leyendo pedidos:', err));
     unsubVisitas = visitasCol.orderBy('ultima', 'desc').limit(300).onSnapshot((snap) => {
       visitas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderVisitas();
+      renderMasVistos();
     }, (err) => console.error('Error leyendo visitas:', err));
     unsubSuscritos = suscritosCol.orderBy('fecha', 'desc').limit(500).onSnapshot((snap) => {
       suscritos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1661,8 +1666,18 @@
               '<div class="ped-dato">📍 ' + escapeHtml(dir.calle || '') + ', ' + escapeHtml(dir.comuna || '') + '<br>' + escapeHtml(dir.region || '') + '</div>' +
               '<div class="ped-dato">✉️ <a href="mailto:' + escapeHtml(cli.correo || '') + '">' + escapeHtml(cli.correo || '') + '</a></div>' +
               '<div class="ped-dato">📱 <a target="_blank" rel="noopener" href="https://wa.me/' + telLimpio + '">' + escapeHtml(cli.telefono || '') + '</a></div>' +
-              '<div class="ped-sub" style="margin-top:10px;">Comprobante</div>' +
-              (p.comprobante ? '<a class="ped-comp" href="' + p.comprobante + '" target="_blank" rel="noopener" style="background-image:url(\'' + p.comprobante + '\')" title="Ver comprobante grande"></a>' : '<div class="ped-dato">⚠ Sin comprobante</div>') +
+              '<div class="ped-sub" style="margin-top:10px;">' + (p.medioPago === 'mercadopago' ? 'Pago con tarjeta' : 'Comprobante') + '</div>' +
+              (p.medioPago === 'mercadopago'
+                ? '<div class="ped-mp' + (p.pagoEstado === 'approved' ? ' ok' : (p.pagoEstado === 'por-verificar' ? ' pend' : ' mal')) + '">' +
+                    '<div>💳 Mercado Pago · N° ' + escapeHtml(p.pagoId || '—') + '</div>' +
+                    '<div class="ped-mp-estado">' + (
+                      p.pagoEstado === 'approved' ? '✅ Pago confirmado con Mercado Pago' :
+                      p.pagoEstado === 'por-verificar' ? '⏳ Aún NO verificado — aprieta el botón antes de enviar' :
+                      p.pagoEstado ? '⚠ ' + escapeHtml(String(p.pagoEstado)) : '—') + '</div>' +
+                    (p.pagoDetalle ? '<div class="ped-mp-estado">' + escapeHtml(p.pagoDetalle) + '</div>' : '') +
+                    '<button type="button" class="adm-btn-borde adm-btn-mini" data-role="ped-verificar" data-id="' + p.id + '">🔎 Verificar pago con Mercado Pago</button>' +
+                  '</div>'
+                : (p.comprobante ? '<a class="ped-comp" href="' + p.comprobante + '" target="_blank" rel="noopener" style="background-image:url(\'' + p.comprobante + '\')" title="Ver comprobante grande"></a>' : '<div class="ped-dato">⚠ Sin comprobante</div>')) +
             '</div>' +
           '</div>' +
           '<div class="ped-acciones">' +
@@ -1702,6 +1717,7 @@
       pedidosCol.doc(n.dataset.id).delete().catch(err => console.error(err));
     }));
     cont.querySelectorAll('[data-role="ped-enviar"]').forEach(n => n.addEventListener('click', () => pedMarcarEnviado(n.dataset.id, n)));
+    cont.querySelectorAll('[data-role="ped-verificar"]').forEach(n => n.addEventListener('click', () => pedVerificarPago(n.dataset.id, n)));
   }
   /* descuenta del stock lo que lleva el pedido. Solo afecta a los productos que
      tienen una cantidad anotada; los que están "sin control" quedan igual.
@@ -1720,6 +1736,41 @@
     });
     pedidosCol.doc(pedidoId).update({ stockDescontado: true }).catch(err => console.error(err));
     if (avisos.length) window.alert('⚠ Ojo con el stock:\n\n• ' + avisos.join('\n• ') + '\n\nQuedaron en 0. Revisa si alcanzas a cumplir el pedido.');
+  }
+
+  /* Pregunta a Mercado Pago si el pago realmente se aprobó.
+     Es importante: lo que dice la página al volver del pago NO es prueba
+     (se puede falsificar escribiendo la dirección a mano). Esto sí lo es. */
+  async function pedVerificarPago(id, btn) {
+    const p = pedidos.find(x => x.id === id); if (!p) return;
+    const url = String(settings.igPubUrl || '').trim();
+    const clave = pubClave();
+    if (!url || !clave) { window.alert('Falta configurar la URL del publicador y tu clave secreta en "Instagram y Facebook".'); return; }
+    if (!p.pagoId) { window.alert('Este pedido no tiene número de pago de Mercado Pago.'); return; }
+    const txt = btn.textContent; btn.disabled = true; btn.textContent = 'Consultando…';
+    try {
+      const r = await fetch(url, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ accion: 'mp-verificar', clave: clave, pagoId: p.pagoId })
+      });
+      const d = await r.json();
+      if (!d || !d.ok) throw new Error((d && d.error) || 'No se pudo consultar');
+      const aprobado = d.estado === 'approved';
+      const montoOk = Math.abs(Number(d.monto || 0) - Number(p.total || 0)) < 1;
+      await pedidosCol.doc(id).update({
+        pagoEstado: d.estado,
+        pagoDetalle: (aprobado ? 'Verificado el ' + new Date().toLocaleString('es-CL') : (d.detalle || '')) +
+          (aprobado && !montoOk ? ' · ⚠ el monto pagado (' + formatCLP(d.monto) + ') NO calza con el total del pedido' : ''),
+        pagoMedio: d.medio || ''
+      });
+      window.alert(aprobado
+        ? (montoOk ? '✅ Pago CONFIRMADO por ' + formatCLP(d.monto) + '.\n\nYa puedes preparar el pedido.'
+                   : '⚠ El pago está aprobado pero por ' + formatCLP(d.monto) + ', y el pedido es de ' + formatCLP(p.total) + '.\n\nRevisa antes de enviar.')
+        : '⚠ Mercado Pago dice que el pago está en estado "' + d.estado + '".\n\nNO envíes el pedido hasta que aparezca como aprobado.');
+    } catch (e) {
+      window.alert('No se pudo verificar el pago: ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = txt;
   }
 
   async function pedMarcarEnviado(id, btn) {
@@ -1753,6 +1804,81 @@
   const VIS_ICONO_DISP = { 'Móvil': '📱', 'Tablet': '📲', 'Escritorio': '💻' };
   const VIS_ICONO_ORIGEN = { 'Instagram': '📷', 'Facebook': '👍', 'WhatsApp': '💬', 'Google': '🔎', 'Directo': '🔗', 'Otro': '🌐' };
   const visitasAbiertas = {};   // id -> true (detalle con miniaturas desplegado)
+
+  /* ---------- LO MÁS VISTO ----------
+     Se cuenta cuántas visitas distintas abrieron cada producto, y también
+     cuántas lo pusieron en el carrito (eso pesa más porque es más intención). */
+  function rankingVistos() {
+    const cuenta = new Map();
+    const sumar = (id, peso) => { if (id) cuenta.set(id, (cuenta.get(id) || 0) + peso); };
+    visitas.forEach(v => {
+      (v.productosIds || []).forEach(id => sumar(id, 1));
+      (v.carritoActual || []).forEach(it => sumar(it.id, 2));
+    });
+    pedidos.forEach(p => (p.items || []).forEach(it => sumar(it.id, 3)));
+    return [...cuenta.entries()]
+      .map(([id, n]) => ({ p: products.find(x => x.id === id), id: id, n: n }))
+      .filter(r => r.p)
+      .sort((a, b) => b.n - a.n);
+  }
+  function renderMasVistos() {
+    const cont = $('adm-mv-lista'); if (!cont) return;
+    const act = $('adm-mv-activo'), cuantos = $('adm-mv-cuantos'), estado = $('adm-mv-estado');
+    const cfg = (settings && settings.masVistos) || {};
+    if (act && document.activeElement !== act) act.checked = !!cfg.activo;
+    if (cuantos && document.activeElement !== cuantos && cfg.cuantos) cuantos.value = String(cfg.cuantos);
+    const rank = rankingVistos();
+    if (estado) {
+      const pub = kvMasVistosIds(settings).length;
+      estado.textContent = cfg.activo
+        ? (pub ? '✓ Se están mostrando ' + pub + ' productos en el catálogo.' : '⚠ Está activado pero aún no has publicado la lista: aprieta "Guardar y publicar".')
+        : 'Desactivado: no aparece en el catálogo.';
+    }
+    if (!rank.length) {
+      cont.innerHTML = '<p class="adm-seccion-sub">Todavía no hay suficientes visitas para armar el ranking.</p>';
+      return;
+    }
+    const publicados = kvMasVistosIds(settings);
+    cont.innerHTML = '<div class="adm-mv-grid">' + rank.slice(0, 20).map((r, i) => {
+      const cat = kvCat(r.p.category, settings);
+      return '<div class="adm-mv-item' + (publicados.indexOf(r.id) !== -1 ? ' pub' : '') + '">' +
+        '<span class="adm-mv-pos">' + (i + 1) + '</span>' +
+        (r.p.photo ? '<span class="vis-mini-foto" style="background-image:url(\'' + r.p.photo + '\')"></span>' : '<span class="vis-mini-foto vis-mini-sin">✦</span>') +
+        '<span class="vis-mini-txt"><b>' + escapeHtml(r.p.name || '') + '</b>' +
+          '<span>' + escapeHtml(r.p.code || '') + (cat ? ' · ' + escapeHtml(cat.nombre) : '') + '</span></span>' +
+        '<span class="adm-mv-pts">' + r.n + ' pts</span>' +
+      '</div>';
+    }).join('') + '</div>' +
+    '<p class="adm-focogen-estado">Los puntos suman: 1 por abrir el producto, 2 por ponerlo en el carrito y 3 por comprarlo. Los marcados en dorado son los que están publicados.</p>';
+  }
+  if ($('adm-mv-guardar')) $('adm-mv-guardar').addEventListener('click', () => {
+    const n = parseInt($('adm-mv-cuantos').value, 10) || 8;
+    const ids = rankingVistos().slice(0, n).map(r => r.id);
+    if ($('adm-mv-activo').checked && !ids.length) {
+      window.alert('Todavía no hay visitas suficientes para armar la lista. Actívalo más adelante.');
+      return;
+    }
+    settingsRef.set({ masVistos: { activo: $('adm-mv-activo').checked, cuantos: n, ids: ids, fecha: new Date().toISOString() } }, { merge: true })
+      .then(() => guardado('adm-mv-ok')).catch(err => console.error(err));
+  });
+
+  /* Botones para recuperar un carrito abandonado: abren WhatsApp o el correo
+     con un mensaje ya escrito (tú lo revisas antes de enviarlo). */
+  function recuperarBotones(v) {
+    const c = v.contacto || {};
+    const nombre = String(c.nombre || '').split(' ')[0] || 'hola';
+    const lista = (v.carritoActual || []).map(it => '• ' + it.qty + '× ' + it.name).join('\n');
+    const cup = kvCupones(settings).find(x => x.activo !== false);
+    const gancho = cup ? '\n\nSi quieres, usa el código ' + cup.codigo + ' (' + kvCuponTexto(cup) + ') 💜' : '';
+    const msg = 'Hola ' + nombre + ' 💜 Soy de Karivé Joyas. Vi que dejaste esto en tu carrito:\n\n' + lista +
+      '\n\n¿Te ayudo a terminar tu compra? Quedan poquitas unidades ✨' + gancho;
+    const tel = String(c.telefono || '').replace(/[^0-9]/g, '');
+    const asunto = 'Se te quedó algo en el carrito 💜 Karivé Joyas';
+    let h = '';
+    if (tel) h += '<a class="adm-btn-solido adm-btn-mini" target="_blank" rel="noopener" href="https://wa.me/' + (tel.length <= 9 ? '56' + tel : tel) + '?text=' + encodeURIComponent(msg) + '">💬 Escribir por WhatsApp</a>';
+    h += '<a class="adm-btn-borde adm-btn-mini" href="mailto:' + escapeHtml(c.correo) + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(msg) + '">✉️ Escribir por correo</a>';
+    return h;
+  }
 
   /* miniatura + código + colección de un producto que la visitante miró.
      Si el producto ya no existe (lo borraste), igual muestra el nombre guardado. */
@@ -1816,10 +1942,21 @@
           (v.carritoActual || []).map(it => it.qty + '× ' + escapeHtml(it.name)).join(', ') +
           ' — ' + formatCLP(v.carritoTotal || 0) + '</div>'
         : '';
+      const c = v.contacto || {};
+      const contactoHtml = c.correo ? (
+        '<div class="vis-sub">Alcanzó a dejar sus datos</div>' +
+        '<div class="vis-contacto">' +
+          '<div><b>' + escapeHtml(c.nombre || 'Sin nombre') + '</b></div>' +
+          '<div>✉️ ' + escapeHtml(c.correo) + '</div>' +
+          (c.telefono ? '<div>📱 ' + escapeHtml(c.telefono) + '</div>' : '') +
+          (carritoAbandonado ? '<div class="vis-recuperar">' + recuperarBotones(v) + '</div>' : '') +
+        '</div>') : (carritoAbandonado
+          ? '<div class="vis-fila vis-sincontacto">No alcanzó a dejar sus datos, así que no hay cómo escribirle.</div>' : '');
       const detalleHtml = abierta ? (
         '<div class="vis-detalle">' +
           (miniVistos ? '<div class="vis-sub">Productos que miró</div><div class="vis-minis">' + miniVistos + '</div>' : '') +
           (miniCarrito ? '<div class="vis-sub">' + (carritoAbandonado ? 'Quedó en su carrito' : 'En su carrito') + '</div><div class="vis-minis">' + miniCarrito + '</div>' : '') +
+          contactoHtml +
           (!miniVistos && !miniCarrito ? '<div class="vis-fila">Solo navegó, no abrió ningún producto.</div>' : '') +
         '</div>') : '';
       const hayDetalle = nProd > 0 || (v.carritoActual || []).length > 0;
@@ -1854,6 +1991,19 @@
       visitasCol.doc(n.dataset.id).delete().catch(err => console.error(err));
     }));
   }
+  // ---------- MEDIOS DE PAGO ----------
+  function poblarPagos() {
+    const mp = kvMercadoPago(settings);
+    if ($('adm-mp-activo') && document.activeElement !== $('adm-mp-activo')) $('adm-mp-activo').checked = mp.activo;
+    if ($('adm-mp-prueba') && document.activeElement !== $('adm-mp-prueba')) $('adm-mp-prueba').checked = mp.prueba;
+  }
+  if ($('adm-mp-guardar')) $('adm-mp-guardar').addEventListener('click', () => {
+    const activo = $('adm-mp-activo').checked;
+    if (activo && !window.confirm('¿Ya pegaste tu Access Token en el script de Google y ejecutaste probarMercadoPago?\n\nSi no lo has hecho, el botón de tarjeta va a dar error a tus clientas.')) return;
+    settingsRef.set({ pagos: { mercadopago: { activo: activo, prueba: $('adm-mp-prueba').checked } } }, { merge: true })
+      .then(() => guardado('adm-mp-ok')).catch(err => console.error(err));
+  });
+
   // ---------- CORREOS Y CUPONES ----------
   function poblarMarketing() {
     const b = kvBienvenida(settings);

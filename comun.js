@@ -675,6 +675,36 @@ function kvTransferenciaLista(settings) {
 }
 
 /* ============================================================
+   MEDIOS DE PAGO
+   El token secreto de Mercado Pago NO vive acá: está solo en el
+   Apps Script (que es privado). Acá solo se sabe si está activo.
+   ============================================================ */
+function kvMercadoPago(settings) {
+  const m = (settings && settings.pagos && settings.pagos.mercadopago) || {};
+  return { activo: !!m.activo, prueba: !!m.prueba };
+}
+
+/* ============================================================
+   LO MÁS VISTO
+   La lista la calcula el panel de admin (que sí puede leer las visitas)
+   y la guarda en la configuración, que es pública. Acá solo se lee.
+   ============================================================ */
+function kvMasVistosIds(settings) {
+  const m = settings && settings.masVistos;
+  return (m && Array.isArray(m.ids)) ? m.ids : [];
+}
+function kvMasVistosActivo(settings) {
+  return !!(settings && settings.masVistos && settings.masVistos.activo);
+}
+/* devuelve los productos (en orden de más visto) que siguen existiendo y con stock */
+function kvMasVistos(settings, productos) {
+  if (!kvMasVistosActivo(settings)) return [];
+  return kvMasVistosIds(settings)
+    .map(id => productos.find(p => p.id === id))
+    .filter(p => p && kvEnStock(p));
+}
+
+/* ============================================================
    CUPONES DE DESCUENTO
    ============================================================ */
 function kvCupones(settings) {

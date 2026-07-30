@@ -901,3 +901,35 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 .adm-aviso-spam p{margin:6px 0 0;font-size:12.5px;line-height:1.6;color:var(--kv-lavanda);}
 .ped-cupon{color:#a9e6b8;}
 .ped-repetido{color:#ffb3c0;font-weight:600;font-size:11px;}
+
+/* ---------- recuperar carritos abandonados ---------- */
+.vis-contacto{background:rgba(227,197,114,0.09);border:1px solid rgba(227,197,114,0.35);border-radius:10px;padding:10px 13px;font-family:'Jost',sans-serif;font-size:12.5px;line-height:1.7;color:var(--kv-crema);}
+.vis-recuperar{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;}
+.vis-recuperar a{text-decoration:none;display:inline-block;}
+.vis-sincontacto{color:#8f7aa0;font-style:italic;}
+
+/* ---------- lo más visto (admin) ---------- */
+.adm-mv-fila{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0 4px;}
+.adm-mv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:9px;margin-top:12px;}
+.adm-mv-item{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(201,162,75,0.2);border-radius:11px;padding:7px 11px 7px 7px;}
+.adm-mv-item.pub{border-color:rgba(227,197,114,0.65);background:rgba(227,197,114,0.09);}
+.adm-mv-pos{flex:0 0 auto;width:22px;text-align:center;font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--kv-dorado-cl);}
+.adm-mv-pts{flex:0 0 auto;margin-left:auto;font-family:'Jost',sans-serif;font-size:11px;color:var(--kv-lavanda);white-space:nowrap;}
+.adm-mv-item .vis-mini-txt{flex:1;min-width:0;}
+
+/* ---------- medios de pago (checkout) ---------- */
+.kv-cart-medios{display:flex;gap:9px;}
+.kv-cart-medio{flex:1;display:flex;flex-direction:column;gap:2px;align-items:center;background:rgba(255,255,255,0.06);border:1.5px solid rgba(203,183,216,0.3);border-radius:12px;padding:11px 8px;color:var(--kv-lavanda);font-family:'Jost',sans-serif;cursor:pointer;transition:all .15s;}
+.kv-cart-medio b{font-size:13px;font-weight:600;color:var(--kv-crema);}
+.kv-cart-medio span{font-size:10.5px;}
+.kv-cart-medio:hover{background:rgba(255,255,255,0.1);}
+.kv-cart-medio.is-active{border-color:var(--kv-dorado-cl);background:rgba(227,197,114,0.14);}
+.kv-cart-medio.is-active b{color:var(--kv-dorado-cl);}
+.kv-cart-mp{background:rgba(120,150,255,0.1);border:1px solid rgba(120,150,255,0.4);border-radius:11px;padding:12px 14px;font-family:'Jost',sans-serif;font-size:13px;line-height:1.5;color:var(--kv-crema);}
+.kv-cart-mp-prueba{margin-top:7px;font-size:11.5px;color:#f0d9a0;}
+/* ---------- pago con tarjeta (panel de pedidos) ---------- */
+.ped-mp{background:rgba(255,255,255,0.05);border:1px solid rgba(201,162,75,0.3);border-radius:10px;padding:10px 12px;font-family:'Jost',sans-serif;font-size:12.5px;color:var(--kv-crema);display:flex;flex-direction:column;gap:6px;align-items:flex-start;}
+.ped-mp.ok{border-color:rgba(94,180,110,0.6);background:rgba(94,180,110,0.1);}
+.ped-mp.pend{border-color:rgba(227,197,114,0.6);background:rgba(227,197,114,0.09);}
+.ped-mp.mal{border-color:rgba(224,67,90,0.6);background:rgba(224,67,90,0.1);}
+.ped-mp-estado{font-size:12px;color:var(--kv-lavanda);}

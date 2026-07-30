@@ -296,6 +296,14 @@
     visitaCarritoMarcado = true;
     visitaGuardar({ agregoCarrito: true });
   }
+  let visitaCarritoTimer = null;
+  function visitaActualizarCarrito() {
+    clearTimeout(visitaCarritoTimer);
+    visitaCarritoTimer = setTimeout(() => {
+      const items = carroItems().map(it => ({ id: it.p.id, name: it.p.name || '', code: it.p.code || '', qty: it.qty, precio: kvPrecioOferta(it.p) || it.p.price || 0 }));
+      visitaGuardar({ carritoActual: items, carritoTotal: carroSubtotal() });
+    }, 800);
+  }
   function visitaMarcarPedido() {
     if (visitaPedidoMarcado) return;
     visitaPedidoMarcado = true;
@@ -318,6 +326,7 @@
   function carroGuardar() {
     try { localStorage.setItem(CARRO_KEY, JSON.stringify(carro)); } catch (e) {}
     carroBadge();
+    visitaActualizarCarrito();
   }
   function carroCantidad() { return Object.values(carro).reduce((a, b) => a + (b || 0), 0); }
   function carroItems() {
@@ -927,12 +936,29 @@
   })();
 
   // ---------- datos en vivo ----------
+  // a veces (sobre todo abriendo desde el ícono guardado en la pantalla de inicio del
+  // celular) la primera conexión con la base queda "pegada" y no llega nunca el primer
+  // dato: si a los 5s siguen sin llegar ni productos ni configuración, se recarga la
+  // página UNA sola vez por sesión (evita que quede en blanco hasta que la usuaria
+  // la vuelva a abrir a mano).
+  let llegoProductos = false, llegoSettings = false;
+  setTimeout(() => {
+    if (llegoProductos && llegoSettings) return;
+    let yaReintento = false;
+    try { yaReintento = sessionStorage.getItem('kv_reintento_carga') === '1'; } catch (e) {}
+    if (yaReintento) return;
+    try { sessionStorage.setItem('kv_reintento_carga', '1'); } catch (e) {}
+    location.reload();
+  }, 5000);
+
   kvDb.collection('catalog').doc('products').collection('items').orderBy('order').onSnapshot((snap) => {
+    llegoProductos = true;
     products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     rebuild();
   }, (err) => console.error('Error leyendo el catálogo:', err));
 
   kvDb.collection('catalog').doc('settings').onSnapshot((doc) => {
+    llegoSettings = true;
     settings = doc.data() || {};
     rebuild();
   }, (err) => console.error('Error leyendo la configuración:', err));

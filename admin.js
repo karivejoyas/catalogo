@@ -1626,12 +1626,14 @@
       const nSemana = visitas.filter(esSemana).length;
       const nCarrito = visitas.filter(v => v.agregoCarrito).length;
       const nPedido = visitas.filter(v => v.hizoPedido).length;
+      const nAbandonado = visitas.filter(v => !v.hizoPedido && (v.carritoActual || []).length > 0).length;
       statsEl.innerHTML =
         '<div class="vis-stat"><b>' + total + '</b><span>Visitas (últimas 300)</span></div>' +
         '<div class="vis-stat"><b>' + nHoy + '</b><span>Hoy</span></div>' +
         '<div class="vis-stat"><b>' + nSemana + '</b><span>Últimos 7 días</span></div>' +
         '<div class="vis-stat"><b>' + nCarrito + '</b><span>Agregaron al carrito</span></div>' +
-        '<div class="vis-stat"><b>' + nPedido + '</b><span>Hicieron un pedido</span></div>';
+        '<div class="vis-stat"><b>' + nPedido + '</b><span>Hicieron un pedido</span></div>' +
+        '<div class="vis-stat"><b>' + nAbandonado + '</b><span>Carritos abandonados</span></div>';
     }
     const cont = $('adm-visitas-lista'); if (!cont) return;
     if (!visitas.length) {
@@ -1639,9 +1641,18 @@
       return;
     }
     cont.innerHTML = '<div class="vis-lista">' + visitas.map(v => {
-      const ubic = [v.ciudad, v.region].filter(Boolean).join(', ') || (v.pais ? v.pais : 'Ubicación no disponible');
+      const region = (v.region || '').replace(/Metropolitan$/i, 'Metropolitana');
+      const ubicPartes = [v.ciudad, region !== v.ciudad ? region : ''].filter(Boolean);
+      const ubic = ubicPartes.length ? ubicPartes.join(', ') + (v.pais ? ' · ' + v.pais : '') : (v.pais || 'Ubicación no disponible');
       const colecciones = (v.colecciones || []).map(c => '<span class="vis-chip">' + escapeHtml(c) + '</span>').join('');
+      const productosChips = (v.productos || []).map(p => '<span class="vis-chip vis-chip-prod">' + escapeHtml(p) + '</span>').join('');
       const nProd = (v.productos || []).length;
+      const carritoAbandonado = !v.hizoPedido && (v.carritoActual || []).length > 0;
+      const carritoHtml = (v.carritoActual || []).length
+        ? '<div class="vis-fila' + (carritoAbandonado ? ' vis-carro-abandonado' : '') + '">' + (carritoAbandonado ? '🛒⚠ Carrito abandonado: ' : '🛒 Carrito: ') +
+          (v.carritoActual || []).map(it => it.qty + '× ' + escapeHtml(it.name)).join(', ') +
+          ' — ' + formatCLP(v.carritoTotal || 0) + '</div>'
+        : '';
       return '<div class="vis-card">' +
         '<div class="vis-fila-top">' +
           '<span class="vis-fecha">' + pedFecha(v.ultima || v.creada) + '</span>' +
@@ -1651,8 +1662,9 @@
         '<div class="vis-fila">📍 ' + escapeHtml(ubic) + '</div>' +
         '<div class="vis-fila">' + (VIS_ICONO_ORIGEN[v.origenTipo] || '🌐') + ' Llegó desde: ' + escapeHtml(v.origenTipo || 'Directo') + (v.origenHost ? ' (' + escapeHtml(v.origenHost) + ')' : '') + '</div>' +
         (colecciones ? '<div class="vis-fila">Colecciones vistas: ' + colecciones + '</div>' : '') +
-        (nProd ? '<div class="vis-fila">🔍 Vio ' + nProd + ' producto' + (nProd === 1 ? '' : 's') + '</div>' : '') +
-        (v.agregoCarrito || v.hizoPedido ? '<div class="vis-fila vis-destacado">' + (v.agregoCarrito ? '🛒 Agregó al carrito&nbsp; ' : '') + (v.hizoPedido ? '✅ Hizo un pedido' : '') + '</div>' : '') +
+        (nProd ? '<div class="vis-fila">🔍 Vio: ' + productosChips + '</div>' : '') +
+        carritoHtml +
+        (v.hizoPedido ? '<div class="vis-fila vis-destacado">✅ Hizo un pedido</div>' : '') +
       '</div>';
     }).join('') + '</div>';
     cont.querySelectorAll('[data-role="vis-borrar"]').forEach(n => n.addEventListener('click', () => {

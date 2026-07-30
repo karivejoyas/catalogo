@@ -202,11 +202,13 @@
   function abrirLightbox(p) {
     if (!p) return;
     lbProd = p;
-    visitaVioProducto(p.name);
+    visitaVioProducto(p);
     const foto = $('fb-lb-foto');
     // se muestra EXACTAMENTE como en la tarjeta: mismo recorte 4/3 con el encuadre,
     // así todos los recuadros quedan del mismo tamaño y el producto centrado igual
-    foto.innerHTML = kvFotoInner(p);
+    // la vista ampliada tiene SIEMPRE el mismo marco 4/3 (en PC y celular), así que
+    // usa el encuadre de PC: el de celular está pensado para el marco alto de la tarjeta
+    foto.innerHTML = kvFotoInner(p, 'pc');
     foto.classList.toggle('sin-foto', !p.photo);
     $('fb-lb-codigo').textContent = p.code || '';
     $('fb-lb-nombre').textContent = p.name || '';
@@ -286,10 +288,15 @@
     visitaColecciones.add(nombre);
     visitaGuardar({ colecciones: firebase.firestore.FieldValue.arrayUnion(nombre) });
   }
-  function visitaVioProducto(nombre) {
-    if (!nombre || visitaProductos.has(nombre)) return;
-    visitaProductos.add(nombre);
-    visitaGuardar({ productos: firebase.firestore.FieldValue.arrayUnion(nombre) });
+  function visitaVioProducto(p) {
+    if (!p || !p.id || visitaProductos.has(p.id)) return;
+    visitaProductos.add(p.id);
+    // se guarda el nombre (legible aunque el producto se borre) y el id (para
+    // mostrar la miniatura, el código y la colección en el panel)
+    visitaGuardar({
+      productos: firebase.firestore.FieldValue.arrayUnion(p.name || ''),
+      productosIds: firebase.firestore.FieldValue.arrayUnion(p.id)
+    });
   }
   function visitaMarcarCarrito() {
     if (visitaCarritoMarcado) return;

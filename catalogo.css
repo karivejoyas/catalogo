@@ -100,6 +100,14 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .cat-card{display:flex;flex-direction:column;background:#fff;border-radius:13px;overflow:hidden;box-shadow:0 10px 26px rgba(42,18,62,0.22);}
 .cat-card-foto{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;background-color:#EFEAF5;display:flex;align-items:center;justify-content:center;}
 .kv-fbg{position:absolute;inset:0;background-size:cover;background-repeat:no-repeat;background-position:center;}
+/* dos encuadres por foto: el marco es ancho en PC y alto en celular, así que se
+   muestra el que corresponda a la pantalla (si no se ajustó uno propio para el
+   celular, las dos capas llevan el mismo encuadre y no se nota diferencia) */
+.kv-fbg-mov{display:none;}
+@media (max-width:640px){
+  .kv-fbg-pc{display:none;}
+  .kv-fbg-mov{display:block;}
+}
 .cat-card-sinfoto{font-size:26px;color:#a894bd;}
 .cat-card-etiqueta{background:linear-gradient(150deg, var(--kv-morado), var(--kv-morado-prof));padding:9px 10px 10px;display:flex;flex-direction:column;gap:2px;text-align:center;}
 .cat-card-nombre{font-family:'Jost',sans-serif;font-size:13px;font-weight:500;letter-spacing:0.02em;color:var(--kv-crema);line-height:1.2;}
@@ -382,6 +390,18 @@ body.fb-lb-open{overflow:hidden;}
 .ed-encuadre[open] .ed-encuadre-tit::after{transform:rotate(180deg);}
 .ed-encuadre[open] .ed-encuadre-tit{border-bottom:1px solid rgba(227,197,114,0.22);}
 .ed-encuadre-body{padding:11px 13px;display:flex;flex-direction:column;gap:12px;}
+/* pestañas PC / Celular del encuadre */
+.ed-foco-tabs{display:flex;gap:7px;}
+.ed-foco-tab{flex:1;font-family:'Jost',sans-serif;font-size:12px;font-weight:500;color:var(--kv-lavanda);background:rgba(255,255,255,0.05);border:1px solid rgba(203,183,216,0.28);border-radius:9px;padding:8px 6px;cursor:pointer;transition:all .15s;}
+.ed-foco-tab:hover{background:rgba(255,255,255,0.1);}
+.ed-foco-tab.is-active{color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border-color:var(--kv-dorado-cl);font-weight:600;}
+.ed-foco-punto{color:#2bd968;font-size:9px;vertical-align:middle;}
+.ed-foco-tab.is-active .ed-foco-punto{color:var(--kv-morado-osc);}
+.ed-foco-ayuda{margin:0;font-size:11.5px;line-height:1.45;color:#a894bd;}
+.ed-foco-reset{font-family:'Jost',sans-serif;font-size:11.5px;color:var(--kv-lavanda);background:transparent;border:1px solid rgba(203,183,216,0.3);border-radius:999px;padding:6px 12px;cursor:pointer;align-self:flex-start;}
+.ed-foco-reset:hover{background:rgba(255,255,255,0.08);}
+/* vista previa con la proporción REAL de cada pantalla (medida en el catálogo) */
+.cat-card-edit .cat-card-foto.ed-foto-movil{aspect-ratio:7/8;}
 .ed-slider{display:grid;grid-template-columns:78px 1fr;align-items:center;gap:10px;}
 .ed-slider span{font-size:12.5px;color:var(--kv-lavanda);}
 .ed-slider input[type=range]{width:100%;height:26px;accent-color:var(--kv-dorado-cl);cursor:pointer;}
@@ -425,6 +445,7 @@ body.fb-lb-open{overflow:hidden;}
   .adm-grilla{grid-template-columns:1fr;gap:16px;}
   .adm-seccion{padding:20px 14px 10px;}
   .cat-card-edit .cat-card-foto{aspect-ratio:4/3;}   /* igual que el catálogo público */
+  .cat-card-edit .cat-card-foto.ed-foto-movil{aspect-ratio:7/8;}
   .ed-cuerpo{padding:14px 14px 16px;gap:11px;}
   .ed-input{font-size:15px;padding:10px 11px;}       /* evita el zoom automático de iOS y es más fácil de tocar */
   .ed-nombre{font-size:16px;}
@@ -754,3 +775,17 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 .vis-chip-prod{background:rgba(120,150,255,0.14);border-color:rgba(120,150,255,0.4);color:#c0cdff;}
 .vis-destacado{color:#a9e6b8;font-weight:500;}
 .vis-carro-abandonado{color:#ffb3c0;}
+/* tarjeta desplegable con las miniaturas de lo que miró */
+.vis-click{cursor:pointer;transition:border-color .15s, background .15s;}
+.vis-click:hover{background:rgba(255,255,255,0.06);border-color:rgba(227,197,114,0.4);}
+.vis-card.abierta{border-color:rgba(227,197,114,0.5);}
+.vis-vermas{margin-top:7px;font-size:11.5px;font-weight:500;color:var(--kv-dorado-cl);}
+.vis-detalle{margin-top:10px;padding-top:10px;border-top:1px dashed rgba(201,162,75,0.28);}
+.vis-sub{font-size:10.5px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--kv-dorado-cl);margin:8px 0 7px;}
+.vis-minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px;}
+.vis-mini{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,0.05);border:1px solid rgba(201,162,75,0.2);border-radius:10px;padding:6px 9px 6px 6px;}
+.vis-mini-foto{width:44px;height:44px;flex:0 0 auto;border-radius:8px;background-size:cover;background-position:center;background-color:#EFEAF5;}
+.vis-mini-sin{display:flex;align-items:center;justify-content:center;color:#a894bd;font-size:16px;}
+.vis-mini-txt{min-width:0;display:flex;flex-direction:column;gap:1px;}
+.vis-mini-txt b{font-size:12.5px;font-weight:500;color:var(--kv-crema);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vis-mini-txt span{font-size:10.5px;letter-spacing:0.08em;color:var(--kv-lavanda);}

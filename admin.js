@@ -320,13 +320,13 @@
         '<section class="adm-seccion" id="sec-' + cat.id + '">' +
           '<h2 class="adm-seccion-titulo">' + escapeHtml(cat.nombre) + ' <span class="adm-tag">(' + items.length + ')</span>' +
             ' <button type="button" class="adm-btn-solido adm-btn-mini" data-role="add" data-cat="' + cat.id + '">+ Agregar producto</button></h2>' +
-          '<div class="adm-grilla">' + items.map(p => kvCardEditHtml(vista(p), cats)).join('') + '</div>' +
+          '<div class="adm-grilla">' + items.map(p => kvCardEditHtml(vista(p), cats, focoModo[p.id])).join('') + '</div>' +
         '</section>';
     });
     if (huerfanos.length) {
       html += '<section class="adm-seccion" id="sec-huerfanos"><h2 class="adm-seccion-titulo">Sin colección <span class="adm-tag">(' + huerfanos.length + ')</span></h2>' +
         '<p class="adm-seccion-sub">Estos productos quedaron sin colección. Cámbiales la colección con el selector 📁 de cada uno.</p>' +
-        '<div class="adm-grilla">' + huerfanos.map(p => kvCardEditHtml(vista(p), cats)).join('') + '</div></section>';
+        '<div class="adm-grilla">' + huerfanos.map(p => kvCardEditHtml(vista(p), cats, focoModo[p.id])).join('') + '</div></section>';
     }
     $('adm-categorias').innerHTML = html;
     $('adm-categorias').querySelectorAll('[data-goto]').forEach(n => n.addEventListener('click', e => {
@@ -379,10 +379,24 @@
       const lbl = e.target.closest('.ed-stock');
       if (lbl) { lbl.classList.toggle('is-off', !e.target.checked); const t = lbl.querySelector('.ed-stock-txt'); if (t) t.textContent = e.target.checked ? 'En stock (visible)' : 'Sin stock (oculto)'; }
     }));
-    r.querySelectorAll('[data-role^="foco-"]').forEach(n => {
+    r.querySelectorAll('input[data-role^="foco-"]').forEach(n => {
       n.addEventListener('input', e => aplicarFocoPreview(e.target.dataset.id));
-      n.addEventListener('change', e => setBorrador(e.target.dataset.id, 'foco', focoDeCard(e.target.dataset.id)));
+      n.addEventListener('change', e => {
+        const id = e.target.dataset.id;
+        setBorrador(id, focoModo[id] === 'movil' ? 'focoMovil' : 'foco', focoDeCard(id));
+      });
     });
+    // pestañas PC / Celular del encuadre
+    r.querySelectorAll('[data-role="foco-modo"]').forEach(n => n.addEventListener('click', e => {
+      const btn = e.target.closest('[data-role="foco-modo"]');
+      cambiarFocoModo(btn.dataset.id, btn.dataset.modo);
+    }));
+    // "usar el mismo encuadre del PC": borra el encuadre propio del celular
+    r.querySelectorAll('[data-role="foco-igualar"]').forEach(n => n.addEventListener('click', e => {
+      const id = e.target.dataset.id;
+      setBorrador(id, 'focoMovil', null);
+      renderProductos();
+    }));
     r.querySelectorAll('[data-role="remove-photo"]').forEach(n => n.addEventListener('click', e => { setBorrador(e.target.dataset.id, 'photo', null); renderProductos(); }));
     r.querySelectorAll('[data-role="upload"]').forEach(n => n.addEventListener('change', e => {
       const file = e.target.files && e.target.files[0], id = e.target.dataset.id;
@@ -394,6 +408,26 @@
       }, 1600, 0.87);
       e.target.value = '';
     }));
+  }
+
+  // qué encuadre se está editando en cada tarjeta: 'pc' (por defecto) o 'movil'
+  const focoModo = {};
+  function cambiarFocoModo(id, modo) {
+    focoModo[id] = modo;
+    const card = $('adm-categorias').querySelector('.cat-card-edit[data-id="' + id + '"]');
+    if (!card) return;
+    card.querySelectorAll('[data-role="foco-modo"]').forEach(t => t.classList.toggle('is-active', t.dataset.modo === modo));
+    const p = vista(products.find(x => x.id === id));
+    const f = modo === 'movil' ? kvFocoMovil(p) : kvFoco(p);
+    const set = (role, val) => { const el = card.querySelector('input[data-role="' + role + '"]'); if (el) el.value = val; };
+    set('foco-zoom', f.zoom); set('foco-x', f.x); set('foco-y', f.y);
+    const foto = card.querySelector('.cat-card-foto');
+    if (foto) foto.classList.toggle('ed-foto-movil', modo === 'movil');
+    const ayuda = card.querySelector('.ed-foco-ayuda');
+    if (ayuda) ayuda.textContent = modo === 'movil'
+      ? 'En el celular la foto se ve más alta que ancha. Ajusta aquí para que la joya no quede cortada en el teléfono.'
+      : 'Así se ve en computador y tablet. El celular tiene su propio ajuste en la pestaña 📱.';
+    aplicarFocoPreview(id);
   }
 
   // encuadre: lee los 3 sliders de una tarjeta y aplica la vista previa en vivo
@@ -1614,6 +1648,25 @@
   // ---------- VISITAS ----------
   const VIS_ICONO_DISP = { 'Móvil': '📱', 'Tablet': '📲', 'Escritorio': '💻' };
   const VIS_ICONO_ORIGEN = { 'Instagram': '📷', 'Facebook': '👍', 'WhatsApp': '💬', 'Google': '🔎', 'Directo': '🔗', 'Otro': '🌐' };
+  const visitasAbiertas = {};   // id -> true (detalle con miniaturas desplegado)
+
+  /* miniatura + código + colección de un producto que la visitante miró.
+     Si el producto ya no existe (lo borraste), igual muestra el nombre guardado. */
+  function visMiniHtml(pid, nombreGuardado, qty) {
+    const p = products.find(x => x.id === pid);
+    const nombre = (p && p.name) || nombreGuardado || 'Producto eliminado';
+    const cat = p ? kvCat(p.category, settings) : null;
+    const foto = p && p.photo
+      ? '<span class="vis-mini-foto" style="background-image:url(\'' + p.photo + '\')"></span>'
+      : '<span class="vis-mini-foto vis-mini-sin">✦</span>';
+    return '<div class="vis-mini">' + foto +
+      '<div class="vis-mini-txt">' +
+        '<b>' + (qty ? qty + '× ' : '') + escapeHtml(nombre) + '</b>' +
+        '<span>' + (p ? escapeHtml(p.code || '') : '—') +
+          (cat ? ' · ' + escapeHtml(cat.nombre) : (p ? '' : ' · ya no está en el catálogo')) + '</span>' +
+      '</div>' +
+    '</div>';
+  }
   function renderVisitas() {
     const statsEl = $('adm-vis-stats');
     if (statsEl) {
@@ -1645,15 +1698,29 @@
       const ubicPartes = [v.ciudad, region !== v.ciudad ? region : ''].filter(Boolean);
       const ubic = ubicPartes.length ? ubicPartes.join(', ') + (v.pais ? ' · ' + v.pais : '') : (v.pais || 'Ubicación no disponible');
       const colecciones = (v.colecciones || []).map(c => '<span class="vis-chip">' + escapeHtml(c) + '</span>').join('');
-      const productosChips = (v.productos || []).map(p => '<span class="vis-chip vis-chip-prod">' + escapeHtml(p) + '</span>').join('');
-      const nProd = (v.productos || []).length;
+      const nProd = Math.max((v.productos || []).length, (v.productosIds || []).length);
       const carritoAbandonado = !v.hizoPedido && (v.carritoActual || []).length > 0;
+      const abierta = !!visitasAbiertas[v.id];
+      // miniaturas de los productos que miró (solo al desplegar la tarjeta)
+      const miniVistos = (v.productosIds || []).map((pid, i) => {
+        const nombre = (v.productos || [])[i] || '';
+        return visMiniHtml(pid, nombre);
+      }).join('');
+      const miniCarrito = (v.carritoActual || []).map(it => visMiniHtml(it.id, it.name, it.qty)).join('');
       const carritoHtml = (v.carritoActual || []).length
         ? '<div class="vis-fila' + (carritoAbandonado ? ' vis-carro-abandonado' : '') + '">' + (carritoAbandonado ? '🛒⚠ Carrito abandonado: ' : '🛒 Carrito: ') +
           (v.carritoActual || []).map(it => it.qty + '× ' + escapeHtml(it.name)).join(', ') +
           ' — ' + formatCLP(v.carritoTotal || 0) + '</div>'
         : '';
-      return '<div class="vis-card">' +
+      const detalleHtml = abierta ? (
+        '<div class="vis-detalle">' +
+          (miniVistos ? '<div class="vis-sub">Productos que miró</div><div class="vis-minis">' + miniVistos + '</div>' : '') +
+          (miniCarrito ? '<div class="vis-sub">' + (carritoAbandonado ? 'Quedó en su carrito' : 'En su carrito') + '</div><div class="vis-minis">' + miniCarrito + '</div>' : '') +
+          (!miniVistos && !miniCarrito ? '<div class="vis-fila">Solo navegó, no abrió ningún producto.</div>' : '') +
+        '</div>') : '';
+      const hayDetalle = nProd > 0 || (v.carritoActual || []).length > 0;
+      return '<div class="vis-card' + (abierta ? ' abierta' : '') + (hayDetalle ? ' vis-click' : '') + '"' +
+        (hayDetalle ? ' data-role="vis-toggle" data-id="' + v.id + '" role="button" tabindex="0"' : '') + '>' +
         '<div class="vis-fila-top">' +
           '<span class="vis-fecha">' + pedFecha(v.ultima || v.creada) + '</span>' +
           '<span class="vis-dispo">' + (VIS_ICONO_DISP[v.dispositivo] || '💻') + ' ' + escapeHtml(v.dispositivo || '') + ' · ' + escapeHtml(v.so || '') + ' · ' + escapeHtml(v.navegador || '') + '</span>' +
@@ -1662,12 +1729,24 @@
         '<div class="vis-fila">📍 ' + escapeHtml(ubic) + '</div>' +
         '<div class="vis-fila">' + (VIS_ICONO_ORIGEN[v.origenTipo] || '🌐') + ' Llegó desde: ' + escapeHtml(v.origenTipo || 'Directo') + (v.origenHost ? ' (' + escapeHtml(v.origenHost) + ')' : '') + '</div>' +
         (colecciones ? '<div class="vis-fila">Colecciones vistas: ' + colecciones + '</div>' : '') +
-        (nProd ? '<div class="vis-fila">🔍 Vio: ' + productosChips + '</div>' : '') +
+        (nProd ? '<div class="vis-fila">🔍 Vio ' + nProd + ' producto' + (nProd === 1 ? '' : 's') + '</div>' : '') +
         carritoHtml +
         (v.hizoPedido ? '<div class="vis-fila vis-destacado">✅ Hizo un pedido</div>' : '') +
+        (hayDetalle ? '<div class="vis-vermas">' + (abierta ? '▴ Ocultar detalle' : '▾ Ver qué miró') + '</div>' : '') +
+        detalleHtml +
       '</div>';
     }).join('') + '</div>';
-    cont.querySelectorAll('[data-role="vis-borrar"]').forEach(n => n.addEventListener('click', () => {
+    cont.querySelectorAll('[data-role="vis-toggle"]').forEach(n => {
+      const abrir = (e) => {
+        if (e.target.closest('[data-role="vis-borrar"]')) return;   // la ✕ no despliega
+        visitasAbiertas[n.dataset.id] = !visitasAbiertas[n.dataset.id];
+        renderVisitas();
+      };
+      n.addEventListener('click', abrir);
+      n.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(e); } });
+    });
+    cont.querySelectorAll('[data-role="vis-borrar"]').forEach(n => n.addEventListener('click', (e) => {
+      e.stopPropagation();
       visitasCol.doc(n.dataset.id).delete().catch(err => console.error(err));
     }));
   }

@@ -195,15 +195,38 @@ function kvFocoIG(p) {
   };
 }
 
-/* capa de imagen con el encuadre aplicado (posición + zoom). '' si no hay foto */
-function kvFotoInner(p) {
-  if (!p || !p.photo) return '';
-  const f = kvFoco(p);
+/* encuadre PROPIO para celular: en el teléfono el marco de la foto es más ALTO que
+   ancho, y en PC más ancho que alto, así que un encuadre bueno en PC a veces corta
+   la joya en el celular. Si no se ajustó aparte, usa el mismo del PC. */
+function kvFocoMovil(p) {
+  const f = (p && p.focoMovil) || null;
+  if (!f) return kvFoco(p);
+  return {
+    x: f.x != null ? f.x : 50,
+    y: f.y != null ? f.y : 50,
+    zoom: f.zoom != null ? f.zoom : 100
+  };
+}
+function kvTieneFocoMovil(p) { return !!(p && p.focoMovil); }
+
+/* una capa de imagen con el encuadre aplicado */
+function kvCapaFoto(url, f, clase) {
   // se invierte (100 - x) para que el deslizador sea intuitivo: mover a la derecha = la imagen va a la derecha
   const px = 100 - f.x, py = 100 - f.y;
-  return '<div class="kv-fbg" style="background-image:url(\'' + p.photo + '\');' +
+  return '<div class="kv-fbg' + (clase ? ' ' + clase : '') + '" style="background-image:url(\'' + url + '\');' +
          'background-position:' + px + '% ' + py + '%;' +
          'transform:scale(' + (f.zoom / 100) + ');transform-origin:' + px + '% ' + py + '%;"></div>';
+}
+
+/* capa(s) de imagen con el encuadre aplicado. '' si no hay foto.
+   modo 'pc' o 'movil' = una sola capa (vista previa del admin);
+   sin modo = las dos capas y el CSS muestra la que corresponde a la pantalla */
+function kvFotoInner(p, modo) {
+  if (!p || !p.photo) return '';
+  if (modo === 'pc') return kvCapaFoto(p.photo, kvFoco(p), 'kv-fbg-solo');
+  if (modo === 'movil') return kvCapaFoto(p.photo, kvFocoMovil(p), 'kv-fbg-solo');
+  return kvCapaFoto(p.photo, kvFoco(p), 'kv-fbg-pc') +
+         kvCapaFoto(p.photo, kvFocoMovil(p), 'kv-fbg-mov');
 }
 
 /* foto para la vista ampliada: la joya SIEMPRE completa y centrada,
@@ -494,17 +517,18 @@ function kvCardHtml(p) {
 }
 
 /* tarjeta de edición (panel admin) */
-function kvCardEditHtml(p, cats) {
+function kvCardEditHtml(p, cats, modo) {
   cats = cats || KV_CATEGORIAS;
+  modo = modo === 'movil' ? 'movil' : 'pc';
   const opciones = cats.map(c =>
     '<option value="' + c.id + '"' + (p.category === c.id ? ' selected' : '') + '>' + escapeHtml(c.nombre) + '</option>').join('');
-  const f = kvFoco(p);
+  const f = modo === 'movil' ? kvFocoMovil(p) : kvFoco(p);
   const enStock = kvEnStock(p);
   const of = p.priceOffer != null && Number(p.priceOffer) > 0 ? p.priceOffer : '';
   return (
     '<div class="cat-card cat-card-edit' + (enStock ? '' : ' sin-stock') + '" data-id="' + p.id + '">' +
-      '<div class="cat-card-foto' + (!p.photo ? ' sin-foto' : '') + '">' +
-        kvFotoInner(p) +
+      '<div class="cat-card-foto' + (!p.photo ? ' sin-foto' : '') + (modo === 'movil' ? ' ed-foto-movil' : '') + '">' +
+        kvFotoInner(p, modo) +
         (!p.photo ? '<span class="cat-card-sinfoto">✦</span>' : '') +
         (enStock ? '' : '<span class="ed-badge-sin">Sin stock</span>') +
         '<div class="ed-orden">' +
@@ -519,12 +543,22 @@ function kvCardEditHtml(p, cats) {
         '</div>' +
       '</div>' +
       '<div class="ed-cuerpo">' +
-        '<details class="ed-encuadre">' +
+        '<details class="ed-encuadre"' + (modo === 'movil' ? ' open' : '') + '>' +
           '<summary class="ed-encuadre-tit">🎯 Ajustar encuadre de la foto</summary>' +
           '<div class="ed-encuadre-body">' +
+            '<div class="ed-foco-tabs">' +
+              '<button type="button" class="ed-foco-tab' + (modo === 'pc' ? ' is-active' : '') + '" data-role="foco-modo" data-modo="pc" data-id="' + p.id + '">💻 PC</button>' +
+              '<button type="button" class="ed-foco-tab' + (modo === 'movil' ? ' is-active' : '') + '" data-role="foco-modo" data-modo="movil" data-id="' + p.id + '">📱 Celular' +
+                (kvTieneFocoMovil(p) ? ' <span class="ed-foco-punto" title="Tiene su propio encuadre">●</span>' : '') + '</button>' +
+            '</div>' +
+            '<p class="ed-foco-ayuda">' + (modo === 'movil'
+              ? 'En el celular la foto se ve más alta que ancha. Ajusta aquí para que la joya no quede cortada en el teléfono.'
+              : 'Así se ve en computador y tablet. El celular tiene su propio ajuste en la pestaña 📱.') + '</p>' +
             '<label class="ed-slider"><span>Zoom</span><input type="range" min="100" max="250" step="1" data-role="foco-zoom" data-id="' + p.id + '" value="' + f.zoom + '" /></label>' +
             '<label class="ed-slider"><span>Horizontal</span><input type="range" min="0" max="100" step="1" data-role="foco-x" data-id="' + p.id + '" value="' + f.x + '" /></label>' +
             '<label class="ed-slider"><span>Vertical</span><input type="range" min="0" max="100" step="1" data-role="foco-y" data-id="' + p.id + '" value="' + f.y + '" /></label>' +
+            (modo === 'movil' && kvTieneFocoMovil(p)
+              ? '<button type="button" class="ed-foco-reset" data-role="foco-igualar" data-id="' + p.id + '">↩ Usar el mismo encuadre del PC</button>' : '') +
           '</div>' +
         '</details>' +
         '<div class="ed-fila">' +

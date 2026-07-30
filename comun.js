@@ -133,7 +133,26 @@ function escapeHtml(str) {
 const KV_SIN_FOTO = 'repeating-linear-gradient(45deg, rgba(122,47,176,0.08) 0 11px, rgba(122,47,176,0.02) 11px 22px)';
 
 /* ¿el producto está disponible? (sin campo = disponible) */
-function kvEnStock(p) { return !p || p.stock !== false; }
+/* Stock: el interruptor "en stock" manda. Además, si el producto tiene una
+   CANTIDAD anotada, al llegar a 0 se oculta solo. Sin cantidad anotada (null)
+   funciona como siempre: visible mientras el interruptor esté encendido. */
+function kvStockCantidad(p) {
+  if (!p || p.cantidad == null || p.cantidad === '') return null;
+  const n = parseInt(p.cantidad, 10);
+  return isNaN(n) ? null : Math.max(0, n);
+}
+function kvEnStock(p) {
+  if (!p) return true;
+  if (p.stock === false) return false;
+  const c = kvStockCantidad(p);
+  return c === null ? true : c > 0;
+}
+/* quedan pocas unidades: sirve para mostrar "¡Últimas 2!" y apurar la compra */
+var KV_STOCK_BAJO = 3;
+function kvStockBajo(p) {
+  const c = kvStockCantidad(p);
+  return c !== null && c > 0 && c <= KV_STOCK_BAJO;
+}
 
 /* ---------- descuento global a todo el catálogo ---------- */
 // por defecto (hasta que la admin lo configure): 20% hasta el 19-07-2026 (una semana)
@@ -496,12 +515,14 @@ function kvContactoRow(settings, tipos) {
 /* tarjeta pública (estilo Amore: foto + barra de etiqueta), clickeable para ampliar */
 function kvCardHtml(p) {
   const oferta = kvPrecioOferta(p) ? '<span class="cat-card-oferta">Oferta</span>' : '';
+  const pocas = kvStockBajo(p)
+    ? '<span class="cat-card-pocas">¡Última' + (kvStockCantidad(p) === 1 ? '!' : 's ' + kvStockCantidad(p) + '!') + '</span>' : '';
   return (
     '<div class="cat-card cat-card-click" data-id="' + p.id + '" role="button" tabindex="0" aria-label="Ver ' + escapeHtml(p.name) + '">' +
       '<div class="cat-card-foto' + (!p.photo ? ' sin-foto' : '') + '">' +
         kvFotoInner(p) +
         (!p.photo ? '<span class="cat-card-sinfoto">✦</span>' : '') +
-        oferta +
+        oferta + pocas +
         '<span class="cat-card-zoom" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="16" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="11" y1="8" x2="11" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>' +
       '</div>' +
       '<div class="cat-card-etiqueta">' +
@@ -581,6 +602,13 @@ function kvCardEditHtml(p, cats, modo) {
           '<label class="ed-coleccion-label">📁 Colección:</label>' +
           '<select class="ed-input ed-categoria" data-role="category" data-id="' + p.id + '">' + opciones + '</select>' +
         '</div>' +
+        '<label class="ed-cant">' +
+          '<span class="ed-cant-lbl">📦 Cantidad</span>' +
+          '<input class="ed-input ed-cant-input" data-role="cantidad" data-id="' + p.id + '" inputmode="numeric" placeholder="sin control" value="' + (kvStockCantidad(p) == null ? '' : kvStockCantidad(p)) + '" />' +
+          '<span class="ed-cant-ayuda">' + (kvStockCantidad(p) == null
+            ? 'Vacío = sin control de cantidad'
+            : (kvStockCantidad(p) === 0 ? 'Agotado: se oculta solo' : 'Al llegar a 0 se oculta solo')) + '</span>' +
+        '</label>' +
         '<label class="ed-stock' + (enStock ? '' : ' is-off') + '">' +
           '<input type="checkbox" data-role="stock" data-id="' + p.id + '"' + (enStock ? ' checked' : '') + ' />' +
           '<span class="ed-stock-sw"></span>' +

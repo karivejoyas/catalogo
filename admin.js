@@ -344,6 +344,11 @@
     r.querySelectorAll('[data-role="code"]').forEach(n => n.addEventListener('input', e => setBorrador(e.target.dataset.id, 'code', e.target.value)));
     r.querySelectorAll('[data-role="name"]').forEach(n => n.addEventListener('input', e => setBorrador(e.target.dataset.id, 'name', e.target.value)));
     r.querySelectorAll('[data-role="detail"]').forEach(n => n.addEventListener('input', e => setBorrador(e.target.dataset.id, 'detail', e.target.value)));
+    r.querySelectorAll('[data-role="cantidad"]').forEach(n => n.addEventListener('input', e => {
+      const txt = e.target.value.replace(/[^0-9]/g, '');
+      if (txt !== e.target.value) e.target.value = txt;              // solo números
+      setBorrador(e.target.dataset.id, 'cantidad', txt === '' ? null : parseInt(txt, 10));
+    }));
     r.querySelectorAll('[data-role="price"]').forEach(n => n.addEventListener('input', e => {
       const num = parseInt(String(e.target.value).replace(/[^0-9]/g, ''), 10);
       setBorrador(e.target.dataset.id, 'price', isNaN(num) ? 0 : num);
@@ -1610,7 +1615,10 @@
       renderPedidos();
     }));
     cont.querySelectorAll('[data-role="ped-estado"]').forEach(n => n.addEventListener('click', () => {
-      pedidosCol.doc(n.dataset.id).update({ estado: n.dataset.est }).catch(err => console.error(err));
+      const id = n.dataset.id, est = n.dataset.est;
+      // al verificar el pago se descuenta el stock (una sola vez por pedido)
+      if (est === 'verificado') descontarStock(id);
+      pedidosCol.doc(id).update({ estado: est }).catch(err => console.error(err));
     }));
     cont.querySelectorAll('[data-role="ped-borrar"]').forEach(n => n.addEventListener('click', () => {
       if (!window.confirm('¿Eliminar este pedido del panel? (no avisa a la clienta)')) return;
@@ -1618,6 +1626,25 @@
     }));
     cont.querySelectorAll('[data-role="ped-enviar"]').forEach(n => n.addEventListener('click', () => pedMarcarEnviado(n.dataset.id, n)));
   }
+  /* descuenta del stock lo que lleva el pedido. Solo afecta a los productos que
+     tienen una cantidad anotada; los que están "sin control" quedan igual.
+     Se marca en el pedido para no descontar dos veces si retrocede y vuelve. */
+  function descontarStock(pedidoId) {
+    const ped = pedidos.find(x => x.id === pedidoId);
+    if (!ped || ped.stockDescontado) return;
+    const avisos = [];
+    (ped.items || []).forEach(it => {
+      const p = products.find(x => x.id === it.id);
+      const c = kvStockCantidad(p);
+      if (c === null) return;                       // sin control de cantidad
+      const nueva = Math.max(0, c - (it.qty || 0));
+      if (c < (it.qty || 0)) avisos.push(p.name + ' (quedaban ' + c + ', pedidas ' + it.qty + ')');
+      itemsCol.doc(it.id).update({ cantidad: nueva }).catch(err => console.error('Error descontando stock:', err));
+    });
+    pedidosCol.doc(pedidoId).update({ stockDescontado: true }).catch(err => console.error(err));
+    if (avisos.length) window.alert('⚠ Ojo con el stock:\n\n• ' + avisos.join('\n• ') + '\n\nQuedaron en 0. Revisa si alcanzas a cumplir el pedido.');
+  }
+
   async function pedMarcarEnviado(id, btn) {
     const p = pedidos.find(x => x.id === id); if (!p) return;
     const courier = ($('ped-courier-' + id).value || 'Bluexpress').trim();

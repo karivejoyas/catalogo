@@ -789,3 +789,44 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 .vis-mini-txt{min-width:0;display:flex;flex-direction:column;gap:1px;}
 .vis-mini-txt b{font-size:12.5px;font-weight:500;color:var(--kv-crema);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .vis-mini-txt span{font-size:10.5px;letter-spacing:0.08em;color:var(--kv-lavanda);}
+
+/* ============================================================
+   STOCK POR CANTIDAD + BUSCADOR
+   ============================================================ */
+/* aviso "¡Últimas 2!" en la tarjeta (bajo la etiqueta de oferta si las dos aparecen) */
+.cat-card-pocas{position:absolute;top:8px;left:8px;z-index:2;font-family:'Jost',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.06em;color:#fff;background:linear-gradient(135deg,#e0435a,#b52544);padding:3px 9px;border-radius:999px;box-shadow:0 3px 10px rgba(0,0,0,0.3);}
+.cat-card-oferta + .cat-card-pocas{top:33px;}
+
+/* campo de cantidad en el admin */
+.ed-cant{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:4px;padding:8px 10px;background:rgba(255,255,255,0.05);border:1px solid rgba(203,183,216,0.24);border-radius:9px;}
+.ed-cant-lbl{font-size:11.5px;font-weight:600;letter-spacing:0.04em;color:var(--kv-dorado-cl);white-space:nowrap;}
+.ed-cant-input{max-width:88px;text-align:center;font-size:14px;}
+.ed-cant-ayuda{flex:1;min-width:120px;font-size:10.5px;color:#a894bd;}
+
+/* buscador */
+.kv-buscar{position:fixed;inset:0;z-index:95;display:flex;align-items:flex-start;justify-content:center;padding:clamp(12px,5vh,60px) 14px 14px;}
+.kv-buscar[hidden]{display:none;}
+.kv-buscar-back{position:absolute;inset:0;background:rgba(14,5,26,0.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
+.kv-buscar-panel{position:relative;z-index:2;width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;background:#241238;border:1px solid rgba(201,162,75,0.45);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,0.6);overflow:hidden;}
+.kv-buscar-top{display:flex;align-items:center;gap:9px;padding:12px 14px;border-bottom:1px solid rgba(201,162,75,0.25);flex:0 0 auto;}
+.kv-buscar-lupa{font-size:15px;flex:0 0 auto;}
+.kv-buscar-input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--kv-crema);font-family:'Jost',sans-serif;font-size:15.5px;}
+.kv-buscar-input::placeholder{color:#8f7aa0;}
+.kv-buscar-input::-webkit-search-cancel-button{filter:invert(1) opacity(.5);}
+.kv-buscar-x{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,0.12);color:#fff;font-size:12px;cursor:pointer;}
+.kv-buscar-res{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 16px;}
+.kv-buscar-vacio{margin:26px 6px;text-align:center;font-family:'Jost',sans-serif;font-size:13.5px;line-height:1.6;color:var(--kv-lavanda);}
+.kv-buscar-cuenta{margin:0 0 9px;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--kv-dorado-cl);}
+.kv-buscar-grid{display:flex;flex-direction:column;gap:8px;}
+.kv-buscar-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:rgba(255,255,255,0.05);border:1px solid rgba(201,162,75,0.2);border-radius:12px;padding:8px;cursor:pointer;transition:background .15s,border-color .15s;}
+.kv-buscar-item:hover{background:rgba(255,255,255,0.1);border-color:rgba(227,197,114,0.45);}
+.kv-buscar-foto{width:56px;height:56px;flex:0 0 auto;border-radius:9px;background-size:cover;background-position:center;background-color:#EFEAF5;display:flex;align-items:center;justify-content:center;color:#a894bd;font-size:18px;}
+.kv-buscar-txt{min-width:0;display:flex;flex-direction:column;gap:2px;}
+.kv-buscar-txt b{font-family:'Jost',sans-serif;font-size:14px;font-weight:500;color:var(--kv-crema);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kv-buscar-meta{font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--kv-lavanda);}
+.kv-buscar-precio .cat-card-precio{font-size:16px;}
+.kv-buscar-precio .cat-card-precio-old{font-size:12px;}
+@media (max-width:640px){
+  .kv-buscar{padding:0;}
+  .kv-buscar-panel{width:100%;max-height:100%;height:100%;border-radius:0;border:none;}
+}

@@ -319,6 +319,65 @@
   visitaIniciar();
 
   // ============================================================
+  //  BUSCADOR DE PRODUCTOS
+  // ============================================================
+  const buscarEl = $('kv-buscar'), buscarInput = $('kv-buscar-input'), buscarRes = $('kv-buscar-res');
+  // quita tildes y mayúsculas para que "corazon" encuentre "Corazón"
+  const sinTildes = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  function buscarAbrir() {
+    buscarEl.hidden = false;
+    document.body.classList.add('fb-lb-open');
+    buscarPintar();
+    setTimeout(() => buscarInput.focus(), 50);
+  }
+  function buscarCerrar() {
+    buscarEl.hidden = true;
+    if (lb.hidden) document.body.classList.remove('fb-lb-open');
+  }
+  function buscarPintar() {
+    const q = sinTildes(buscarInput.value).trim();
+    const visibles = products.filter(kvEnStock);
+    if (!q) {
+      buscarRes.innerHTML = '<p class="kv-buscar-vacio">Escribe el nombre, el color o el código de lo que buscas 💜</p>';
+      return;
+    }
+    // se buscan todas las palabras: "aros azul" encuentra los que tengan las dos
+    const palabras = q.split(/\s+/).filter(Boolean);
+    const encontrados = visibles.filter(p => {
+      const cat = kvCat(p.category, settings);
+      const texto = sinTildes([p.name, p.code, p.detail, cat && cat.nombre].filter(Boolean).join(' '));
+      return palabras.every(w => texto.indexOf(w) !== -1);
+    });
+    if (!encontrados.length) {
+      buscarRes.innerHTML = '<p class="kv-buscar-vacio">No encontramos nada con «' + escapeHtml(buscarInput.value.trim()) + '».<br>Prueba con otra palabra o escríbenos por WhatsApp 💜</p>';
+      return;
+    }
+    buscarRes.innerHTML =
+      '<p class="kv-buscar-cuenta">' + encontrados.length + ' producto' + (encontrados.length === 1 ? '' : 's') + '</p>' +
+      '<div class="kv-buscar-grid">' + encontrados.map(p => {
+        const cat = kvCat(p.category, settings);
+        return '<button type="button" class="kv-buscar-item" data-id="' + p.id + '">' +
+          '<span class="kv-buscar-foto"' + (p.photo ? ' style="background-image:url(\'' + p.photo + '\')"' : '') + '>' + (p.photo ? '' : '✦') + '</span>' +
+          '<span class="kv-buscar-txt">' +
+            '<b>' + escapeHtml(p.name || '') + '</b>' +
+            '<span class="kv-buscar-meta">' + escapeHtml(p.code || '') + (cat ? ' · ' + escapeHtml(cat.nombre) : '') + '</span>' +
+            '<span class="kv-buscar-precio">' + kvPrecioHtml(p) + '</span>' +
+          '</span>' +
+        '</button>';
+      }).join('') + '</div>';
+    buscarRes.querySelectorAll('.kv-buscar-item').forEach(n => n.addEventListener('click', () => {
+      const p = products.find(x => x.id === n.dataset.id);
+      buscarCerrar();
+      abrirLightbox(p);
+    }));
+  }
+  if ($('kv-buscar-btn')) $('kv-buscar-btn').addEventListener('click', buscarAbrir);
+  buscarEl.querySelectorAll('[data-role="buscar-close"]').forEach(n => n.addEventListener('click', buscarCerrar));
+  buscarInput.addEventListener('input', buscarPintar);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !buscarEl.hidden) buscarCerrar(); });
+
+  // ============================================================
   //  CARRITO DE COMPRAS
   // ============================================================
   const CARRO_KEY = 'kv_carrito';
@@ -337,10 +396,14 @@
   }
   function carroCantidad() { return Object.values(carro).reduce((a, b) => a + (b || 0), 0); }
   function carroItems() {
-    // solo productos que siguen existiendo y con stock
+    // solo productos que siguen existiendo y con stock; si mientras tanto bajó la
+    // cantidad disponible, se ajusta para no vender más de lo que hay
     return Object.keys(carro).map(id => {
       const p = products.find(x => x.id === id && kvEnStock(x));
-      return p ? { p: p, qty: carro[id] } : null;
+      if (!p) return null;
+      const tope = kvStockCantidad(p);
+      const qty = tope !== null ? Math.min(carro[id], tope) : carro[id];
+      return { p: p, qty: qty };
     }).filter(Boolean);
   }
   function carroSubtotal() { return carroItems().reduce((s, it) => s + (kvPrecioOferta(it.p) || it.p.price || 0) * it.qty, 0); }
@@ -353,7 +416,18 @@
   function carroAgregar(id, n) {
     const p = products.find(x => x.id === id && kvEnStock(x));
     if (!p) return;
-    carro[id] = (carro[id] || 0) + (n || 1);
+    const tope = kvStockCantidad(p);                 // null = sin control de cantidad
+    const pedido = (carro[id] || 0) + (n || 1);
+    if (tope !== null && pedido > tope) {
+      carro[id] = tope;
+      carroGuardar();
+      carroToast(tope === (carro[id] || 0) && (carro[id] || 0) === pedido - (n || 1)
+        ? 'Solo queda' + (tope === 1 ? ' 1' : 'n ' + tope) + ' de ' + (p.name || 'este producto')
+        : '✓ Agregado — solo queda' + (tope === 1 ? ' 1' : 'n ' + tope) + ' disponible' + (tope === 1 ? '' : 's'));
+      if (!carritoEl.hidden) carroRender();
+      return;
+    }
+    carro[id] = pedido;
     carroGuardar();
     visitaMarcarCarrito();
     carroToast('✓ ' + (p.name || 'Producto') + ' agregado al carrito');
@@ -526,7 +600,14 @@
     carritoEl.querySelectorAll('[data-role="cart-close"]').forEach(n => n.addEventListener('click', carroCerrar));
     carritoEl.querySelectorAll('[data-role="qty"]').forEach(n => n.addEventListener('click', () => {
       const id = n.dataset.id, d = parseInt(n.dataset.d, 10);
-      carro[id] = (carro[id] || 0) + d;
+      const prod = products.find(x => x.id === id);
+      const tope = kvStockCantidad(prod);
+      const nueva = (carro[id] || 0) + d;
+      if (tope !== null && nueva > tope) {
+        carroToast('Solo queda' + (tope === 1 ? ' 1 unidad' : 'n ' + tope + ' unidades') + ' de este producto');
+        return;
+      }
+      carro[id] = nueva;
       if (carro[id] <= 0) delete carro[id];
       carroGuardar(); carroRender();
     }));

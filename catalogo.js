@@ -319,6 +319,91 @@
   visitaIniciar();
 
   // ============================================================
+  //  REGALO DE BIENVENIDA (deja tu correo y recibe un descuento)
+  // ============================================================
+  const bienEl = $('kv-bien'), bienCuerpo = $('kv-bien-cuerpo');
+  const BIEN_KEY = 'kv_bienvenida';        // 'suscrito' | 'cerrado'
+  let bienEstado = '';
+  try { bienEstado = localStorage.getItem(BIEN_KEY) || ''; } catch (e) {}
+  let bienEnviando = false, bienMostrado = false;
+
+  function bienGuardarEstado(v) { bienEstado = v; try { localStorage.setItem(BIEN_KEY, v); } catch (e) {} }
+  function bienCerrar() { bienEl.hidden = true; if (bienEstado !== 'suscrito') bienGuardarEstado('cerrado'); }
+
+  function bienPintar(vista, msg) {
+    const b = kvBienvenida(settings);
+    if (vista === 'ok') {
+      bienCuerpo.innerHTML =
+        '<div class="kv-bien-tit">¡Listo! 🎉</div>' +
+        '<p class="kv-bien-txt">Usa este código en tu compra:</p>' +
+        '<div class="kv-bien-codigo">' + escapeHtml(b.codigo) + '</div>' +
+        '<p class="kv-bien-chico">Te lo enviamos también a tu correo. ¡Gracias por sumarte! 💜</p>';
+      return;
+    }
+    bienCuerpo.innerHTML =
+      '<div class="kv-bien-tit">' + escapeHtml(b.titulo) + '</div>' +
+      '<p class="kv-bien-txt">' + escapeHtml(b.texto.replace('{PCT}', b.pct)) + '</p>' +
+      '<div class="kv-bien-fila">' +
+        '<input type="email" id="kv-bien-mail" class="kv-bien-inp" placeholder="tucorreo@ejemplo.cl" autocomplete="email" ' + (bienEnviando ? 'disabled' : '') + ' />' +
+        '<button type="button" class="kv-bien-btn" id="kv-bien-enviar"' + (bienEnviando ? ' disabled' : '') + '>' + (bienEnviando ? '…' : 'Quiero mi ' + b.pct + '%') + '</button>' +
+      '</div>' +
+      (msg ? '<div class="kv-bien-error">' + escapeHtml(msg) + '</div>' : '') +
+      '<label class="kv-bien-acepta"><input type="checkbox" id="kv-bien-ok" /> <span>Acepto recibir novedades y ofertas de Karivé Joyas. Puedo desuscribirme cuando quiera.</span></label>';
+    const btn = $('kv-bien-enviar');
+    if (btn) btn.addEventListener('click', bienEnviar);
+    const inp = $('kv-bien-mail');
+    if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') bienEnviar(); });
+  }
+
+  async function bienEnviar() {
+    if (bienEnviando) return;
+    const correo = ($('kv-bien-mail').value || '').trim();
+    const acepta = $('kv-bien-ok') && $('kv-bien-ok').checked;
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) { bienPintar('form', 'Revisa tu correo electrónico.'); return; }
+    if (!acepta) { bienPintar('form', 'Marca la casilla para poder enviarte las novedades.'); return; }
+    bienEnviando = true; bienPintar('form');
+    const b = kvBienvenida(settings);
+    try {
+      await kvDb.collection('catalog').doc('suscriptores').collection('items').add({
+        correo: correo.toLowerCase(),
+        fecha: new Date().toISOString(),
+        origen: kvVisitaOrigen(document.referrer).tipo,
+        codigo: b.codigo,
+        acepta: true
+      });
+    } catch (e) { console.warn('No se pudo registrar el correo:', e); }
+    // aviso por correo (si el publicador está configurado)
+    const url = String(settings.igPubUrl || '').trim();
+    if (url) {
+      try {
+        await fetch(url, {
+          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ accion: 'bienvenida', correo: correo, codigo: b.codigo, pct: b.pct })
+        });
+      } catch (e) { console.warn('No se pudo enviar el correo de bienvenida:', e); }
+    }
+    bienEnviando = false;
+    bienGuardarEstado('suscrito');
+    bienPintar('ok');
+    // deja el cupón listo en el carrito
+    carroCuponTxt = b.codigo;
+    setTimeout(() => { if (!bienEl.hidden) bienCerrar(); }, 9000);
+  }
+
+  function bienQuizasMostrar() {
+    if (bienMostrado || bienEstado) return;             // ya se suscribió o ya lo cerró
+    const b = kvBienvenida(settings);
+    if (!b.activo) return;
+    bienMostrado = true;
+    setTimeout(() => {
+      if (bienEstado) return;
+      bienPintar('form');
+      bienEl.hidden = false;
+    }, 12000);                                          // tras 12s mirando el catálogo
+  }
+  if ($('kv-bien-x')) $('kv-bien-x').addEventListener('click', bienCerrar);
+
+  // ============================================================
   //  BUSCADOR DE PRODUCTOS
   // ============================================================
   const buscarEl = $('kv-buscar'), buscarInput = $('kv-buscar-input'), buscarRes = $('kv-buscar-res');
@@ -387,6 +472,9 @@
   let carroComprobante = null;       // dataURL del comprobante adjunto
   let carroPedidoOk = null;          // {num, total} tras enviar
   let carroEnviando = false;
+  let carroCupon = null;             // cupón aplicado {codigo, tipo, valor…}
+  let carroCuponTxt = '';            // lo que la clienta escribió en la casilla
+  let carroCuponError = '';
   const carroForm = { nombre: '', correo: '', telefono: '', direccion: '', comuna: '', region: '', notas: '' };
 
   function carroGuardar() {
@@ -407,6 +495,12 @@
     }).filter(Boolean);
   }
   function carroSubtotal() { return carroItems().reduce((s, it) => s + (kvPrecioOferta(it.p) || it.p.price || 0) * it.qty, 0); }
+  /* cuánto descuenta el cupón aplicado (0 si no hay o si dejó de valer) */
+  function carroDescuento() {
+    if (!carroCupon) return 0;
+    const r = kvCuponValidar(carroCupon.codigo, settings, carroSubtotal());
+    return r.ok ? r.descuento : 0;
+  }
   function carroBadge() {
     const el = $('kv-cart-count'); if (!el) return;
     const n = carroCantidad();
@@ -518,8 +612,9 @@
 
   function carroHtmlCheckout(items) {
     const sub = carroSubtotal();
+    const dcto = carroDescuento();
     const envio = carroForm.region ? kvEnvioCosto(carroForm.region) : null;
-    const total = sub + (envio || 0);
+    const total = Math.max(0, sub - dcto) + (envio || 0);
     const t = kvTransferencia(settings);
     const f = carroForm;
     const inp = (campo, ph, tipo, extra) =>
@@ -536,12 +631,23 @@
         '<option value="" disabled' + (f.region ? '' : ' selected') + '>Región *</option>' +
         KV_REGIONES.map(r => '<option value="' + r + '"' + (f.region === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select><span class="kv-cart-selflecha">▾</span></div>' +
       inp('notas', 'Nota para tu pedido (opcional)');
+    // cupón de descuento
+    h += '<div class="kv-cart-sec-tit">¿Tienes un cupón?</div>' +
+      '<div class="kv-cart-cupon">' +
+        '<input class="kv-cart-inp kv-cart-cupon-inp" id="kv-cupon-inp" type="text" placeholder="Código de descuento" value="' + escapeHtml(carroCuponTxt) + '" autocomplete="off" />' +
+        (carroCupon
+          ? '<button type="button" class="kv-cart-cupon-btn quitar" data-role="cupon-quitar">Quitar</button>'
+          : '<button type="button" class="kv-cart-cupon-btn" data-role="cupon-aplicar">Aplicar</button>') +
+      '</div>' +
+      (carroCuponError ? '<div class="kv-cart-cupon-msg error">' + escapeHtml(carroCuponError) + '</div>' : '') +
+      (carroCupon ? '<div class="kv-cart-cupon-msg ok">✓ Cupón <b>' + escapeHtml(carroCupon.codigo) + '</b> aplicado: ' + escapeHtml(kvCuponTexto(carroCupon)) + '</div>' : '');
     // resumen
     h += '<div class="kv-cart-sec-tit">Resumen</div><div class="kv-cart-resumen">';
     items.forEach(it => {
       const precio = kvPrecioOferta(it.p) || it.p.price || 0;
       h += '<div><span>' + it.qty + '× ' + escapeHtml(it.p.name) + '</span><span>' + formatCLP(precio * it.qty) + '</span></div>';
     });
+    if (dcto > 0) h += '<div class="kv-cart-resumen-dcto"><span>Cupón ' + escapeHtml(carroCupon.codigo) + '</span><span>−' + formatCLP(dcto) + '</span></div>';
     h += '<div><span>Envío' + (f.region ? ' (' + escapeHtml(f.region === KV_REGION_RM ? 'RM' : f.region) + ')' : '') + '</span><span>' + (envio != null ? formatCLP(envio) : 'elige región') + '</span></div>';
     h += '<div class="kv-cart-resumen-tot"><span>Total a transferir</span><span>' + formatCLP(total) + '</span></div></div>';
     // transferencia
@@ -631,6 +737,21 @@
       const txt = [t.titular, t.rut ? 'RUT: ' + t.rut : '', t.banco, t.tipo, t.numero, t.correo].filter(Boolean).join('\n');
       try { navigator.clipboard.writeText(txt); cpt.textContent = '✓ Datos copiados — pégalos en tu banco'; } catch (e) {}
     });
+    // cupón: aplicar / quitar
+    const cupInp = carritoEl.querySelector('#kv-cupon-inp');
+    if (cupInp) cupInp.addEventListener('input', e => { carroCuponTxt = e.target.value; });
+    const cupAp = carritoEl.querySelector('[data-role="cupon-aplicar"]');
+    if (cupAp) cupAp.addEventListener('click', () => {
+      const r = kvCuponValidar(carroCuponTxt, settings, carroSubtotal());
+      if (r.ok) { carroCupon = r.cupon; carroCuponError = ''; carroCuponTxt = kvCuponNormalizar(carroCuponTxt); }
+      else { carroCupon = null; carroCuponError = r.error; }
+      carroRender();
+    });
+    const cupQu = carritoEl.querySelector('[data-role="cupon-quitar"]');
+    if (cupQu) cupQu.addEventListener('click', () => {
+      carroCupon = null; carroCuponTxt = ''; carroCuponError = '';
+      carroRender();
+    });
     const comp = carritoEl.querySelector('#kv-cart-comp');
     if (comp) comp.addEventListener('change', e => {
       const file = e.target.files && e.target.files[0];
@@ -660,13 +781,16 @@
     if (!url) { carroError('La tienda aún no puede recibir pedidos en línea. Escríbenos por WhatsApp 💜'); return; }
 
     const envio = kvEnvioCosto(f.region);
+    const sub = carroSubtotal();
+    const dcto = carroDescuento();
     const pedido = {
       cliente: { nombre: f.nombre.trim(), correo: f.correo.trim(), telefono: f.telefono.trim() },
       direccion: { calle: f.direccion.trim(), comuna: f.comuna.trim(), region: f.region },
       items: items.map(it => ({ id: it.p.id, code: it.p.code || '', name: it.p.name || '', precio: kvPrecioOferta(it.p) || it.p.price || 0, qty: it.qty })),
-      subtotal: carroSubtotal(),
+      subtotal: sub,
+      cupon: dcto > 0 ? { codigo: carroCupon.codigo, descuento: dcto } : null,
       envio: { region: f.region, costo: envio },
-      total: carroSubtotal() + envio,
+      total: Math.max(0, sub - dcto) + envio,
       notas: f.notas.trim()
     };
     carroEnviando = true; carroRender();
@@ -687,7 +811,9 @@
       } catch (e2) { console.warn('Pedido enviado por correo; no se pudo registrar en la base:', e2); }
       carroPedidoOk = { num: d.num, total: pedido.total };
       visitaMarcarPedido();
-      carro = {}; carroComprobante = null; carroGuardar();
+      carro = {}; carroComprobante = null;
+      carroCupon = null; carroCuponTxt = ''; carroCuponError = '';
+      carroGuardar();
       carroVista = 'ok'; carroEnviando = false; carroRender();
     } catch (err) {
       carroEnviando = false; carroRender();
@@ -734,6 +860,7 @@
   let waActualizar = null;
   function rebuild() {
     kvSetDescuento(settings);
+    kvSetFocoMovilGeneral(settings);
     kvApplyTheme(Object.assign({}, KV_THEME_DEFAULT, settings.theme || {}));
     buildSlides();
     buildNav();
@@ -742,6 +869,7 @@
     if (waActualizar) waActualizar();
     carroBadge();
     if (!carritoEl.hidden) carroRender();   // refresca precios/stock si cambia el catálogo
+    bienQuizasMostrar();
   }
 
   // pinta la portada de inmediato (con valores por defecto) para no esperar

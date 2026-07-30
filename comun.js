@@ -217,8 +217,17 @@ function kvFocoIG(p) {
 /* encuadre PROPIO para celular: en el teléfono el marco de la foto es más ALTO que
    ancho, y en PC más ancho que alto, así que un encuadre bueno en PC a veces corta
    la joya en el celular. Si no se ajustó aparte, usa el mismo del PC. */
+/* encuadre general de celular: se aplica a TODOS los productos, salvo los que
+   tengan uno propio. Se guarda en la configuración y se carga una vez. */
+var _kvFocoMovilGen = null;
+function kvSetFocoMovilGeneral(settings) {
+  const f = settings && settings.focoMovilGeneral;
+  _kvFocoMovilGen = (f && (f.x != null || f.y != null || f.zoom != null)) ? f : null;
+}
+function kvFocoMovilGeneral() { return _kvFocoMovilGen; }
 function kvFocoMovil(p) {
-  const f = (p && p.focoMovil) || null;
+  // 1º el encuadre propio del producto, 2º el general, 3º el mismo del PC
+  const f = (p && p.focoMovil) || _kvFocoMovilGen || null;
   if (!f) return kvFoco(p);
   return {
     x: f.x != null ? f.x : 50,
@@ -573,13 +582,17 @@ function kvCardEditHtml(p, cats, modo) {
                 (kvTieneFocoMovil(p) ? ' <span class="ed-foco-punto" title="Tiene su propio encuadre">●</span>' : '') + '</button>' +
             '</div>' +
             '<p class="ed-foco-ayuda">' + (modo === 'movil'
-              ? 'En el celular la foto se ve más alta que ancha. Ajusta aquí para que la joya no quede cortada en el teléfono.'
+              ? (kvTieneFocoMovil(p)
+                  ? 'Este producto tiene su propio encuadre de celular (no lo afecta el general).'
+                  : (kvFocoMovilGeneral()
+                      ? 'Está usando el encuadre general. Si mueves algo acá, este producto queda con el suyo propio.'
+                      : 'En el celular la foto se ve más alta que ancha. Ajusta aquí para que la joya no quede cortada.'))
               : 'Así se ve en computador y tablet. El celular tiene su propio ajuste en la pestaña 📱.') + '</p>' +
             '<label class="ed-slider"><span>Zoom</span><input type="range" min="100" max="250" step="1" data-role="foco-zoom" data-id="' + p.id + '" value="' + f.zoom + '" /></label>' +
             '<label class="ed-slider"><span>Horizontal</span><input type="range" min="0" max="100" step="1" data-role="foco-x" data-id="' + p.id + '" value="' + f.x + '" /></label>' +
             '<label class="ed-slider"><span>Vertical</span><input type="range" min="0" max="100" step="1" data-role="foco-y" data-id="' + p.id + '" value="' + f.y + '" /></label>' +
             (modo === 'movil' && kvTieneFocoMovil(p)
-              ? '<button type="button" class="ed-foco-reset" data-role="foco-igualar" data-id="' + p.id + '">↩ Usar el mismo encuadre del PC</button>' : '') +
+              ? '<button type="button" class="ed-foco-reset" data-role="foco-igualar" data-id="' + p.id + '">↩ Volver al encuadre ' + (kvFocoMovilGeneral() ? 'general' : 'del PC') + '</button>' : '') +
           '</div>' +
         '</details>' +
         '<div class="ed-fila">' +
@@ -659,6 +672,61 @@ function kvTransferencia(settings) {
 function kvTransferenciaLista(settings) {
   const t = kvTransferencia(settings);
   return !!(t.titular && t.banco && t.numero);
+}
+
+/* ============================================================
+   CUPONES DE DESCUENTO
+   ============================================================ */
+function kvCupones(settings) {
+  const c = settings && settings.cupones;
+  return Array.isArray(c) ? c : [];
+}
+function kvCuponNormalizar(codigo) {
+  return String(codigo || '').trim().toUpperCase().replace(/\s+/g, '');
+}
+/* configuración del "regalo de bienvenida" por dejar el correo */
+function kvBienvenida(settings) {
+  const b = (settings && settings.bienvenida) || {};
+  return {
+    activo: !!b.activo,
+    pct: b.pct != null ? Number(b.pct) : 10,
+    codigo: kvCuponNormalizar(b.codigo || 'BIENVENIDA10'),
+    titulo: b.titulo || '¿Primera vez por acá? 💜',
+    texto: b.texto || 'Déjanos tu correo y te regalamos un {PCT}% de descuento en tu primera compra.'
+  };
+}
+
+/* Revisa un cupón contra el subtotal. Devuelve {ok, error, cupon, descuento}.
+   `hoy` se puede pasar para poder probarlo con otra fecha. */
+function kvCuponValidar(codigo, settings, subtotal, hoy) {
+  const cod = kvCuponNormalizar(codigo);
+  if (!cod) return { ok: false, error: 'Escribe un código.' };
+  const c = kvCupones(settings).find(x => kvCuponNormalizar(x.codigo) === cod);
+  if (!c) return { ok: false, error: 'Ese código no existe. Revísalo e intenta de nuevo.' };
+  if (c.activo === false) return { ok: false, error: 'Ese cupón ya no está disponible.' };
+  if (c.hasta) {
+    const fin = new Date(c.hasta + 'T23:59:59');
+    const ahora = hoy ? new Date(hoy) : new Date();
+    if (!isNaN(fin.getTime()) && ahora > fin) return { ok: false, error: 'Ese cupón venció el ' + c.hasta + '.' };
+  }
+  const min = Number(c.minimo || 0);
+  if (min > 0 && subtotal < min) {
+    return { ok: false, error: 'Este cupón es para compras sobre ' + formatCLP(min) + '.' };
+  }
+  const descuento = kvCuponDescuento(c, subtotal);
+  if (descuento <= 0) return { ok: false, error: 'Ese cupón no aplica a tu carrito.' };
+  return { ok: true, cupon: c, descuento: descuento };
+}
+function kvCuponDescuento(c, subtotal) {
+  if (!c) return 0;
+  const val = Number(c.valor || 0);
+  if (val <= 0) return 0;
+  const d = c.tipo === 'monto' ? val : Math.round(subtotal * val / 100);
+  return Math.max(0, Math.min(d, subtotal));   // nunca más que el subtotal
+}
+function kvCuponTexto(c) {
+  if (!c) return '';
+  return c.tipo === 'monto' ? formatCLP(Number(c.valor || 0)) + ' de descuento' : Number(c.valor || 0) + '% de descuento';
 }
 
 /* ---------- visitas (analítica anónima: sin IP exacta ni datos personales) ---------- */

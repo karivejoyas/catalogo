@@ -830,3 +830,74 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
   .kv-buscar{padding:0;}
   .kv-buscar-panel{width:100%;max-height:100%;height:100%;border-radius:0;border:none;}
 }
+
+/* ---------- encuadre general para celular (panel admin) ---------- */
+.adm-focogen{margin-top:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(227,197,114,0.3);border-radius:12px;overflow:hidden;}
+.adm-focogen-tit{list-style:none;cursor:pointer;font-family:'Jost',sans-serif;font-size:13.5px;font-weight:600;color:var(--kv-dorado-cl);padding:13px 16px;display:flex;align-items:center;justify-content:space-between;}
+.adm-focogen-tit::-webkit-details-marker{display:none;}
+.adm-focogen-tit::after{content:'▾';font-size:12px;transition:transform .2s;opacity:.8;}
+.adm-focogen[open] .adm-focogen-tit::after{transform:rotate(180deg);}
+.adm-focogen[open] .adm-focogen-tit{border-bottom:1px solid rgba(227,197,114,0.22);}
+.adm-focogen-body{padding:14px 16px 16px;}
+.adm-focogen-ayuda{margin:0 0 14px;font-size:12.5px;line-height:1.55;color:var(--kv-lavanda);max-width:620px;}
+.adm-focogen-cols{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;}
+.adm-focogen-prev{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;}
+.adm-focogen-prev .cat-card-foto{width:150px;border-radius:12px;border:1px solid rgba(201,162,75,0.35);}
+.adm-focogen-prevtxt{font-size:10.5px;letter-spacing:0.08em;color:#8f7aa0;max-width:150px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.adm-focogen-sliders{flex:1;min-width:260px;display:flex;flex-direction:column;gap:12px;}
+.adm-focogen-estado{margin:0;font-size:11.5px;line-height:1.5;color:#a894bd;}
+@media (max-width:640px){.adm-focogen-cols{flex-direction:column;}.adm-focogen-prev{align-self:center;}}
+
+/* ---------- cupón en el checkout ---------- */
+.kv-cart-cupon{display:flex;gap:8px;}
+.kv-cart-cupon-inp{flex:1;text-transform:uppercase;letter-spacing:0.08em;}
+.kv-cart-cupon-btn{flex:0 0 auto;font-family:'Jost',sans-serif;font-size:13px;font-weight:600;color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border:none;border-radius:10px;padding:0 16px;cursor:pointer;}
+.kv-cart-cupon-btn.quitar{color:var(--kv-lavanda);background:transparent;border:1px solid rgba(203,183,216,0.4);font-weight:500;}
+.kv-cart-cupon-msg{margin-top:6px;font-size:12.5px;line-height:1.45;}
+.kv-cart-cupon-msg.error{color:#ffb3c0;}
+.kv-cart-cupon-msg.ok{color:#a9e6b8;}
+.kv-cart-resumen-dcto{color:#a9e6b8;}
+
+/* ---------- regalo de bienvenida ---------- */
+.kv-bien{position:fixed;left:16px;bottom:16px;z-index:88;width:min(330px,calc(100vw - 32px));background:linear-gradient(160deg,#3a1b5e,#241238);border:1px solid rgba(227,197,114,0.55);border-radius:16px;padding:18px 18px 16px;box-shadow:0 24px 60px rgba(0,0,0,0.55);animation:fbPop .3s cubic-bezier(0.16,1,0.3,1);}
+.kv-bien[hidden]{display:none;}
+.kv-bien-x{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(255,255,255,0.12);color:#fff;font-size:11px;cursor:pointer;}
+.kv-bien-tit{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:21px;color:var(--kv-crema);margin-bottom:5px;padding-right:24px;}
+.kv-bien-txt{font-family:'Jost',sans-serif;font-size:13px;line-height:1.5;color:var(--kv-lavanda);margin:0 0 11px;}
+.kv-bien-fila{display:flex;gap:7px;}
+.kv-bien-inp{flex:1;min-width:0;background:rgba(255,255,255,0.09);border:1px solid rgba(201,162,75,0.4);border-radius:9px;padding:9px 11px;color:var(--kv-crema);font-family:'Jost',sans-serif;font-size:13.5px;outline:none;}
+.kv-bien-inp::placeholder{color:#8f7aa0;}
+.kv-bien-btn{flex:0 0 auto;font-family:'Jost',sans-serif;font-size:12.5px;font-weight:600;color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border:none;border-radius:9px;padding:0 13px;cursor:pointer;white-space:nowrap;}
+.kv-bien-btn:disabled{opacity:.6;cursor:default;}
+.kv-bien-error{margin-top:7px;font-family:'Jost',sans-serif;font-size:12px;color:#ffb3c0;}
+.kv-bien-acepta{display:flex;align-items:flex-start;gap:7px;margin-top:10px;font-family:'Jost',sans-serif;font-size:11px;line-height:1.4;color:#a894bd;cursor:pointer;}
+.kv-bien-acepta input{margin-top:1px;flex:0 0 auto;accent-color:var(--kv-dorado-cl);}
+.kv-bien-codigo{font-family:'Jost',sans-serif;font-size:19px;font-weight:700;letter-spacing:0.14em;text-align:center;color:var(--kv-dorado-cl);background:rgba(227,197,114,0.14);border:1px dashed rgba(227,197,114,0.6);border-radius:10px;padding:11px;margin:4px 0 9px;}
+.kv-bien-chico{font-family:'Jost',sans-serif;font-size:11.5px;line-height:1.5;color:var(--kv-lavanda);margin:0;}
+@media (max-width:640px){
+  .kv-bien{left:10px;right:10px;bottom:78px;width:auto;}
+}
+
+/* ---------- admin: cupones y suscriptores ---------- */
+.adm-cup-lista{display:flex;flex-direction:column;gap:9px;margin-bottom:18px;}
+.adm-cup{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:rgba(255,255,255,0.04);border:1px solid rgba(201,162,75,0.25);border-radius:12px;padding:10px 14px;}
+.adm-cup.off{opacity:.55;}
+.adm-cup-cod{font-family:'Jost',sans-serif;font-size:13.5px;font-weight:700;letter-spacing:0.12em;color:var(--kv-dorado-cl);background:rgba(227,197,114,0.13);border:1px dashed rgba(227,197,114,0.5);border-radius:8px;padding:5px 11px;flex:0 0 auto;}
+.adm-cup-info{flex:1;min-width:150px;display:flex;flex-direction:column;gap:1px;font-family:'Jost',sans-serif;}
+.adm-cup-info b{font-size:13.5px;font-weight:500;color:var(--kv-crema);}
+.adm-cup-info span{font-size:11.5px;color:var(--kv-lavanda);}
+.adm-cupon-nuevo{display:flex;gap:9px;flex-wrap:wrap;align-items:center;}
+.adm-cupon-nuevo .adm-input{max-width:170px;}
+.adm-cupon-selwrap .adm-input{cursor:pointer;}
+.adm-cupon-selwrap option{color:#222;}
+.adm-sus-lista{display:flex;flex-direction:column;gap:7px;margin-top:12px;}
+.adm-sus{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:rgba(255,255,255,0.04);border:1px solid rgba(201,162,75,0.2);border-radius:10px;padding:9px 13px;font-family:'Jost',sans-serif;}
+.adm-sus-mail{flex:1;min-width:180px;font-size:13.5px;color:var(--kv-crema);overflow:hidden;text-overflow:ellipsis;}
+.adm-sus-meta{font-size:11.5px;color:var(--kv-lavanda);}
+.adm-sus-compro{font-size:11.5px;color:#a9e6b8;}
+.adm-sus-nocompro{font-size:11.5px;color:#8f7aa0;}
+.adm-aviso-spam{margin-top:20px;background:rgba(227,197,114,0.08);border:1px solid rgba(227,197,114,0.4);border-radius:12px;padding:14px 16px;max-width:760px;}
+.adm-aviso-spam b{font-family:'Jost',sans-serif;font-size:13px;color:var(--kv-dorado-cl);}
+.adm-aviso-spam p{margin:6px 0 0;font-size:12.5px;line-height:1.6;color:var(--kv-lavanda);}
+.ped-cupon{color:#a9e6b8;}
+.ped-repetido{color:#ffb3c0;font-weight:600;font-size:11px;}

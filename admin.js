@@ -11,9 +11,11 @@
   const settingsRef = kvDb.collection('catalog').doc('settings');
   const pedidosCol = kvDb.collection('catalog').doc('pedidos').collection('items');
   const visitasCol = kvDb.collection('catalog').doc('visitas').collection('items');
-  let unsubItems = null, unsubSettings = null, unsubPedidos = null, unsubVisitas = null;
+  const suscritosCol = kvDb.collection('catalog').doc('suscriptores').collection('items');
+  let unsubItems = null, unsubSettings = null, unsubPedidos = null, unsubVisitas = null, unsubSuscritos = null;
   let pedidos = [];
   let visitas = [];
+  let suscritos = [];
 
   const guardado = (id) => { const n = $(id); if (!n) return; n.hidden = false; setTimeout(() => { n.hidden = true; }, 2000); };
   const activo = () => document.activeElement;
@@ -86,12 +88,16 @@
     unsubItems = itemsCol.orderBy('order').onSnapshot((snap) => {
       products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       if (products.length === 0) { sembrar(); return; }
+      if (window.__focogenRefrescar) window.__focogenRefrescar();
       renderProductosGuarded();
       renderIG();
     }, (err) => console.error('Error leyendo productos:', err));
     unsubSettings = settingsRef.onSnapshot((doc) => {
       settings = doc.data() || {};
       kvSetDescuento(settings);
+      kvSetFocoMovilGeneral(settings);
+      if (window.__focogenRefrescar) window.__focogenRefrescar();
+      poblarMarketing();
       poblarCampos();
       renderCatsEditorGuarded();
       renderProductosGuarded();
@@ -100,17 +106,24 @@
     unsubPedidos = pedidosCol.onSnapshot((snap) => {
       pedidos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderPedidos();
+      renderCupones();          // los usos de cada cupón se cuentan desde los pedidos
+      renderSuscritos();        // marca quién ya compró
     }, (err) => console.error('Error leyendo pedidos:', err));
     unsubVisitas = visitasCol.orderBy('ultima', 'desc').limit(300).onSnapshot((snap) => {
       visitas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderVisitas();
     }, (err) => console.error('Error leyendo visitas:', err));
+    unsubSuscritos = suscritosCol.orderBy('fecha', 'desc').limit(500).onSnapshot((snap) => {
+      suscritos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderSuscritos();
+    }, (err) => console.error('Error leyendo suscriptores:', err));
   }
   function dejarDeEscuchar() {
     if (unsubItems) { unsubItems(); unsubItems = null; }
     if (unsubSettings) { unsubSettings(); unsubSettings = null; }
     if (unsubPedidos) { unsubPedidos(); unsubPedidos = null; }
     if (unsubVisitas) { unsubVisitas(); unsubVisitas = null; }
+    if (unsubSuscritos) { unsubSuscritos(); unsubSuscritos = null; }
     products = [];
   }
   function sembrar() {
@@ -402,7 +415,13 @@
       setBorrador(id, 'focoMovil', null);
       renderProductos();
     }));
-    r.querySelectorAll('[data-role="remove-photo"]').forEach(n => n.addEventListener('click', e => { setBorrador(e.target.dataset.id, 'photo', null); renderProductos(); }));
+    r.querySelectorAll('[data-role="remove-photo"]').forEach(n => n.addEventListener('click', e => {
+      const id = e.target.dataset.id;
+      const p = products.find(x => x.id === id);
+      if (!window.confirm('¿Quitar la foto de "' + ((p && p.name) || 'este producto') + '"?\n\nQuedará como cambio pendiente: si te arrepientes, recarga la página SIN guardar y la foto vuelve.')) return;
+      setBorrador(id, 'photo', null);
+      renderProductos();
+    }));
     r.querySelectorAll('[data-role="upload"]').forEach(n => n.addEventListener('change', e => {
       const file = e.target.files && e.target.files[0], id = e.target.dataset.id;
       if (file) kvCompressPhoto(file, (data) => {
@@ -414,6 +433,45 @@
       e.target.value = '';
     }));
   }
+
+  // ---------- encuadre GENERAL para celular (se aplica a todos los productos) ----------
+  (function setupFocoGeneral() {
+    const zoom = $('adm-focogen-zoom'), x = $('adm-focogen-x'), y = $('adm-focogen-y');
+    const foto = $('adm-focogen-foto'), prevTxt = $('adm-focogen-prevtxt'), estado = $('adm-focogen-estado');
+    if (!zoom || !foto) return;
+    const leer = () => ({ zoom: parseInt(zoom.value, 10), x: parseInt(x.value, 10), y: parseInt(y.value, 10) });
+    // usa el primer producto con foto como muestra
+    function muestra() { return products.find(p => p.photo) || null; }
+    function pintar() {
+      const p = muestra();
+      if (!p) { foto.innerHTML = ''; prevTxt.textContent = 'Sube una foto para ver la vista previa'; return; }
+      prevTxt.textContent = 'Ejemplo: ' + (p.name || '');
+      foto.innerHTML = kvCapaFoto(p.photo, leer(), 'kv-fbg-solo');
+    }
+    function estadoTxt() {
+      const g = kvFocoMovilGeneral();
+      const propios = products.filter(kvTieneFocoMovil).length;
+      estado.textContent = (g ? 'Encuadre general activo (zoom ' + (g.zoom != null ? g.zoom : 100) + ').' : 'Sin encuadre general: el celular usa el mismo del computador.') +
+        (propios ? ' ' + propios + ' producto' + (propios === 1 ? ' tiene' : 's tienen') + ' encuadre propio y no se ven afectados.' : '');
+    }
+    window.__focogenRefrescar = () => {
+      const g = kvFocoMovilGeneral() || { zoom: 100, x: 50, y: 50 };
+      zoom.value = g.zoom != null ? g.zoom : 100;
+      x.value = g.x != null ? g.x : 50;
+      y.value = g.y != null ? g.y : 50;
+      pintar(); estadoTxt();
+    };
+    [zoom, x, y].forEach(s => s.addEventListener('input', pintar));
+    $('adm-focogen-guardar').addEventListener('click', () => {
+      settingsRef.set({ focoMovilGeneral: leer() }, { merge: true })
+        .then(() => guardado('adm-focogen-ok')).catch(err => console.error(err));
+    });
+    $('adm-focogen-quitar').addEventListener('click', () => {
+      if (!window.confirm('¿Quitar el encuadre general?\n\nEn el celular los productos volverán a usar el mismo encuadre del computador (salvo los que tengan uno propio).')) return;
+      settingsRef.set({ focoMovilGeneral: null }, { merge: true })
+        .then(() => guardado('adm-focogen-ok')).catch(err => console.error(err));
+    });
+  })();
 
   // qué encuadre se está editando en cada tarjeta: 'pc' (por defecto) o 'movil'
   const focoModo = {};
@@ -1541,6 +1599,24 @@
   });
 
   const pedidosAbiertos = {};   // id -> true (detalle expandido)
+
+  /* Aviso anti-abuso del cupón: marca si esta persona YA hizo un pedido antes
+     (mismo correo, teléfono o dirección). No bloquea nada — tú decides. */
+  function repetido(p) {
+    const cli = p.cliente || {}, dir = p.direccion || {};
+    const mail = String(cli.correo || '').toLowerCase().trim();
+    const fono = String(cli.telefono || '').replace(/[^0-9]/g, '').slice(-8);
+    const calle = String(dir.calle || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const previos = pedidos.filter(o => o.id !== p.id && (o.num || 0) < (p.num || 0));
+    const coincide = previos.find(o => {
+      const c = o.cliente || {}, d = o.direccion || {};
+      if (mail && String(c.correo || '').toLowerCase().trim() === mail) return true;
+      if (fono && String(c.telefono || '').replace(/[^0-9]/g, '').slice(-8) === fono) return true;
+      if (calle && String(d.calle || '').toLowerCase().replace(/\s+/g, ' ').trim() === calle) return true;
+      return false;
+    });
+    return coincide ? ' <b class="ped-repetido">⚠ ya compró antes (pedido #' + (coincide.num || '?') + ')</b>' : '';
+  }
   function pedFecha(iso) {
     if (!iso) return '';
     try {
@@ -1575,6 +1651,7 @@
         '<div class="ped-body">' +
           '<div class="ped-cols">' +
             '<div><div class="ped-sub">Artículos</div>' + items +
+              (p.cupon ? '<div class="ped-item ped-cupon"><span>🎟 Cupón ' + escapeHtml(p.cupon.codigo || '') + repetido(p) + '</span><span>−' + formatCLP(p.cupon.descuento || 0) + '</span></div>' : '') +
               '<div class="ped-item ped-envio"><span>Envío (' + escapeHtml((p.envio || {}).region || '') + ')</span><span>' + formatCLP((p.envio || {}).costo || 0) + '</span></div>' +
               '<div class="ped-item ped-tot"><span>Total</span><span>' + formatCLP(p.total || 0) + '</span></div>' +
               (p.notas ? '<div class="ped-nota">📝 ' + escapeHtml(p.notas) + '</div>' : '') +
@@ -1777,4 +1854,136 @@
       visitasCol.doc(n.dataset.id).delete().catch(err => console.error(err));
     }));
   }
+  // ---------- CORREOS Y CUPONES ----------
+  function poblarMarketing() {
+    const b = kvBienvenida(settings);
+    if ($('adm-bien-activo')) $('adm-bien-activo').checked = b.activo;
+    if ($('adm-bien-pct')) $('adm-bien-pct').value = b.pct;
+    if ($('adm-bien-codigo')) $('adm-bien-codigo').value = b.codigo;
+    if ($('adm-bien-titulo')) $('adm-bien-titulo').value = b.titulo;
+    if ($('adm-bien-texto')) $('adm-bien-texto').value = b.texto;
+    const aviso = $('adm-bien-aviso');
+    if (aviso) {
+      const existe = kvCupones(settings).some(c => kvCuponNormalizar(c.codigo) === b.codigo);
+      aviso.textContent = b.activo && !existe
+        ? '⚠ El código "' + b.codigo + '" todavía no existe como cupón: créalo más abajo o el descuento no se podrá usar.'
+        : (b.activo ? '✓ Todo listo: el cupón "' + b.codigo + '" existe y está activo.' : '');
+    }
+    renderCupones();
+  }
+  if ($('adm-bien-guardar')) $('adm-bien-guardar').addEventListener('click', () => {
+    const pct = parseInt($('adm-bien-pct').value, 10);
+    settingsRef.set({ bienvenida: {
+      activo: $('adm-bien-activo').checked,
+      pct: isNaN(pct) ? 10 : pct,
+      codigo: kvCuponNormalizar($('adm-bien-codigo').value) || 'BIENVENIDA10',
+      titulo: $('adm-bien-titulo').value.trim(),
+      texto: $('adm-bien-texto').value.trim()
+    } }, { merge: true }).then(() => guardado('adm-bien-ok')).catch(err => console.error(err));
+  });
+
+  /* cuántas veces se usó cada cupón (se cuenta desde los pedidos) */
+  function cuponUsos(codigo) {
+    const cod = kvCuponNormalizar(codigo);
+    return pedidos.filter(p => p.cupon && kvCuponNormalizar(p.cupon.codigo) === cod).length;
+  }
+  function renderCupones() {
+    const cont = $('adm-cupones-lista'); if (!cont) return;
+    const cups = kvCupones(settings);
+    if (!cups.length) {
+      cont.innerHTML = '<p class="adm-seccion-sub">Todavía no hay cupones. Crea uno abajo 🎟</p>';
+      return;
+    }
+    cont.innerHTML = '<div class="adm-cup-lista">' + cups.map((c, i) => {
+      const usos = cuponUsos(c.codigo);
+      const vencido = c.hasta && new Date(c.hasta + 'T23:59:59') < new Date();
+      const off = c.activo === false || vencido;
+      return '<div class="adm-cup' + (off ? ' off' : '') + '">' +
+        '<div class="adm-cup-cod">' + escapeHtml(c.codigo) + '</div>' +
+        '<div class="adm-cup-info">' +
+          '<b>' + escapeHtml(kvCuponTexto(c)) + '</b>' +
+          '<span>' + (Number(c.minimo || 0) > 0 ? 'Sobre ' + formatCLP(Number(c.minimo)) + ' · ' : '') +
+            (c.hasta ? (vencido ? 'venció el ' + c.hasta : 'hasta el ' + c.hasta) : 'sin vencimiento') +
+            ' · usado ' + usos + ' ' + (usos === 1 ? 'vez' : 'veces') + '</span>' +
+        '</div>' +
+        '<button type="button" class="adm-btn-borde adm-btn-mini" data-role="cup-toggle" data-i="' + i + '">' + (c.activo === false ? 'Activar' : 'Desactivar') + '</button>' +
+        '<button type="button" class="adm-btn-borde adm-btn-mini adm-btn-del-cat" data-role="cup-borrar" data-i="' + i + '">Eliminar</button>' +
+      '</div>';
+    }).join('') + '</div>';
+    cont.querySelectorAll('[data-role="cup-toggle"]').forEach(n => n.addEventListener('click', () => {
+      const lista = kvCupones(settings).slice();
+      const i = parseInt(n.dataset.i, 10);
+      lista[i] = Object.assign({}, lista[i], { activo: lista[i].activo === false });
+      guardarCupones(lista);
+    }));
+    cont.querySelectorAll('[data-role="cup-borrar"]').forEach(n => n.addEventListener('click', () => {
+      const lista = kvCupones(settings).slice();
+      const i = parseInt(n.dataset.i, 10);
+      if (!window.confirm('¿Eliminar el cupón "' + lista[i].codigo + '"?\n\nQuien lo tenga guardado ya no podrá usarlo.')) return;
+      lista.splice(i, 1);
+      guardarCupones(lista);
+    }));
+  }
+  function guardarCupones(lista) {
+    settingsRef.set({ cupones: lista }, { merge: true }).catch(err => console.error(err));
+  }
+  if ($('adm-cup-agregar')) $('adm-cup-agregar').addEventListener('click', () => {
+    const codigo = kvCuponNormalizar($('adm-cup-codigo').value);
+    const valor = parseInt(String($('adm-cup-valor').value).replace(/[^0-9]/g, ''), 10);
+    const minimo = parseInt(String($('adm-cup-minimo').value).replace(/[^0-9]/g, ''), 10);
+    const tipo = $('adm-cup-tipo').value === 'monto' ? 'monto' : 'pct';
+    if (!codigo) { window.alert('Escribe un código para el cupón.'); return; }
+    if (isNaN(valor) || valor <= 0) { window.alert('Escribe el valor del descuento.'); return; }
+    if (tipo === 'pct' && valor > 90) { window.alert('El porcentaje no puede ser mayor a 90%.'); return; }
+    if (kvCupones(settings).some(c => kvCuponNormalizar(c.codigo) === codigo)) { window.alert('Ya existe un cupón con ese código.'); return; }
+    const lista = kvCupones(settings).concat([{
+      codigo: codigo, tipo: tipo, valor: valor,
+      minimo: isNaN(minimo) ? 0 : minimo,
+      hasta: $('adm-cup-hasta').value || '',
+      activo: true
+    }]);
+    guardarCupones(lista);
+    $('adm-cup-codigo').value = ''; $('adm-cup-valor').value = ''; $('adm-cup-minimo').value = ''; $('adm-cup-hasta').value = '';
+  });
+
+  /* correos registrados: se agrupan por correo (si alguien se inscribió dos veces) */
+  function suscritosUnicos() {
+    const mapa = new Map();
+    suscritos.forEach(s => {
+      const c = String(s.correo || '').toLowerCase().trim();
+      if (!c) return;
+      if (!mapa.has(c)) mapa.set(c, Object.assign({}, s, { correo: c, veces: 1 }));
+      else mapa.get(c).veces++;
+    });
+    return [...mapa.values()];
+  }
+  function renderSuscritos() {
+    const cont = $('adm-suscriptores-lista'); if (!cont) return;
+    const lista = suscritosUnicos();
+    const cuenta = $('adm-sus-cuenta');
+    if (cuenta) cuenta.textContent = lista.length + ' correo' + (lista.length === 1 ? '' : 's') + ' registrado' + (lista.length === 1 ? '' : 's');
+    if (!lista.length) {
+      cont.innerHTML = '<p class="adm-seccion-sub">Todavía no hay correos. Activa el regalo de bienvenida para empezar a juntarlos 💌</p>';
+      return;
+    }
+    // ¿ya compró? se cruza con los pedidos
+    const correosConPedido = new Set(pedidos.map(p => String((p.cliente || {}).correo || '').toLowerCase()));
+    cont.innerHTML = '<div class="adm-sus-lista">' + lista.map(s =>
+      '<div class="adm-sus">' +
+        '<span class="adm-sus-mail">' + escapeHtml(s.correo) + '</span>' +
+        '<span class="adm-sus-meta">' + pedFecha(s.fecha) + (s.origen ? ' · ' + escapeHtml(s.origen) : '') + '</span>' +
+        (correosConPedido.has(s.correo) ? '<span class="adm-sus-compro">✅ ya compró</span>' : '<span class="adm-sus-nocompro">— sin compras</span>') +
+        '<button type="button" class="vis-borrar" data-role="sus-borrar" data-id="' + s.id + '" title="Eliminar">✕</button>' +
+      '</div>').join('') + '</div>';
+    cont.querySelectorAll('[data-role="sus-borrar"]').forEach(n => n.addEventListener('click', () => {
+      if (!window.confirm('¿Eliminar este correo de la lista?')) return;
+      suscritosCol.doc(n.dataset.id).delete().catch(err => console.error(err));
+    }));
+  }
+  if ($('adm-sus-copiar')) $('adm-sus-copiar').addEventListener('click', async () => {
+    const txt = suscritosUnicos().map(s => s.correo).join(', ');
+    if (!txt) { window.alert('Todavía no hay correos que copiar.'); return; }
+    try { await navigator.clipboard.writeText(txt); $('adm-sus-copiar').textContent = '✓ Copiados'; setTimeout(() => { $('adm-sus-copiar').textContent = '📋 Copiar todos los correos'; }, 2200); }
+    catch (e) { window.prompt('Copia los correos desde aquí:', txt); }
+  });
 })();

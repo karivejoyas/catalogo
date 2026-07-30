@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260766" />
+<link rel="stylesheet" href="catalogo.css?v=20260767" />
 </head>
 <body>
 
@@ -47,6 +47,7 @@
       <button class="adm-tab is-active" data-tab="productos">Productos</button>
       <button class="adm-tab" data-tab="pedidos">🛍 Pedidos <span class="adm-ped-badge" id="adm-ped-badge" hidden></span></button>
       <button class="adm-tab" data-tab="visitas">👀 Visitas</button>
+      <button class="adm-tab" data-tab="marketing">💌 Correos y cupones</button>
       <button class="adm-tab" data-tab="descuento">Descuentos</button>
       <button class="adm-tab" data-tab="diseno">Diseño y colores</button>
       <button class="adm-tab" data-tab="portada">Portada e info</button>
@@ -63,6 +64,29 @@
         <span class="cat-contador" id="adm-contador"></span>
         <button id="adm-reset" class="adm-btn-borde">Restaurar catálogo inicial</button>
       </div>
+      <details class="adm-focogen" id="adm-focogen">
+        <summary class="adm-focogen-tit">📱 Encuadre general para celular</summary>
+        <div class="adm-focogen-body">
+          <p class="adm-focogen-ayuda">En el celular la foto se ve <b>más alta que ancha</b> que en el computador. Ajusta aquí una vez y se aplica a <b>todos</b> los productos. Los que tengan su propio encuadre de celular (●) no se tocan.</p>
+          <div class="adm-focogen-cols">
+            <div class="adm-focogen-prev">
+              <div class="cat-card-foto ed-foto-movil" id="adm-focogen-foto"></div>
+              <span class="adm-focogen-prevtxt" id="adm-focogen-prevtxt">Vista previa</span>
+            </div>
+            <div class="adm-focogen-sliders">
+              <label class="ed-slider"><span>Zoom</span><input type="range" min="100" max="250" step="1" id="adm-focogen-zoom" value="100" /></label>
+              <label class="ed-slider"><span>Horizontal</span><input type="range" min="0" max="100" step="1" id="adm-focogen-x" value="50" /></label>
+              <label class="ed-slider"><span>Vertical</span><input type="range" min="0" max="100" step="1" id="adm-focogen-y" value="50" /></label>
+              <div class="adm-guardar-fila">
+                <button id="adm-focogen-guardar" class="adm-btn-solido">Aplicar a todos</button>
+                <button id="adm-focogen-quitar" class="adm-btn-borde">Quitar encuadre general</button>
+                <span id="adm-focogen-ok" class="adm-guardado" hidden>✓ Aplicado</span>
+              </div>
+              <p class="adm-focogen-estado" id="adm-focogen-estado"></p>
+            </div>
+          </div>
+        </div>
+      </details>
     </div>
     <div id="adm-categorias"></div>
     <div style="height:60px;"></div>
@@ -101,6 +125,64 @@
       <p class="adm-seccion-sub">Estadística anónima de quienes navegan el catálogo: ciudad aproximada (no la dirección IP), tipo de dispositivo, de dónde llegaron y qué colecciones o productos miraron. No identifica a la persona.</p>
       <div class="vis-stats" id="adm-vis-stats"></div>
       <div id="adm-visitas-lista"><p class="adm-seccion-sub">Cargando visitas…</p></div>
+    </section>
+    <div style="height:60px;"></div>
+  </div>
+
+  <!-- ===== CORREOS Y CUPONES ===== -->
+  <div class="adm-panel" data-panel="marketing" hidden>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">💌 Regalo de bienvenida</h2>
+      <p class="adm-seccion-sub">Al rato de estar mirando el catálogo, a las visitantes nuevas les aparece un aviso que les ofrece un descuento a cambio de su correo. El código que reciben es el cupón que elijas acá abajo.</p>
+      <label class="adm-desc-toggle"><input type="checkbox" id="adm-bien-activo" /> <span>Activar el aviso de bienvenida</span></label>
+      <div class="adm-contacto" style="max-width:520px;">
+        <label class="adm-etiqueta">Descuento que se ofrece (%)</label>
+        <input type="number" id="adm-bien-pct" min="1" max="90" step="1" class="adm-input" />
+        <label class="adm-etiqueta">Código del cupón que recibe</label>
+        <input id="adm-bien-codigo" class="adm-input" placeholder="BIENVENIDA10" />
+        <label class="adm-etiqueta">Título del aviso</label>
+        <input id="adm-bien-titulo" class="adm-input" placeholder="¿Primera vez por acá? 💜" />
+        <label class="adm-etiqueta">Texto (usa {PCT} para el número del descuento)</label>
+        <input id="adm-bien-texto" class="adm-input" placeholder="Déjanos tu correo y te regalamos un {PCT}% …" />
+        <div class="adm-guardar-fila">
+          <button id="adm-bien-guardar" class="adm-btn-solido">Guardar</button>
+          <span id="adm-bien-ok" class="adm-guardado" hidden>✓ Guardado</span>
+        </div>
+        <p class="adm-focogen-estado" id="adm-bien-aviso"></p>
+      </div>
+    </section>
+
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">🎟 Cupones de descuento</h2>
+      <p class="adm-seccion-sub">La clienta escribe el código al finalizar su compra y el descuento se aplica al subtotal (el envío no se descuenta).</p>
+      <div id="adm-cupones-lista"></div>
+      <div class="adm-cupon-nuevo">
+        <input id="adm-cup-codigo" class="adm-input" placeholder="CÓDIGO" />
+        <div class="adm-cupon-selwrap">
+          <select id="adm-cup-tipo" class="adm-input">
+            <option value="pct">% de descuento</option>
+            <option value="monto">$ de descuento</option>
+          </select>
+        </div>
+        <input id="adm-cup-valor" class="adm-input" inputmode="numeric" placeholder="Valor" />
+        <input id="adm-cup-minimo" class="adm-input" inputmode="numeric" placeholder="Compra mínima (opcional)" />
+        <input id="adm-cup-hasta" type="date" class="adm-input" />
+        <button id="adm-cup-agregar" class="adm-btn-solido">+ Crear cupón</button>
+      </div>
+    </section>
+
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">📋 Correos registrados</h2>
+      <p class="adm-seccion-sub">Personas que aceptaron recibir tus novedades. <b>Antes de mandar promociones masivas, lee el aviso de más abajo.</b></p>
+      <div class="adm-barra-sup">
+        <span class="cat-contador" id="adm-sus-cuenta"></span>
+        <button id="adm-sus-copiar" class="adm-btn-borde">📋 Copiar todos los correos</button>
+      </div>
+      <div id="adm-suscriptores-lista"></div>
+      <div class="adm-aviso-spam">
+        <b>⚠ Importante antes de enviar promociones</b>
+        <p>Los correos de pedidos y envíos salen desde tu Gmail y funcionan bien porque son uno a uno. Pero mandar <b>promociones masivas desde Gmail</b> puede dañar la reputación de tu dirección y hacer que hasta los correos de pedidos empiecen a caer en spam. Para promociones usa un servicio de envío masivo (por ejemplo Brevo, que tiene plan gratis), incluye siempre un link para desuscribirse, y parte enviando de a poco.</p>
+      </div>
     </section>
     <div style="height:60px;"></div>
   </div>
@@ -449,8 +531,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260766"></script>
-<script src="comun.js?v=20260766"></script>
-<script src="admin.js?v=20260766"></script>
+<script src="firebase-config.js?v=20260767"></script>
+<script src="comun.js?v=20260767"></script>
+<script src="admin.js?v=20260767"></script>
 </body>
 </html>

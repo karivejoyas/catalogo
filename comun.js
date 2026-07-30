@@ -483,9 +483,11 @@ function kvCardHtml(p) {
       '</div>' +
       '<div class="cat-card-etiqueta">' +
         '<div class="cat-card-nombre"><span>' + escapeHtml(p.name) + '</span></div>' +
-        '<div class="cat-card-detalle">' + escapeHtml(p.detail || '') + '</div>' +
         '<div class="cat-card-pie"><span class="cat-card-codigo">' + escapeHtml(p.code) + '</span>' + kvPrecioHtml(p) + '</div>' +
-        '<button type="button" class="cat-card-addbtn" data-role="cart-add" data-id="' + p.id + '">🛒 Agregar al carrito</button>' +
+        '<div class="cat-card-botones">' +
+          '<button type="button" class="cat-card-verbtn" data-role="cart-ver" data-id="' + p.id + '">👁 Ver</button>' +
+          '<button type="button" class="cat-card-addbtn" data-role="cart-add" data-id="' + p.id + '">🛒 Agregar</button>' +
+        '</div>' +
       '</div>' +
     '</div>'
   );

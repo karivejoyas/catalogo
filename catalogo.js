@@ -130,7 +130,7 @@
         (fp.imgUrl ? '<div class="fb-prod-bg" style="background-image:url(\'' + fp.imgUrl + '\');opacity:' + fp.imgOp + ';"></div>' : '') +
         '<div class="fb-prod-inner">' +
           '<div class="fb-prod-head"><h2 class="fb-prod-titulo">' + escapeHtml(s.cat.nombre) + '</h2>' + paginacion + '</div>' +
-          '<div class="fb-grid">' + cards + '</div>' +
+          '<div class="fb-grid" data-n="' + s.items.length + '">' + cards + '</div>' +
         '</div>' +
       '</div>'
     );
@@ -146,25 +146,10 @@
     nivelarTarjetas();
   }
 
-  /* iguala las barras moradas de la página a la más alta real (barra mínima y pareja) */
-  function nivelarTarjetas() {
-    const ets = page.querySelectorAll('.fb-grid .cat-card-etiqueta');
-    if (!ets.length) return;
-    const aplicar = () => {
-      let max = 0;
-      ets.forEach(e => { e.style.minHeight = ''; max = Math.max(max, e.getBoundingClientRect().height); });
-      const m = Math.ceil(max);
-      ets.forEach(e => { e.style.minHeight = m + 'px'; });
-      // le avisa a la foto cuánto mide la etiqueta, para que ocupe justo el espacio de arriba
-      page.querySelectorAll('.fb-grid .cat-card').forEach(c => c.style.setProperty('--kv-etiq', m + 'px'));
-    };
-    aplicar();
-    requestAnimationFrame(aplicar);      // por si el texto se reacomodó al pintar
-    setTimeout(aplicar, 380);            // y tras la transición de entrada de la página
-  }
-  let nivelarPend;
-  window.addEventListener('resize', () => { clearTimeout(nivelarPend); nivelarPend = setTimeout(nivelarTarjetas, 120); });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => nivelarTarjetas());
+  /* cada tarjeta mide lo justo para su contenido (ya no se fuerza a todas
+     a igualar la más alta: eso dejaba espacio en blanco bajo el botón en
+     las tarjetas con menos texto). La foto ya es uniforme (4/3 fijo). */
+  function nivelarTarjetas() {}
 
   // ---------- navegación con transición suave de página ----------
   function go(n, dir) {

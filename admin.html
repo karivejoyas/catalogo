@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260771" />
+<link rel="stylesheet" href="catalogo.css?v=20260772" />
 </head>
 <body>
 
@@ -66,22 +66,14 @@
         <!-- El botón "Restaurar catálogo inicial" se eliminó: borraba TODO el catálogo
              real y lo reemplazaba por los productos de ejemplo (otros nombres y precios). -->
       </div>
-      <details class="adm-focogen" id="adm-focogen">
-        <summary class="adm-focogen-tit">🖼 ¿Qué encuadre se muestra?</summary>
-        <div class="adm-focogen-body">
-          <p class="adm-focogen-ayuda">Cada producto tiene dos encuadres guardados: uno para el marco <b>ancho</b> del computador y otro para el marco <b>alto</b> del celular. Aquí eliges cuál se usa en <b>todos</b> los productos.</p>
-          <div class="adm-modo-switch" id="adm-modo-switch">
-            <button type="button" class="adm-modo-op" data-modo="auto">
-              <b>Según la pantalla</b><span>PC en computador, celular en teléfono</span></button>
-            <button type="button" class="adm-modo-op" data-modo="pc">
-              <b>💻 Siempre el de PC</b><span>En todas las pantallas</span></button>
-            <button type="button" class="adm-modo-op" data-modo="movil">
-              <b>📱 Siempre el de celular</b><span>En todas las pantallas</span></button>
-          </div>
-          <p class="adm-focogen-estado" id="adm-focogen-estado"></p>
-          <p class="adm-focogen-ayuda" style="margin-top:8px;">¿Quieres que un producto puntual se comporte distinto? Ábrelo, entra a <b>🎯 Ajustar encuadre</b> y elige ahí su propia opción.</p>
+      <div class="adm-verenc">
+        <span class="adm-verenc-lbl">🖼 Ver los productos como:</span>
+        <div class="adm-verenc-ops" id="adm-verenc">
+          <button type="button" class="adm-verenc-op" data-modo="pc">💻 Computador</button>
+          <button type="button" class="adm-verenc-op" data-modo="movil">📱 Celular</button>
         </div>
-      </details>
+        <span class="adm-verenc-ayuda">Cambia solo lo que ves <b>aquí en el panel</b>, para revisar de una pasada si algún encuadre quedó mal. El catálogo público no cambia.</span>
+      </div>
       <details class="adm-focogen" id="adm-codigos">
         <summary class="adm-focogen-tit">🔢 Ordenar los códigos de los productos</summary>
         <div class="adm-focogen-body">
@@ -607,8 +599,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260771"></script>
-<script src="comun.js?v=20260771"></script>
-<script src="admin.js?v=20260771"></script>
+<script src="firebase-config.js?v=20260772"></script>
+<script src="comun.js?v=20260772"></script>
+<script src="admin.js?v=20260772"></script>
 </body>
 </html>

@@ -1015,7 +1015,6 @@
   let waActualizar = null;
   function rebuild() {
     kvSetDescuento(settings);
-    kvSetModoEncuadre(settings);
     kvSetSettings(settings);
     kvApplyTheme(Object.assign({}, KV_THEME_DEFAULT, settings.theme || {}));
     buildSlides();

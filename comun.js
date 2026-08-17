@@ -217,21 +217,8 @@ function kvFocoIG(p) {
 /* encuadre PROPIO para celular: en el teléfono el marco de la foto es más ALTO que
    ancho, y en PC más ancho que alto, así que un encuadre bueno en PC a veces corta
    la joya en el celular. Si no se ajustó aparte, usa el mismo del PC. */
-/* ¿Qué encuadre se muestra en el catálogo?
-   'auto'  = como siempre: el de PC en computador y el de celular en teléfono
-   'pc'    = TODOS ven el encuadre de PC (en cualquier pantalla)
-   'movil' = TODOS ven el encuadre de celular
-   Cada producto puede llevar el suyo propio y manda por sobre el general. */
-var _kvModoEnc = 'auto';
-function kvSetModoEncuadre(settings) {
-  const m = settings && settings.encuadreModo;
-  _kvModoEnc = (m === 'pc' || m === 'movil') ? m : 'auto';
-}
-function kvModoEncuadreGeneral() { return _kvModoEnc; }
-function kvModoEncuadre(p) {
-  const m = p && p.encuadreModo;
-  return (m === 'pc' || m === 'movil' || m === 'auto') ? m : _kvModoEnc;
-}
+/* El catálogo público SIEMPRE usa el que corresponde a la pantalla.
+   El modo 'pc' / 'movil' existe solo para la vista previa del panel. */
 function kvFocoMovil(p) {
   const f = (p && p.focoMovil) || null;
   if (!f) return kvFoco(p);
@@ -270,10 +257,7 @@ function kvFotoInner(p, modo) {
   if (!p || !p.photo) return '';
   if (modo === 'pc') return kvCapaFoto(p.photo, kvFoco(p), 'kv-fbg-solo');
   if (modo === 'movil') return kvCapaFoto(p.photo, kvFocoMovil(p), 'kv-fbg-solo');
-  const m = kvModoEncuadre(p);
-  if (m === 'pc') return kvCapaFoto(p.photo, kvFoco(p), 'kv-fbg-solo');
-  if (m === 'movil') return kvCapaFoto(p.photo, kvFocoMovil(p), 'kv-fbg-solo');
-  // automático: las dos capas y el CSS muestra la que toca según la pantalla
+  // las dos capas: el CSS muestra la que corresponde a la pantalla
   return kvCapaFoto(p.photo, kvFoco(p), 'kv-fbg-pc') +
          kvCapaFoto(p.photo, kvFocoMovil(p), 'kv-fbg-mov');
 }
@@ -602,12 +586,6 @@ function kvCardEditHtml(p, cats, modo) {
         '<details class="ed-encuadre"' + (modo === 'movil' ? ' open' : '') + '>' +
           '<summary class="ed-encuadre-tit">🎯 Ajustar encuadre de la foto</summary>' +
           '<div class="ed-encuadre-body">' +
-            '<div class="ed-modo-fila"><span>Se muestra:</span>' +
-              ['auto', 'pc', 'movil'].map(m => '<button type="button" class="ed-modo-btn' +
-                ((p.encuadreModo || 'general') === m ? ' is-active' : '') + '" data-role="modo-enc" data-modo="' + m + '" data-id="' + p.id + '">' +
-                (m === 'auto' ? 'Según pantalla' : (m === 'pc' ? '💻 Siempre PC' : '📱 Siempre celular')) + '</button>').join('') +
-              '<button type="button" class="ed-modo-btn' + (!p.encuadreModo ? ' is-active' : '') + '" data-role="modo-enc" data-modo="" data-id="' + p.id + '">Como el general</button>' +
-            '</div>' +
             '<div class="ed-foco-tabs">' +
               '<button type="button" class="ed-foco-tab' + (modo === 'pc' ? ' is-active' : '') + '" data-role="foco-modo" data-modo="pc" data-id="' + p.id + '">💻 PC</button>' +
               '<button type="button" class="ed-foco-tab' + (modo === 'movil' ? ' is-active' : '') + '" data-role="foco-modo" data-modo="movil" data-id="' + p.id + '">📱 Celular' +

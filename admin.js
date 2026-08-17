@@ -91,7 +91,6 @@
       // (aunque fuera un parpadeo de conexión) se "sembraba" el catálogo de
       // ejemplo ENCIMA de los productos reales, cambiándoles nombre y precio.
       if (products.length === 0) avisarCatalogoVacio();
-      if (window.__modoEncRefrescar) window.__modoEncRefrescar();
       renderProductosGuarded();
       renderMasVistos();        // el ranking necesita los datos de los productos
       poblarOpiniones();
@@ -100,8 +99,6 @@
     unsubSettings = settingsRef.onSnapshot((doc) => {
       settings = doc.data() || {};
       kvSetDescuento(settings);
-      kvSetModoEncuadre(settings);
-      if (window.__modoEncRefrescar) window.__modoEncRefrescar();
       poblarMarketing();
       poblarPagos();
       poblarOpiniones();
@@ -339,13 +336,13 @@
         '<section class="adm-seccion" id="sec-' + cat.id + '">' +
           '<h2 class="adm-seccion-titulo">' + escapeHtml(cat.nombre) + ' <span class="adm-tag">(' + items.length + ')</span>' +
             ' <button type="button" class="adm-btn-solido adm-btn-mini" data-role="add" data-cat="' + cat.id + '">+ Agregar producto</button></h2>' +
-          '<div class="adm-grilla">' + items.map(p => kvCardEditHtml(vista(p), cats, focoModo[p.id])).join('') + '</div>' +
+          '<div class="adm-grilla">' + items.map(p => kvCardEditHtml(vista(p), cats, focoModo[p.id] || verEncuadre)).join('') + '</div>' +
         '</section>';
     });
     if (huerfanos.length) {
       html += '<section class="adm-seccion" id="sec-huerfanos"><h2 class="adm-seccion-titulo">Sin colección <span class="adm-tag">(' + huerfanos.length + ')</span></h2>' +
         '<p class="adm-seccion-sub">Estos productos quedaron sin colección. Cámbiales la colección con el selector 📁 de cada uno.</p>' +
-        '<div class="adm-grilla">' + huerfanos.map(p => kvCardEditHtml(vista(p), cats, focoModo[p.id])).join('') + '</div></section>';
+        '<div class="adm-grilla">' + huerfanos.map(p => kvCardEditHtml(vista(p), cats, focoModo[p.id] || verEncuadre)).join('') + '</div></section>';
     }
     $('adm-categorias').innerHTML = html;
     $('adm-categorias').querySelectorAll('[data-goto]').forEach(n => n.addEventListener('click', e => {
@@ -422,13 +419,6 @@
         setBorrador(id, 'foco', focoDeCard(id));
       });
     });
-    // switch por producto: qué encuadre se muestra
-    r.querySelectorAll('[data-role="modo-enc"]').forEach(n => n.addEventListener('click', e => {
-      const b = e.target.closest('[data-role="modo-enc"]');
-      const id = b.dataset.id, m = b.dataset.modo;
-      setBorrador(id, 'encuadreModo', m || null);
-      b.parentElement.querySelectorAll('.ed-modo-btn').forEach(x => x.classList.toggle('is-active', x === b));
-    }));
     // pestañas PC / Celular del encuadre
     r.querySelectorAll('[data-role="foco-modo"]').forEach(n => n.addEventListener('click', e => {
       const btn = e.target.closest('[data-role="foco-modo"]');
@@ -459,25 +449,24 @@
     }));
   }
 
-  // ---------- qué encuadre se muestra en el catálogo ----------
-  (function setupModoEncuadre() {
-    const cont = $('adm-modo-switch'), estado = $('adm-focogen-estado');
-    if (!cont) return;
-    window.__modoEncRefrescar = () => {
-      const m = kvModoEncuadreGeneral();
-      cont.querySelectorAll('.adm-modo-op').forEach(b => b.classList.toggle('is-active', b.dataset.modo === m));
-      const propios = products.filter(p => p.encuadreModo).length;
-      if (estado) estado.textContent =
-        (m === 'auto' ? 'Cada visitante ve el encuadre que corresponde a su pantalla.'
-         : m === 'pc' ? 'Todos ven el encuadre de computador, incluso en el celular.'
-         : 'Todos ven el encuadre de celular, incluso en el computador.') +
-        (propios ? ' ' + propios + ' producto' + (propios === 1 ? ' tiene su propia opción' : 's tienen su propia opción') + '.' : '');
-    };
-    cont.addEventListener('click', e => {
-      const b = e.target.closest('.adm-modo-op'); if (!b) return;
-      settingsRef.set({ encuadreModo: b.dataset.modo }, { merge: true }).catch(err => console.error(err));
-    });
-  })();
+  // ---------- vista previa del panel: ver todo como PC o como celular ----------
+  // Es solo una preferencia de VISTA (se guarda en este navegador). No toca el catálogo.
+  const VER_ENC_KEY = 'kv_admin_ver_encuadre';
+  let verEncuadre = 'pc';
+  try { verEncuadre = localStorage.getItem(VER_ENC_KEY) === 'movil' ? 'movil' : 'pc'; } catch (e) {}
+  function pintarVerEncuadre() {
+    const c = $('adm-verenc'); if (!c) return;
+    c.querySelectorAll('.adm-verenc-op').forEach(b => b.classList.toggle('is-active', b.dataset.modo === verEncuadre));
+  }
+  pintarVerEncuadre();
+  if ($('adm-verenc')) $('adm-verenc').addEventListener('click', e => {
+    const b = e.target.closest('.adm-verenc-op'); if (!b) return;
+    verEncuadre = b.dataset.modo;
+    try { localStorage.setItem(VER_ENC_KEY, verEncuadre); } catch (e2) {}
+    Object.keys(focoModo).forEach(k => delete focoModo[k]);   // todas las tarjetas siguen la vista general
+    pintarVerEncuadre();
+    renderProductos();
+  });
 
   // qué encuadre se está editando en cada tarjeta: 'pc' (por defecto) o 'movil'
   const focoModo = {};
@@ -1429,6 +1418,7 @@
   // ---------- COLECCIONES (agregar / renombrar / foto / eliminar) ----------
   let catsCount = -1;
   function renderCatsEditorGuarded() {
+    if (catsBorrador) return;      // hay cambios sin guardar: no se pisan
     const cats = kvCategorias(settings);
     const cont = $('adm-cats-editor');
     const focoDentro = cont && cont.contains(document.activeElement);
@@ -1442,6 +1432,24 @@
   }
 
   const catsEncAbiertas = {};   // qué "Mover y ampliar la foto" quedó abierto
+  /* Las colecciones se editan en un BORRADOR: nada se publica hasta que
+     tocas "Guardar colecciones". Así no cambias algo sin darte cuenta. */
+  let catsBorrador = null;
+  const catsActuales = () => catsBorrador || kvCategorias(settings);
+  function catsTocar(fn) {
+    const c = (catsBorrador || kvCategorias(settings)).map(x => Object.assign({}, x));
+    fn(c);
+    catsBorrador = c;
+    renderCatsEditor(c);
+  }
+  function catsDescartar() { catsBorrador = null; renderCatsEditor(kvCategorias(settings)); }
+  function catsGuardar() {
+    if (!catsBorrador) return;
+    const c = catsBorrador; catsBorrador = null;
+    guardarCategorias(c);
+    renderCatsEditor(c);          // la barra vuelve a "Todo guardado" al instante
+    guardado('adm-cats-ok');
+  }
   function renderCatsEditor(cats) {
     // se recuerda cuáles estaban abiertas para no cerrarlas al redibujar
     const prev = $('adm-cats-editor');
@@ -1450,6 +1458,11 @@
     cats.forEach((cat, idx) => {
       html +=
         '<div class="adm-editor-fila adm-cat-fila" data-idx="' + idx + '">' +
+          '<div class="adm-cat-orden">' +
+            '<button type="button" class="ed-mini-btn" data-role="cat-sube" data-idx="' + idx + '"' + (idx === 0 ? ' disabled' : '') + ' title="Subir">▲</button>' +
+            '<span class="adm-cat-pos">' + (idx + 1) + '</span>' +
+            '<button type="button" class="ed-mini-btn" data-role="cat-baja" data-idx="' + idx + '"' + (idx === cats.length - 1 ? ' disabled' : '') + ' title="Bajar">▼</button>' +
+          '</div>' +
           '<div class="adm-cat-prev"><div class="adm-editor-foto adm-cat-prevfoto" data-idx="' + idx + '" style="background-image:url(\'' + (cat.imagen || '') + '\');' + kvFocoCatCss(cat) + '"><span class="adm-cat-prevtxt">' + escapeHtml(cat.nombre || '') + '</span></div></div>' +
           '<div class="adm-editor-campos">' +
             '<label class="adm-etiqueta">Nombre de la colección</label>' +
@@ -1476,6 +1489,12 @@
         '</div>';
     });
     html += '<button type="button" id="adm-cat-add" class="adm-btn-solido adm-btn-add-cat">+ Agregar colección</button>';
+    html += '<div class="adm-cats-barra' + (catsBorrador ? ' pendiente' : '') + '">' +
+      (catsBorrador ? '<span class="adm-cats-pend">● Tienes cambios sin guardar</span>' : '<span class="adm-cats-pend ok">Todo guardado</span>') +
+      '<button type="button" id="adm-cats-guardar" class="adm-btn-solido"' + (catsBorrador ? '' : ' disabled') + '>💾 Guardar colecciones</button>' +
+      '<button type="button" id="adm-cats-descartar" class="adm-btn-borde"' + (catsBorrador ? '' : ' disabled') + '>Descartar</button>' +
+      '<span id="adm-cats-ok" class="adm-guardado" hidden>✓ Guardado</span>' +
+    '</div>';
     $('adm-cats-editor').innerHTML = html;
     conectarCatsEditor();
   }
@@ -1497,50 +1516,56 @@
     r.querySelectorAll('[data-role^="catfoco-"]').forEach(n => {
       if (n.tagName !== 'INPUT') return;
       n.addEventListener('input', e => catFocoPreview(+e.target.dataset.idx));
-      n.addEventListener('change', e => {
-        const cats = kvCategorias(settings), i = +e.target.dataset.idx;
-        if (cats[i]) { cats[i].foco = catFocoLeer(i); guardarCategorias(cats); }
-      });
+      n.addEventListener('change', e => { const i = +e.target.dataset.idx; catsTocar(c => { if (c[i]) c[i].foco = catFocoLeer(i); }); });
     });
     r.querySelectorAll('[data-role="catfoco-reset"]').forEach(n => n.addEventListener('click', e => {
-      const cats = kvCategorias(settings), i = +e.target.dataset.idx;
-      if (cats[i]) { delete cats[i].foco; guardarCategorias(cats); }
+      const i = +e.target.dataset.idx; catsTocar(c => { if (c[i]) delete c[i].foco; });
     }));
     r.querySelectorAll('[data-role="cat-nombre"]').forEach(n => n.addEventListener('change', e => {
-      const cats = kvCategorias(settings), i = +e.target.dataset.idx;
-      if (cats[i]) { cats[i].nombre = e.target.value; guardarCategorias(cats); }
+      const i = +e.target.dataset.idx, v = e.target.value; catsTocar(c => { if (c[i]) c[i].nombre = v; });
     }));
     r.querySelectorAll('[data-role="cat-sub"]').forEach(n => n.addEventListener('change', e => {
-      const cats = kvCategorias(settings), i = +e.target.dataset.idx;
-      if (cats[i]) { cats[i].sub = e.target.value; guardarCategorias(cats); }
+      const i = +e.target.dataset.idx, v = e.target.value; catsTocar(c => { if (c[i]) c[i].sub = v; });
     }));
     r.querySelectorAll('[data-role="cat-pref"]').forEach(n => n.addEventListener('change', e => {
-      const cats = kvCategorias(settings), i = +e.target.dataset.idx;
-      if (cats[i]) { cats[i].prefijo = (e.target.value.trim().toUpperCase().replace(/[^A-ZÑ]/g, '').slice(0, 4)) || 'PR'; e.target.value = cats[i].prefijo; guardarCategorias(cats); }
+      const i = +e.target.dataset.idx;
+      const v = (e.target.value.trim().toUpperCase().replace(/[^A-ZÑ]/g, '').slice(0, 4)) || 'PR';
+      catsTocar(c => { if (c[i]) c[i].prefijo = v; });
     }));
     r.querySelectorAll('[data-role="cat-foto"]').forEach(n => n.addEventListener('change', e => {
       const i = +e.target.dataset.idx, file = e.target.files && e.target.files[0];
-      if (file) kvCompressPhoto(file, (data) => { const cats = kvCategorias(settings); if (cats[i]) { cats[i].imagen = data; guardarCategorias(cats); } }, 1000);
+      if (file) kvCompressPhoto(file, (data) => catsTocar(c => { if (c[i]) c[i].imagen = data; }), 1000);
       e.target.value = '';
     }));
+    // subir / bajar de orden (queda como cambio pendiente)
+    r.querySelectorAll('[data-role="cat-sube"]').forEach(n => n.addEventListener('click', e => {
+      const i = +e.currentTarget.dataset.idx;
+      catsTocar(c => { if (i > 0) { const t = c[i - 1]; c[i - 1] = c[i]; c[i] = t; } });
+    }));
+    r.querySelectorAll('[data-role="cat-baja"]').forEach(n => n.addEventListener('click', e => {
+      const i = +e.currentTarget.dataset.idx;
+      catsTocar(c => { if (i < c.length - 1) { const t = c[i + 1]; c[i + 1] = c[i]; c[i] = t; } });
+    }));
     r.querySelectorAll('[data-role="cat-del"]').forEach(n => n.addEventListener('click', e => {
-      const i = +e.target.dataset.idx, cats = kvCategorias(settings);
+      const i = +e.target.dataset.idx, cats = catsActuales();
       if (!cats[i]) return;
       const nProd = products.filter(p => p.category === cats[i].id).length;
       const msg = nProd > 0
         ? 'La colección "' + cats[i].nombre + '" tiene ' + nProd + ' producto(s). Si la eliminas, esos productos quedarán "sin colección" (podrás reasignarlos en la pestaña Productos). ¿Eliminar?'
         : '¿Eliminar la colección "' + cats[i].nombre + '"?';
-      if (!window.confirm(msg)) return;
-      cats.splice(i, 1);
-      guardarCategorias(cats);
+      if (!window.confirm(msg + '\n\n(Se aplicará cuando toques "Guardar colecciones")')) return;
+      catsTocar(c => c.splice(i, 1));
     }));
     const add = $('adm-cat-add');
     if (add) add.addEventListener('click', () => {
-      const cats = kvCategorias(settings);
-      cats.push({ id: 'c' + Date.now().toString(36), nombre: 'Nueva colección', sub: '', imagen: '', prefijo: 'PR' });
-      guardarCategorias(cats);
+      catsTocar(c => c.push({ id: 'c' + Date.now().toString(36), nombre: 'Nueva colección', sub: '', imagen: '', prefijo: 'PR' }));
+    });
+    const gb = $('adm-cats-guardar'); if (gb) gb.addEventListener('click', catsGuardar);
+    const db = $('adm-cats-descartar'); if (db) db.addEventListener('click', () => {
+      if (window.confirm('¿Descartar los cambios sin guardar de las colecciones?')) catsDescartar();
     });
   }
+
 
   // ---------- PORTADA ----------
   let coverImgTmp = null;

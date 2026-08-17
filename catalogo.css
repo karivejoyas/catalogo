@@ -246,7 +246,8 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .adm-etiqueta{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#8f7aa0;}
 
 /* tarjeta edición */
-.cat-card-edit .cat-card-foto{aspect-ratio:4/3;}
+/* proporción MEDIDA en el catálogo real: así el recorte del panel calza con lo que ve la clienta */
+.cat-card-edit .cat-card-foto{aspect-ratio:9/8;}
 .ed-foto-botones{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;justify-content:center;padding:10px;background:linear-gradient(transparent,rgba(0,0,0,0.6));}
 .ed-btn-foto{font-family:'Jost',sans-serif;font-size:12px;font-weight:500;color:var(--kv-morado-osc);background:var(--kv-dorado-cl);border:none;border-radius:999px;padding:7px 14px;cursor:pointer;}
 .ed-btn-foto-ghost{font-family:'Jost',sans-serif;font-size:12px;color:#fff;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.5);border-radius:999px;padding:7px 12px;cursor:pointer;}
@@ -401,7 +402,7 @@ body.fb-lb-open{overflow:hidden;}
 .ed-foco-reset{font-family:'Jost',sans-serif;font-size:11.5px;color:var(--kv-lavanda);background:transparent;border:1px solid rgba(203,183,216,0.3);border-radius:999px;padding:6px 12px;cursor:pointer;align-self:flex-start;}
 .ed-foco-reset:hover{background:rgba(255,255,255,0.08);}
 /* vista previa con la proporción REAL de cada pantalla (medida en el catálogo) */
-.cat-card-edit .cat-card-foto.ed-foto-movil{aspect-ratio:7/8;}
+.cat-card-edit .cat-card-foto.ed-foto-movil{aspect-ratio:9/10;}
 .ed-slider{display:grid;grid-template-columns:78px 1fr;align-items:center;gap:10px;}
 .ed-slider span{font-size:12.5px;color:var(--kv-lavanda);}
 .ed-slider input[type=range]{width:100%;height:26px;accent-color:var(--kv-dorado-cl);cursor:pointer;}
@@ -444,8 +445,8 @@ body.fb-lb-open{overflow:hidden;}
 @media (max-width:640px){
   .adm-grilla{grid-template-columns:1fr;gap:16px;}
   .adm-seccion{padding:20px 14px 10px;}
-  .cat-card-edit .cat-card-foto{aspect-ratio:4/3;}   /* igual que el catálogo público */
-  .cat-card-edit .cat-card-foto.ed-foto-movil{aspect-ratio:7/8;}
+  .cat-card-edit .cat-card-foto{aspect-ratio:9/8;}   /* igual que el catálogo público */
+  .cat-card-edit .cat-card-foto.ed-foto-movil{aspect-ratio:9/10;}
   .ed-cuerpo{padding:14px 14px 16px;gap:11px;}
   .ed-input{font-size:15px;padding:10px 11px;}       /* evita el zoom automático de iOS y es más fácil de tocar */
   .ed-nombre{font-size:16px;}

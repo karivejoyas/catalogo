@@ -87,7 +87,7 @@
       return (
         '<div class="fb-hero">' +
           '<div class="fb-hero-blur" style="background-image:url(\'' + s.cat.imagen + '\');"></div>' +
-          '<div class="fb-hero-img" style="background-image:url(\'' + s.cat.imagen + '\');"></div>' +
+          '<div class="fb-hero-img" style="background-image:url(\'' + s.cat.imagen + '\');' + kvFocoCatCss(s.cat) + '"></div>' +
           '<div class="fb-hero-velo"></div>' +
           '<div class="fb-hero-inner">' +
             '<div class="fb-hero-linea"></div>' +
@@ -231,44 +231,10 @@
         '<span class="fb-lb-oferta-pill">Oferta</span>'
       : formatCLP(p.price);
     pintarResenas(p);
-    pintarSugerencias(p);
     lb.hidden = false;
     document.body.classList.add('fb-lb-open');
   }
 
-  // ---------- opiniones del producto (solo se muestran; se cargan desde el panel) ----------
-  function pintarResenas(p) {
-    const cont = $('fb-lb-resenas'); if (!cont) return;
-    const rs = kvResenas(settings, p.id);
-    const prom = kvResenaPromedio(settings, p.id);
-    if (!rs.length) { cont.innerHTML = ''; return; }
-    cont.innerHTML = '<div class="fb-lb-res-tit">Opiniones ' + kvEstrellas(prom.prom) +
-        ' <b>' + prom.prom + '</b> <span>(' + prom.n + ')</span></div>' +
-      '<div class="fb-lb-res-lista">' + rs.slice(0, 4).map(r =>
-        '<div class="fb-lb-res"><div class="fb-lb-res-top">' + kvEstrellas(Number(r.estrellas) || 0, 'kv-estrellas chico') +
-        '<span>' + escapeHtml(r.nombre || '') + '</span></div>' +
-        (r.texto ? '<p>' + escapeHtml(r.texto) + '</p>' : '') + '</div>').join('') + '</div>';
-  }
-
-  // ---------- te puede gustar ----------
-  function pintarSugerencias(p) {
-    const cont = $('fb-lb-sugerencias'); if (!cont) return;
-    const mismos = products.filter(x => x.id !== p.id && x.category === p.category && kvEnStock(x));
-    // se eligen al azar para que no salgan siempre los mismos
-    const elegidos = mismos.sort(() => Math.random() - 0.5).slice(0, 3);
-    if (!elegidos.length) { cont.innerHTML = ''; return; }
-    cont.innerHTML = '<div class="fb-lb-sug-tit">También te puede gustar</div>' +
-      '<div class="fb-lb-sug-fila">' + elegidos.map(s =>
-        '<button type="button" class="fb-lb-sug" data-id="' + s.id + '">' +
-          '<span class="fb-lb-sug-foto"' + (s.photo ? ' style="background-image:url(\'' + s.photo + '\')"' : '') + '>' + (s.photo ? '' : '✦') + '</span>' +
-          '<span class="fb-lb-sug-nom">' + escapeHtml(s.name || '') + '</span>' +
-          '<span class="fb-lb-sug-precio">' + formatCLP(kvPrecioOferta(s) || s.price || 0) + '</span>' +
-        '</button>').join('') + '</div>';
-    cont.querySelectorAll('.fb-lb-sug').forEach(n => n.addEventListener('click', () => {
-      const otro = products.find(x => x.id === n.dataset.id);
-      if (otro) { abrirLightbox(otro); lb.scrollTop = 0; const c = lb.querySelector('.fb-lb-card'); if (c) c.scrollTop = 0; }
-    }));
-  }
   function cerrarLightbox() { lb.hidden = true; document.body.classList.remove('fb-lb-open'); }
   const lbAbierto = () => !lb.hidden;
   lb.querySelectorAll('[data-role="close"]').forEach(n => n.addEventListener('click', cerrarLightbox));
@@ -289,6 +255,20 @@
     e.preventDefault();
     abrirLightbox(products.find(x => x.id === card.dataset.id));
   });
+
+  // ---------- opiniones del producto (solo se muestran; se cargan desde el panel) ----------
+  function pintarResenas(p) {
+    const cont = $('fb-lb-resenas'); if (!cont) return;
+    const rs = kvResenas(settings, p.id);
+    const prom = kvResenaPromedio(settings, p.id);
+    if (!rs.length) { cont.innerHTML = ''; return; }
+    cont.innerHTML = '<div class="fb-lb-res-tit">Opiniones ' + kvEstrellas(prom.prom) +
+        ' <b>' + prom.prom + '</b> <span>(' + prom.n + ')</span></div>' +
+      '<div class="fb-lb-res-lista">' + rs.slice(0, 4).map(r =>
+        '<div class="fb-lb-res"><div class="fb-lb-res-top">' + kvEstrellas(Number(r.estrellas) || 0, 'kv-estrellas chico') +
+        '<span>' + escapeHtml(r.nombre || '') + '</span></div>' +
+        (r.texto ? '<p>' + escapeHtml(r.texto) + '</p>' : '') + '</div>').join('') + '</div>';
+  }
 
   // ============================================================
   //  VISITAS (analítica anónima para el panel admin: NO se guarda
@@ -1035,7 +1015,7 @@
   let waActualizar = null;
   function rebuild() {
     kvSetDescuento(settings);
-    kvSetFocoMovilGeneral(settings);
+    kvSetModoEncuadre(settings);
     kvSetSettings(settings);
     kvApplyTheme(Object.assign({}, KV_THEME_DEFAULT, settings.theme || {}));
     buildSlides();

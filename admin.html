@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260770" />
+<link rel="stylesheet" href="catalogo.css?v=20260771" />
 </head>
 <body>
 
@@ -67,26 +67,19 @@
              real y lo reemplazaba por los productos de ejemplo (otros nombres y precios). -->
       </div>
       <details class="adm-focogen" id="adm-focogen">
-        <summary class="adm-focogen-tit">📱 Encuadre general para celular</summary>
+        <summary class="adm-focogen-tit">🖼 ¿Qué encuadre se muestra?</summary>
         <div class="adm-focogen-body">
-          <p class="adm-focogen-ayuda">En el celular la foto se ve <b>más alta que ancha</b> que en el computador. Ajusta aquí una vez y se aplica a <b>todos</b> los productos. Los que tengan su propio encuadre de celular (●) no se tocan.</p>
-          <div class="adm-focogen-cols">
-            <div class="adm-focogen-prev">
-              <div class="cat-card-foto ed-foto-movil" id="adm-focogen-foto"></div>
-              <span class="adm-focogen-prevtxt" id="adm-focogen-prevtxt">Vista previa</span>
-            </div>
-            <div class="adm-focogen-sliders">
-              <label class="ed-slider"><span>Zoom</span><input type="range" min="100" max="250" step="1" id="adm-focogen-zoom" value="100" /></label>
-              <label class="ed-slider"><span>Horizontal</span><input type="range" min="0" max="100" step="1" id="adm-focogen-x" value="50" /></label>
-              <label class="ed-slider"><span>Vertical</span><input type="range" min="0" max="100" step="1" id="adm-focogen-y" value="50" /></label>
-              <div class="adm-guardar-fila">
-                <button id="adm-focogen-guardar" class="adm-btn-solido">Aplicar a todos</button>
-                <button id="adm-focogen-quitar" class="adm-btn-borde">Quitar encuadre general</button>
-                <span id="adm-focogen-ok" class="adm-guardado" hidden>✓ Aplicado</span>
-              </div>
-              <p class="adm-focogen-estado" id="adm-focogen-estado"></p>
-            </div>
+          <p class="adm-focogen-ayuda">Cada producto tiene dos encuadres guardados: uno para el marco <b>ancho</b> del computador y otro para el marco <b>alto</b> del celular. Aquí eliges cuál se usa en <b>todos</b> los productos.</p>
+          <div class="adm-modo-switch" id="adm-modo-switch">
+            <button type="button" class="adm-modo-op" data-modo="auto">
+              <b>Según la pantalla</b><span>PC en computador, celular en teléfono</span></button>
+            <button type="button" class="adm-modo-op" data-modo="pc">
+              <b>💻 Siempre el de PC</b><span>En todas las pantallas</span></button>
+            <button type="button" class="adm-modo-op" data-modo="movil">
+              <b>📱 Siempre el de celular</b><span>En todas las pantallas</span></button>
           </div>
+          <p class="adm-focogen-estado" id="adm-focogen-estado"></p>
+          <p class="adm-focogen-ayuda" style="margin-top:8px;">¿Quieres que un producto puntual se comporte distinto? Ábrelo, entra a <b>🎯 Ajustar encuadre</b> y elige ahí su propia opción.</p>
         </div>
       </details>
       <details class="adm-focogen" id="adm-codigos">
@@ -614,8 +607,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260770"></script>
-<script src="comun.js?v=20260770"></script>
-<script src="admin.js?v=20260770"></script>
+<script src="firebase-config.js?v=20260771"></script>
+<script src="comun.js?v=20260771"></script>
+<script src="admin.js?v=20260771"></script>
 </body>
 </html>

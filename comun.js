@@ -217,17 +217,23 @@ function kvFocoIG(p) {
 /* encuadre PROPIO para celular: en el teléfono el marco de la foto es más ALTO que
    ancho, y en PC más ancho que alto, así que un encuadre bueno en PC a veces corta
    la joya en el celular. Si no se ajustó aparte, usa el mismo del PC. */
-/* encuadre general de celular: se aplica a TODOS los productos, salvo los que
-   tengan uno propio. Se guarda en la configuración y se carga una vez. */
-var _kvFocoMovilGen = null;
-function kvSetFocoMovilGeneral(settings) {
-  const f = settings && settings.focoMovilGeneral;
-  _kvFocoMovilGen = (f && (f.x != null || f.y != null || f.zoom != null)) ? f : null;
+/* ¿Qué encuadre se muestra en el catálogo?
+   'auto'  = como siempre: el de PC en computador y el de celular en teléfono
+   'pc'    = TODOS ven el encuadre de PC (en cualquier pantalla)
+   'movil' = TODOS ven el encuadre de celular
+   Cada producto puede llevar el suyo propio y manda por sobre el general. */
+var _kvModoEnc = 'auto';
+function kvSetModoEncuadre(settings) {
+  const m = settings && settings.encuadreModo;
+  _kvModoEnc = (m === 'pc' || m === 'movil') ? m : 'auto';
 }
-function kvFocoMovilGeneral() { return _kvFocoMovilGen; }
+function kvModoEncuadreGeneral() { return _kvModoEnc; }
+function kvModoEncuadre(p) {
+  const m = p && p.encuadreModo;
+  return (m === 'pc' || m === 'movil' || m === 'auto') ? m : _kvModoEnc;
+}
 function kvFocoMovil(p) {
-  // 1º el encuadre propio del producto, 2º el general, 3º el mismo del PC
-  const f = (p && p.focoMovil) || _kvFocoMovilGen || null;
+  const f = (p && p.focoMovil) || null;
   if (!f) return kvFoco(p);
   return {
     x: f.x != null ? f.x : 50,
@@ -236,6 +242,17 @@ function kvFocoMovil(p) {
   };
 }
 function kvTieneFocoMovil(p) { return !!(p && p.focoMovil); }
+
+/* encuadre de la FOTO DE PORTADA de una colección (para que el texto no tape la joya) */
+function kvFocoCat(cat) {
+  const f = (cat && cat.foco) || {};
+  return { x: f.x != null ? f.x : 50, y: f.y != null ? f.y : 50, zoom: f.zoom != null ? f.zoom : 100 };
+}
+function kvFocoCatCss(cat) {
+  const f = kvFocoCat(cat);
+  if (f.x === 50 && f.y === 50 && f.zoom === 100) return '';
+  return 'background-position:' + f.x + '% ' + f.y + '%;background-size:' + (f.zoom === 100 ? 'contain' : (f.zoom + '%')) + ';';
+}
 
 /* una capa de imagen con el encuadre aplicado */
 function kvCapaFoto(url, f, clase) {
@@ -253,6 +270,10 @@ function kvFotoInner(p, modo) {
   if (!p || !p.photo) return '';
   if (modo === 'pc') return kvCapaFoto(p.photo, kvFoco(p), 'kv-fbg-solo');
   if (modo === 'movil') return kvCapaFoto(p.photo, kvFocoMovil(p), 'kv-fbg-solo');
+  const m = kvModoEncuadre(p);
+  if (m === 'pc') return kvCapaFoto(p.photo, kvFoco(p), 'kv-fbg-solo');
+  if (m === 'movil') return kvCapaFoto(p.photo, kvFocoMovil(p), 'kv-fbg-solo');
+  // automático: las dos capas y el CSS muestra la que toca según la pantalla
   return kvCapaFoto(p.photo, kvFoco(p), 'kv-fbg-pc') +
          kvCapaFoto(p.photo, kvFocoMovil(p), 'kv-fbg-mov');
 }
@@ -581,23 +602,25 @@ function kvCardEditHtml(p, cats, modo) {
         '<details class="ed-encuadre"' + (modo === 'movil' ? ' open' : '') + '>' +
           '<summary class="ed-encuadre-tit">🎯 Ajustar encuadre de la foto</summary>' +
           '<div class="ed-encuadre-body">' +
+            '<div class="ed-modo-fila"><span>Se muestra:</span>' +
+              ['auto', 'pc', 'movil'].map(m => '<button type="button" class="ed-modo-btn' +
+                ((p.encuadreModo || 'general') === m ? ' is-active' : '') + '" data-role="modo-enc" data-modo="' + m + '" data-id="' + p.id + '">' +
+                (m === 'auto' ? 'Según pantalla' : (m === 'pc' ? '💻 Siempre PC' : '📱 Siempre celular')) + '</button>').join('') +
+              '<button type="button" class="ed-modo-btn' + (!p.encuadreModo ? ' is-active' : '') + '" data-role="modo-enc" data-modo="" data-id="' + p.id + '">Como el general</button>' +
+            '</div>' +
             '<div class="ed-foco-tabs">' +
               '<button type="button" class="ed-foco-tab' + (modo === 'pc' ? ' is-active' : '') + '" data-role="foco-modo" data-modo="pc" data-id="' + p.id + '">💻 PC</button>' +
               '<button type="button" class="ed-foco-tab' + (modo === 'movil' ? ' is-active' : '') + '" data-role="foco-modo" data-modo="movil" data-id="' + p.id + '">📱 Celular' +
                 (kvTieneFocoMovil(p) ? ' <span class="ed-foco-punto" title="Tiene su propio encuadre">●</span>' : '') + '</button>' +
             '</div>' +
             '<p class="ed-foco-ayuda">' + (modo === 'movil'
-              ? (kvTieneFocoMovil(p)
-                  ? 'Este producto tiene su propio encuadre de celular (no lo afecta el general).'
-                  : (kvFocoMovilGeneral()
-                      ? 'Está usando el encuadre general. Si mueves algo acá, este producto queda con el suyo propio.'
-                      : 'En el celular la foto se ve más alta que ancha. Ajusta aquí para que la joya no quede cortada.'))
-              : 'Así se ve en computador y tablet. El celular tiene su propio ajuste en la pestaña 📱.') + '</p>' +
+              ? 'Encuadre para el marco alto del celular. Ajusta para que la joya no quede cortada.'
+              : 'Encuadre para el marco ancho del computador.') + '</p>' +
             '<label class="ed-slider"><span>Zoom</span><input type="range" min="100" max="250" step="1" data-role="foco-zoom" data-id="' + p.id + '" value="' + f.zoom + '" /></label>' +
             '<label class="ed-slider"><span>Horizontal</span><input type="range" min="0" max="100" step="1" data-role="foco-x" data-id="' + p.id + '" value="' + f.x + '" /></label>' +
             '<label class="ed-slider"><span>Vertical</span><input type="range" min="0" max="100" step="1" data-role="foco-y" data-id="' + p.id + '" value="' + f.y + '" /></label>' +
             (modo === 'movil' && kvTieneFocoMovil(p)
-              ? '<button type="button" class="ed-foco-reset" data-role="foco-igualar" data-id="' + p.id + '">↩ Volver al encuadre ' + (kvFocoMovilGeneral() ? 'general' : 'del PC') + '</button>' : '') +
+              ? '<button type="button" class="ed-foco-reset" data-role="foco-igualar" data-id="' + p.id + '">↩ Copiar el encuadre del PC</button>' : '') +
           '</div>' +
         '</details>' +
         '<div class="ed-fila">' +

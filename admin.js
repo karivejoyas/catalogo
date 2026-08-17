@@ -91,7 +91,7 @@
       // (aunque fuera un parpadeo de conexión) se "sembraba" el catálogo de
       // ejemplo ENCIMA de los productos reales, cambiándoles nombre y precio.
       if (products.length === 0) avisarCatalogoVacio();
-      if (window.__focogenRefrescar) window.__focogenRefrescar();
+      if (window.__modoEncRefrescar) window.__modoEncRefrescar();
       renderProductosGuarded();
       renderMasVistos();        // el ranking necesita los datos de los productos
       poblarOpiniones();
@@ -100,8 +100,8 @@
     unsubSettings = settingsRef.onSnapshot((doc) => {
       settings = doc.data() || {};
       kvSetDescuento(settings);
-      kvSetFocoMovilGeneral(settings);
-      if (window.__focogenRefrescar) window.__focogenRefrescar();
+      kvSetModoEncuadre(settings);
+      if (window.__modoEncRefrescar) window.__modoEncRefrescar();
       poblarMarketing();
       poblarPagos();
       poblarOpiniones();
@@ -416,12 +416,19 @@
         // uno propio de celular, se le "congela" el que tenía AHORA, para que
         // el celular no se mueva junto con el PC (son independientes).
         const p = products.find(x => x.id === id);
-        if (p && !kvTieneFocoMovil(vista(p)) && !kvFocoMovilGeneral()) {
+        if (p && !kvTieneFocoMovil(vista(p))) {
           setBorrador(id, 'focoMovil', kvFoco(p));   // el valor guardado, antes de este cambio
         }
         setBorrador(id, 'foco', focoDeCard(id));
       });
     });
+    // switch por producto: qué encuadre se muestra
+    r.querySelectorAll('[data-role="modo-enc"]').forEach(n => n.addEventListener('click', e => {
+      const b = e.target.closest('[data-role="modo-enc"]');
+      const id = b.dataset.id, m = b.dataset.modo;
+      setBorrador(id, 'encuadreModo', m || null);
+      b.parentElement.querySelectorAll('.ed-modo-btn').forEach(x => x.classList.toggle('is-active', x === b));
+    }));
     // pestañas PC / Celular del encuadre
     r.querySelectorAll('[data-role="foco-modo"]').forEach(n => n.addEventListener('click', e => {
       const btn = e.target.closest('[data-role="foco-modo"]');
@@ -452,42 +459,23 @@
     }));
   }
 
-  // ---------- encuadre GENERAL para celular (se aplica a todos los productos) ----------
-  (function setupFocoGeneral() {
-    const zoom = $('adm-focogen-zoom'), x = $('adm-focogen-x'), y = $('adm-focogen-y');
-    const foto = $('adm-focogen-foto'), prevTxt = $('adm-focogen-prevtxt'), estado = $('adm-focogen-estado');
-    if (!zoom || !foto) return;
-    const leer = () => ({ zoom: parseInt(zoom.value, 10), x: parseInt(x.value, 10), y: parseInt(y.value, 10) });
-    // usa el primer producto con foto como muestra
-    function muestra() { return products.find(p => p.photo) || null; }
-    function pintar() {
-      const p = muestra();
-      if (!p) { foto.innerHTML = ''; prevTxt.textContent = 'Sube una foto para ver la vista previa'; return; }
-      prevTxt.textContent = 'Ejemplo: ' + (p.name || '');
-      foto.innerHTML = kvCapaFoto(p.photo, leer(), 'kv-fbg-solo');
-    }
-    function estadoTxt() {
-      const g = kvFocoMovilGeneral();
-      const propios = products.filter(kvTieneFocoMovil).length;
-      estado.textContent = (g ? 'Encuadre general activo (zoom ' + (g.zoom != null ? g.zoom : 100) + ').' : 'Sin encuadre general: el celular usa el mismo del computador.') +
-        (propios ? ' ' + propios + ' producto' + (propios === 1 ? ' tiene' : 's tienen') + ' encuadre propio y no se ven afectados.' : '');
-    }
-    window.__focogenRefrescar = () => {
-      const g = kvFocoMovilGeneral() || { zoom: 100, x: 50, y: 50 };
-      zoom.value = g.zoom != null ? g.zoom : 100;
-      x.value = g.x != null ? g.x : 50;
-      y.value = g.y != null ? g.y : 50;
-      pintar(); estadoTxt();
+  // ---------- qué encuadre se muestra en el catálogo ----------
+  (function setupModoEncuadre() {
+    const cont = $('adm-modo-switch'), estado = $('adm-focogen-estado');
+    if (!cont) return;
+    window.__modoEncRefrescar = () => {
+      const m = kvModoEncuadreGeneral();
+      cont.querySelectorAll('.adm-modo-op').forEach(b => b.classList.toggle('is-active', b.dataset.modo === m));
+      const propios = products.filter(p => p.encuadreModo).length;
+      if (estado) estado.textContent =
+        (m === 'auto' ? 'Cada visitante ve el encuadre que corresponde a su pantalla.'
+         : m === 'pc' ? 'Todos ven el encuadre de computador, incluso en el celular.'
+         : 'Todos ven el encuadre de celular, incluso en el computador.') +
+        (propios ? ' ' + propios + ' producto' + (propios === 1 ? ' tiene su propia opción' : 's tienen su propia opción') + '.' : '');
     };
-    [zoom, x, y].forEach(s => s.addEventListener('input', pintar));
-    $('adm-focogen-guardar').addEventListener('click', () => {
-      settingsRef.set({ focoMovilGeneral: leer() }, { merge: true })
-        .then(() => guardado('adm-focogen-ok')).catch(err => console.error(err));
-    });
-    $('adm-focogen-quitar').addEventListener('click', () => {
-      if (!window.confirm('¿Quitar el encuadre general?\n\nEn el celular los productos volverán a usar el mismo encuadre del computador (salvo los que tengan uno propio).')) return;
-      settingsRef.set({ focoMovilGeneral: null }, { merge: true })
-        .then(() => guardado('adm-focogen-ok')).catch(err => console.error(err));
+    cont.addEventListener('click', e => {
+      const b = e.target.closest('.adm-modo-op'); if (!b) return;
+      settingsRef.set({ encuadreModo: b.dataset.modo }, { merge: true }).catch(err => console.error(err));
     });
   })();
 
@@ -1453,12 +1441,16 @@
     return settingsRef.set({ categorias: cats }, { merge: true }).catch(err => console.error('Error guardando colecciones:', err));
   }
 
+  const catsEncAbiertas = {};   // qué "Mover y ampliar la foto" quedó abierto
   function renderCatsEditor(cats) {
+    // se recuerda cuáles estaban abiertas para no cerrarlas al redibujar
+    const prev = $('adm-cats-editor');
+    if (prev) prev.querySelectorAll('.adm-cat-enc').forEach((d, i) => { catsEncAbiertas[i] = d.open; });
     let html = '';
     cats.forEach((cat, idx) => {
       html +=
         '<div class="adm-editor-fila adm-cat-fila" data-idx="' + idx + '">' +
-          '<div class="adm-editor-foto" style="background-image:url(\'' + (cat.imagen || '') + '\')"></div>' +
+          '<div class="adm-cat-prev"><div class="adm-editor-foto adm-cat-prevfoto" data-idx="' + idx + '" style="background-image:url(\'' + (cat.imagen || '') + '\');' + kvFocoCatCss(cat) + '"><span class="adm-cat-prevtxt">' + escapeHtml(cat.nombre || '') + '</span></div></div>' +
           '<div class="adm-editor-campos">' +
             '<label class="adm-etiqueta">Nombre de la colección</label>' +
             '<input class="adm-input" data-role="cat-nombre" data-idx="' + idx + '" value="' + escapeHtml(cat.nombre || '') + '" />' +
@@ -1466,6 +1458,16 @@
             '<input class="adm-input" data-role="cat-sub" data-idx="' + idx + '" value="' + escapeHtml(cat.sub || '') + '" />' +
             '<label class="adm-etiqueta">Código de los productos (2–4 letras, ej: CO para Corazones)</label>' +
             '<input class="adm-input" data-role="cat-pref" data-idx="' + idx + '" value="' + escapeHtml(cat.prefijo || '') + '" maxlength="4" placeholder="CO" style="max-width:130px;text-transform:uppercase;letter-spacing:0.12em;" />' +
+            '<details class="ed-encuadre adm-cat-enc"' + (catsEncAbiertas[idx] ? ' open' : '') + '>' +
+              '<summary class="ed-encuadre-tit">🎯 Mover y ampliar la foto</summary>' +
+              '<div class="ed-encuadre-body">' +
+                '<p class="ed-foco-ayuda">Ajusta para que la joya no quede tapada por el nombre de la colección.</p>' +
+                '<label class="ed-slider"><span>Zoom</span><input type="range" min="100" max="260" step="1" data-role="catfoco-zoom" data-idx="' + idx + '" value="' + kvFocoCat(cat).zoom + '" /></label>' +
+                '<label class="ed-slider"><span>Horizontal</span><input type="range" min="0" max="100" step="1" data-role="catfoco-x" data-idx="' + idx + '" value="' + kvFocoCat(cat).x + '" /></label>' +
+                '<label class="ed-slider"><span>Vertical</span><input type="range" min="0" max="100" step="1" data-role="catfoco-y" data-idx="' + idx + '" value="' + kvFocoCat(cat).y + '" /></label>' +
+                '<button type="button" class="ed-foco-reset" data-role="catfoco-reset" data-idx="' + idx + '">↩ Volver al centro</button>' +
+              '</div>' +
+            '</details>' +
             '<div class="adm-cat-acciones">' +
               '<label class="adm-btn-solido adm-btn-file">Cambiar foto<input type="file" accept="image/*" data-role="cat-foto" data-idx="' + idx + '" hidden /></label>' +
               '<button type="button" class="adm-btn-borde adm-btn-del-cat" data-role="cat-del" data-idx="' + idx + '">Eliminar colección</button>' +
@@ -1478,8 +1480,32 @@
     conectarCatsEditor();
   }
 
+  function catFocoLeer(idx) {
+    const r = $('adm-cats-editor');
+    const g = (rol) => { const el = r.querySelector('[data-role="' + rol + '"][data-idx="' + idx + '"]'); return el ? parseInt(el.value, 10) : 50; };
+    return { zoom: g('catfoco-zoom'), x: g('catfoco-x'), y: g('catfoco-y') };
+  }
+  function catFocoPreview(idx) {
+    const f = catFocoLeer(idx);
+    const el = $('adm-cats-editor').querySelector('.adm-cat-prevfoto[data-idx="' + idx + '"]');
+    if (!el) return;
+    el.style.backgroundPosition = f.x + '% ' + f.y + '%';
+    el.style.backgroundSize = f.zoom === 100 ? 'contain' : (f.zoom + '%');
+  }
   function conectarCatsEditor() {
     const r = $('adm-cats-editor');
+    r.querySelectorAll('[data-role^="catfoco-"]').forEach(n => {
+      if (n.tagName !== 'INPUT') return;
+      n.addEventListener('input', e => catFocoPreview(+e.target.dataset.idx));
+      n.addEventListener('change', e => {
+        const cats = kvCategorias(settings), i = +e.target.dataset.idx;
+        if (cats[i]) { cats[i].foco = catFocoLeer(i); guardarCategorias(cats); }
+      });
+    });
+    r.querySelectorAll('[data-role="catfoco-reset"]').forEach(n => n.addEventListener('click', e => {
+      const cats = kvCategorias(settings), i = +e.target.dataset.idx;
+      if (cats[i]) { delete cats[i].foco; guardarCategorias(cats); }
+    }));
     r.querySelectorAll('[data-role="cat-nombre"]').forEach(n => n.addEventListener('change', e => {
       const cats = kvCategorias(settings), i = +e.target.dataset.idx;
       if (cats[i]) { cats[i].nombre = e.target.value; guardarCategorias(cats); }

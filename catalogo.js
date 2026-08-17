@@ -230,8 +230,98 @@
         '<span class="fb-lb-precio-of">' + formatCLP(of) + '</span>' +
         '<span class="fb-lb-oferta-pill">Oferta</span>'
       : formatCLP(p.price);
+    pintarResenas(p);
+    pintarSugerencias(p);
     lb.hidden = false;
     document.body.classList.add('fb-lb-open');
+  }
+
+  // ---------- reseñas del producto ----------
+  let resenaEstrellas = 0, resenaEnviando = false, resenaProd = null;
+  function pintarResenas(p) {
+    const cont = $('fb-lb-resenas'); if (!cont) return;
+    resenaProd = p; resenaEstrellas = 0;
+    const rs = kvResenas(settings, p.id);
+    const prom = kvResenaPromedio(settings, p.id);
+    let ya = false;
+    try { ya = (localStorage.getItem('kv_resenado') || '').split(',').indexOf(p.id) !== -1; } catch (e) {}
+    let h = '<div class="fb-lb-res-tit">Opiniones' + (prom ? ' ' + kvEstrellas(prom.prom) + ' <b>' + prom.prom + '</b> <span>(' + prom.n + ')</span>' : '') + '</div>';
+    if (rs.length) {
+      h += '<div class="fb-lb-res-lista">' + rs.slice(0, 4).map(r =>
+        '<div class="fb-lb-res"><div class="fb-lb-res-top">' + kvEstrellas(Number(r.estrellas) || 0, 'kv-estrellas chico') +
+        '<span>' + escapeHtml(r.nombre || 'Anónima') + '</span></div>' +
+        (r.texto ? '<p>' + escapeHtml(r.texto) + '</p>' : '') + '</div>').join('') + '</div>';
+    } else {
+      h += '<p class="fb-lb-res-vacio">Todavía no tiene opiniones. ¡Sé la primera! ✨</p>';
+    }
+    h += ya
+      ? '<p class="fb-lb-res-gracias">✓ ¡Gracias por tu opinión! La revisamos antes de publicarla 💜</p>'
+      : '<button type="button" class="fb-lb-res-abrir" id="fb-lb-res-abrir">✍ Escribir mi opinión</button>' +
+        '<div class="fb-lb-res-form" id="fb-lb-res-form" hidden>' +
+          '<div class="fb-lb-res-pick" id="fb-lb-res-pick">' + [1,2,3,4,5].map(i => '<button type="button" data-n="' + i + '">★</button>').join('') + '</div>' +
+          '<input type="text" id="fb-lb-res-nombre" class="fb-lb-res-inp" placeholder="Tu nombre" maxlength="40" />' +
+          '<textarea id="fb-lb-res-txt" class="fb-lb-res-inp" rows="3" placeholder="¿Qué te pareció? (opcional)" maxlength="400"></textarea>' +
+          '<div class="fb-lb-res-msg" id="fb-lb-res-msg" hidden></div>' +
+          '<button type="button" class="fb-lb-res-enviar" id="fb-lb-res-enviar">Enviar opinión</button>' +
+        '</div>';
+    cont.innerHTML = h;
+    const abrir = $('fb-lb-res-abrir');
+    if (abrir) abrir.addEventListener('click', () => { $('fb-lb-res-form').hidden = false; abrir.hidden = true; });
+    const pick = $('fb-lb-res-pick');
+    if (pick) pick.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      resenaEstrellas = parseInt(b.dataset.n, 10);
+      pick.querySelectorAll('button').forEach(x => x.classList.toggle('on', parseInt(x.dataset.n, 10) <= resenaEstrellas));
+    }));
+    const env = $('fb-lb-res-enviar');
+    if (env) env.addEventListener('click', enviarResena);
+  }
+  async function enviarResena() {
+    if (resenaEnviando || !resenaProd) return;
+    const msg = $('fb-lb-res-msg');
+    const mostrar = (t) => { msg.textContent = t; msg.hidden = false; };
+    if (!resenaEstrellas) { mostrar('Elige cuántas estrellas le das ⭐'); return; }
+    const nombre = ($('fb-lb-res-nombre').value || '').trim();
+    if (!nombre) { mostrar('Escribe tu nombre.'); return; }
+    resenaEnviando = true;
+    const btn = $('fb-lb-res-enviar'); btn.disabled = true; btn.textContent = 'Enviando…';
+    try {
+      await kvDb.collection('catalog').doc('resenas').collection('items').add({
+        producto: resenaProd.id, productoNombre: resenaProd.name || '',
+        estrellas: resenaEstrellas, nombre: nombre.slice(0, 40),
+        texto: ($('fb-lb-res-txt').value || '').trim().slice(0, 400),
+        fecha: new Date().toISOString(), aprobada: false
+      });
+      try {
+        const prev = (localStorage.getItem('kv_resenado') || '').split(',').filter(Boolean);
+        prev.push(resenaProd.id);
+        localStorage.setItem('kv_resenado', prev.join(','));
+      } catch (e) {}
+      pintarResenas(resenaProd);
+    } catch (e) {
+      mostrar('No se pudo enviar tu opinión. Intenta más tarde 💜');
+      btn.disabled = false; btn.textContent = 'Enviar opinión';
+    }
+    resenaEnviando = false;
+  }
+
+  // ---------- te puede gustar ----------
+  function pintarSugerencias(p) {
+    const cont = $('fb-lb-sugerencias'); if (!cont) return;
+    const mismos = products.filter(x => x.id !== p.id && x.category === p.category && kvEnStock(x));
+    // se eligen al azar para que no salgan siempre los mismos
+    const elegidos = mismos.sort(() => Math.random() - 0.5).slice(0, 3);
+    if (!elegidos.length) { cont.innerHTML = ''; return; }
+    cont.innerHTML = '<div class="fb-lb-sug-tit">También te puede gustar</div>' +
+      '<div class="fb-lb-sug-fila">' + elegidos.map(s =>
+        '<button type="button" class="fb-lb-sug" data-id="' + s.id + '">' +
+          '<span class="fb-lb-sug-foto"' + (s.photo ? ' style="background-image:url(\'' + s.photo + '\')"' : '') + '>' + (s.photo ? '' : '✦') + '</span>' +
+          '<span class="fb-lb-sug-nom">' + escapeHtml(s.name || '') + '</span>' +
+          '<span class="fb-lb-sug-precio">' + formatCLP(kvPrecioOferta(s) || s.price || 0) + '</span>' +
+        '</button>').join('') + '</div>';
+    cont.querySelectorAll('.fb-lb-sug').forEach(n => n.addEventListener('click', () => {
+      const otro = products.find(x => x.id === n.dataset.id);
+      if (otro) { abrirLightbox(otro); lb.scrollTop = 0; const c = lb.querySelector('.fb-lb-card'); if (c) c.scrollTop = 0; }
+    }));
   }
   function cerrarLightbox() { lb.hidden = true; document.body.classList.remove('fb-lb-open'); }
   const lbAbierto = () => !lb.hidden;
@@ -1000,6 +1090,7 @@
   function rebuild() {
     kvSetDescuento(settings);
     kvSetFocoMovilGeneral(settings);
+    kvSetSettings(settings);
     kvApplyTheme(Object.assign({}, KV_THEME_DEFAULT, settings.theme || {}));
     buildSlides();
     buildNav();

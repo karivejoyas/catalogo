@@ -12,10 +12,12 @@
   const pedidosCol = kvDb.collection('catalog').doc('pedidos').collection('items');
   const visitasCol = kvDb.collection('catalog').doc('visitas').collection('items');
   const suscritosCol = kvDb.collection('catalog').doc('suscriptores').collection('items');
-  let unsubItems = null, unsubSettings = null, unsubPedidos = null, unsubVisitas = null, unsubSuscritos = null;
+  const resenasCol = kvDb.collection('catalog').doc('resenas').collection('items');
+  let unsubItems = null, unsubSettings = null, unsubPedidos = null, unsubVisitas = null, unsubSuscritos = null, unsubResenas = null;
   let pedidos = [];
   let visitas = [];
   let suscritos = [];
+  let resenas = [];
 
   const guardado = (id) => { const n = $(id); if (!n) return; n.hidden = false; setTimeout(() => { n.hidden = true; }, 2000); };
   const activo = () => document.activeElement;
@@ -87,7 +89,10 @@
     if (unsubItems) return;
     unsubItems = itemsCol.orderBy('order').onSnapshot((snap) => {
       products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (products.length === 0) { sembrar(); return; }
+      // ⚠ NUNCA se escriben productos solos. Antes, si la lista llegaba vacía
+      // (aunque fuera un parpadeo de conexión) se "sembraba" el catálogo de
+      // ejemplo ENCIMA de los productos reales, cambiándoles nombre y precio.
+      if (products.length === 0) avisarCatalogoVacio();
       if (window.__focogenRefrescar) window.__focogenRefrescar();
       renderProductosGuarded();
       renderMasVistos();        // el ranking necesita los datos de los productos
@@ -122,6 +127,10 @@
       suscritos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderSuscritos();
     }, (err) => console.error('Error leyendo suscriptores:', err));
+    unsubResenas = resenasCol.orderBy('fecha', 'desc').limit(300).onSnapshot((snap) => {
+      resenas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderResenas();
+    }, (err) => console.error('Error leyendo reseñas:', err));
   }
   function dejarDeEscuchar() {
     if (unsubItems) { unsubItems(); unsubItems = null; }
@@ -129,12 +138,15 @@
     if (unsubPedidos) { unsubPedidos(); unsubPedidos = null; }
     if (unsubVisitas) { unsubVisitas(); unsubVisitas = null; }
     if (unsubSuscritos) { unsubSuscritos(); unsubSuscritos = null; }
+    if (unsubResenas) { unsubResenas(); unsubResenas = null; }
     products = [];
   }
-  function sembrar() {
-    const batch = kvDb.batch();
-    KV_PRODUCTOS_INICIALES().forEach((p, i) => batch.set(itemsCol.doc('p' + String(i + 1).padStart(3, '0')), p));
-    batch.commit().catch(err => console.error('Error sembrando:', err));
+  /* Si no llega ningún producto solo se avisa: jamás se escribe nada solo.
+     (Si de verdad tu catálogo quedó vacío, restaura desde tu archivo de respaldo.) */
+  function avisarCatalogoVacio() {
+    const cont = $('adm-categorias');
+    if (cont) cont.innerHTML = '<p class="adm-seccion-sub">No llegó ningún producto. Puede ser un problema momentáneo de conexión: <b>recarga la página</b>. ' +
+      'Si tu catálogo quedó vacío de verdad, restáuralo desde tu archivo de respaldo — <b>no se creará nada solo</b>.</p>';
   }
 
   // ---------- PRODUCTOS ----------
@@ -287,15 +299,9 @@
     batch.commit().catch(err => console.error('Error reordenando:', err));
   }
 
-  $('adm-reset').addEventListener('click', () => {
-    if (!window.confirm('Esto reemplazará todo tu catálogo por los productos iniciales. ¿Continuar?')) return;
-    itemsCol.get().then((snap) => {
-      const batch = kvDb.batch();
-      snap.docs.forEach(d => batch.delete(d.ref));
-      KV_PRODUCTOS_INICIALES().forEach((p, i) => batch.set(itemsCol.doc('p' + String(i + 1).padStart(3, '0')), p));
-      return batch.commit();
-    }).catch(err => console.error('Error restaurando:', err));
-  });
+  /* (eliminado) El botón "Restaurar catálogo inicial" borraba todos los productos
+     reales y escribía encima los de ejemplo. Ya no existe: los productos solo
+     cambian cuando TÚ los editas y guardas. */
 
   let pendienteProductos = false;
   function renderProductosGuarded() {
@@ -380,9 +386,13 @@
       setBorrador(id, 'category', nuevaCat);
       // el código sigue el correlativo de la NUEVA colección (con su prefijo)
       const cat = kvCategorias(settings).find(c => c.id === nuevaCat);
-      const num = kvNextNumCat(products.map(vista), nuevaCat);
+      const otros = products.map(vista).filter(p => p.id !== id);
+      const num = kvNextNumCat(otros, nuevaCat);
       const nuevoCode = (cat && cat.prefijo ? cat.prefijo : 'PR') + '-' + String(num).padStart(3, '0');
       setBorrador(id, 'code', nuevoCode);
+      // …y se va AL FINAL de la nueva colección
+      const ordenes = otros.filter(p => p.category === nuevaCat).map(p => Number(p.order) || 0);
+      setBorrador(id, 'order', (ordenes.length ? Math.max.apply(null, ordenes) : 0) + 1);
       const card = e.target.closest('.cat-card-edit');
       const ci = card && card.querySelector('[data-role="code"]'); if (ci) ci.value = nuevoCode;
     }));
@@ -406,7 +416,15 @@
       n.addEventListener('input', e => aplicarFocoPreview(e.target.dataset.id));
       n.addEventListener('change', e => {
         const id = e.target.dataset.id;
-        setBorrador(id, focoModo[id] === 'movil' ? 'focoMovil' : 'foco', focoDeCard(id));
+        if (focoModo[id] === 'movil') { setBorrador(id, 'focoMovil', focoDeCard(id)); return; }
+        // Se está tocando el encuadre de PC. Si este producto todavía no tiene
+        // uno propio de celular, se le "congela" el que tenía AHORA, para que
+        // el celular no se mueva junto con el PC (son independientes).
+        const p = products.find(x => x.id === id);
+        if (p && !kvTieneFocoMovil(vista(p)) && !kvFocoMovilGeneral()) {
+          setBorrador(id, 'focoMovil', kvFoco(p));   // el valor guardado, antes de este cambio
+        }
+        setBorrador(id, 'foco', focoDeCard(id));
       });
     });
     // pestañas PC / Celular del encuadre
@@ -1991,6 +2009,134 @@
       visitasCol.doc(n.dataset.id).delete().catch(err => console.error(err));
     }));
   }
+  // ---------- RESEÑAS ----------
+  /* Al aprobar/rechazar se vuelve a armar la lista PÚBLICA en la configuración.
+     Así el catálogo solo ve las aprobadas, sin acceso a las pendientes. */
+  function publicarResenas(extraAprobada) {
+    const aprobadas = resenas.filter(r => r.aprobada || (extraAprobada && r.id === extraAprobada));
+    const publica = aprobadas.map(r => ({
+      producto: r.producto || '', estrellas: Number(r.estrellas) || 0,
+      nombre: String(r.nombre || '').slice(0, 40), texto: String(r.texto || '').slice(0, 400), fecha: r.fecha || ''
+    }));
+    return settingsRef.set({ resenas: publica }, { merge: true });
+  }
+  function renderResenas() {
+    const badge = $('adm-res-badge');
+    const pend = resenas.filter(r => !r.aprobada).length;
+    if (badge) { badge.textContent = pend; badge.hidden = pend === 0; }
+    const cont = $('adm-resenas-lista'); if (!cont) return;
+    if (!resenas.length) {
+      cont.innerHTML = '<p class="adm-seccion-sub">Todavía no hay opiniones. Aparecerán aquí cuando tus clientas escriban una ⭐</p>';
+      return;
+    }
+    const orden = resenas.slice().sort((a, b) => (a.aprobada ? 1 : 0) - (b.aprobada ? 1 : 0));
+    cont.innerHTML = '<div class="adm-res-lista">' + orden.map(r => {
+      const p = products.find(x => x.id === r.producto);
+      const nom = (p && p.name) || r.productoNombre || 'Producto eliminado';
+      return '<div class="adm-res' + (r.aprobada ? ' aprobada' : '') + '">' +
+        '<div class="adm-res-top">' +
+          (p && p.photo ? '<span class="vis-mini-foto" style="background-image:url(\'' + p.photo + '\')"></span>' : '<span class="vis-mini-foto vis-mini-sin">✦</span>') +
+          '<div class="adm-res-txt">' +
+            '<b>' + escapeHtml(nom) + '</b>' +
+            '<span>' + kvEstrellas(Number(r.estrellas) || 0, 'kv-estrellas chico') + ' · ' + escapeHtml(r.nombre || 'Anónima') + ' · ' + pedFecha(r.fecha) + '</span>' +
+          '</div>' +
+          '<span class="adm-res-estado">' + (r.aprobada ? '✅ publicada' : '⏳ pendiente') + '</span>' +
+        '</div>' +
+        (r.texto ? '<p class="adm-res-com">' + escapeHtml(r.texto) + '</p>' : '<p class="adm-res-com adm-res-sincom">(solo puso estrellas, sin comentario)</p>') +
+        '<div class="adm-res-acciones">' +
+          (r.aprobada
+            ? '<button class="adm-btn-borde adm-btn-mini" data-role="res-ocultar" data-id="' + r.id + '">Quitar del catálogo</button>'
+            : '<button class="adm-btn-solido adm-btn-mini" data-role="res-aprobar" data-id="' + r.id + '">✅ Publicar</button>') +
+          '<button class="adm-btn-borde adm-btn-mini adm-btn-del-cat" data-role="res-borrar" data-id="' + r.id + '">Eliminar</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+    cont.querySelectorAll('[data-role="res-aprobar"]').forEach(n => n.addEventListener('click', () => {
+      const id = n.dataset.id;
+      resenasCol.doc(id).update({ aprobada: true })
+        .then(() => publicarResenas(id)).catch(err => console.error(err));
+    }));
+    cont.querySelectorAll('[data-role="res-ocultar"]').forEach(n => n.addEventListener('click', () => {
+      const id = n.dataset.id;
+      const r = resenas.find(x => x.id === id); if (r) r.aprobada = false;
+      resenasCol.doc(id).update({ aprobada: false })
+        .then(() => publicarResenas()).catch(err => console.error(err));
+    }));
+    cont.querySelectorAll('[data-role="res-borrar"]').forEach(n => n.addEventListener('click', () => {
+      if (!window.confirm('¿Eliminar esta opinión para siempre?')) return;
+      const id = n.dataset.id;
+      resenas = resenas.filter(x => x.id !== id);
+      resenasCol.doc(id).delete().then(() => publicarResenas()).catch(err => console.error(err));
+    }));
+  }
+
+  // ---------- ORDENAR CÓDIGOS ----------
+  /* Calcula qué código DEBERÍA tener cada producto: correlativo dentro de su
+     colección (según el orden en que están), con el prefijo de esa colección.
+     No escribe nada: solo propone. */
+  let codPropuesta = [];
+  function calcularCodigos() {
+    const cats = kvCategorias(settings);
+    const cambios = [];
+    cats.concat([{ id: '__otros__', nombre: 'Sin colección', prefijo: 'PR' }]).forEach(cat => {
+      const suyos = products
+        .filter(p => cat.id === '__otros__' ? !cats.some(c => c.id === p.category) : p.category === cat.id)
+        .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+      const pre = cat.prefijo || 'PR';
+      suyos.forEach((p, i) => {
+        const nuevo = pre + '-' + String(i + 1).padStart(3, '0');
+        if ((p.code || '') !== nuevo) {
+          cambios.push({ id: p.id, nombre: p.name || '(sin nombre)', coleccion: cat.nombre, antes: p.code || '(sin código)', ahora: nuevo });
+        }
+      });
+    });
+    return cambios;
+  }
+  function contarRepetidos() {
+    const c = {};
+    products.forEach(p => { const k = p.code || ''; c[k] = (c[k] || 0) + 1; });
+    return Object.keys(c).filter(k => k && c[k] > 1);
+  }
+  if ($('adm-cod-revisar')) $('adm-cod-revisar').addEventListener('click', () => {
+    codPropuesta = calcularCodigos();
+    const inf = $('adm-cod-informe'), btn = $('adm-cod-aplicar');
+    const rep = contarRepetidos();
+    if (!codPropuesta.length) {
+      inf.innerHTML = '<p class="adm-focogen-estado">✅ Todos los códigos ya están correlativos y con su prefijo correcto.</p>';
+      btn.hidden = true;
+      return;
+    }
+    inf.innerHTML = '<p class="adm-focogen-estado">Se cambiarían <b>' + codPropuesta.length + '</b> código(s)' +
+        (rep.length ? ', y se arreglarían los repetidos: <b>' + rep.join(', ') + '</b>' : '') + '. Las fotos, nombres y precios <b>no se tocan</b>.</p>' +
+      '<div class="adm-cod-tabla">' + codPropuesta.map(c =>
+        '<div class="adm-cod-fila"><span class="adm-cod-col">' + escapeHtml(c.coleccion) + '</span>' +
+        '<span class="adm-cod-nom">' + escapeHtml(c.nombre) + '</span>' +
+        '<span class="adm-cod-antes">' + escapeHtml(c.antes) + '</span>' +
+        '<span class="adm-cod-flecha">→</span>' +
+        '<span class="adm-cod-ahora">' + escapeHtml(c.ahora) + '</span></div>').join('') + '</div>';
+    btn.hidden = false;
+  });
+  if ($('adm-cod-aplicar')) $('adm-cod-aplicar').addEventListener('click', () => {
+    if (!codPropuesta.length) return;
+    if (!window.confirm('Se cambiarán ' + codPropuesta.length + ' código(s).\n\nSolo cambia el CÓDIGO: nombres, precios, fotos y tamaños quedan igual.\n\n¿Continuar?')) return;
+    const btn = $('adm-cod-aplicar'); btn.disabled = true; btn.textContent = 'Aplicando…';
+    // se hace en dos pasos para no chocar con un código que todavía usa otro producto
+    const paso1 = kvDb.batch();
+    codPropuesta.forEach(c => paso1.update(itemsCol.doc(c.id), { code: 'TMP-' + c.id }));
+    paso1.commit().then(() => {
+      const paso2 = kvDb.batch();
+      codPropuesta.forEach(c => paso2.update(itemsCol.doc(c.id), { code: c.ahora }));
+      return paso2.commit();
+    }).then(() => {
+      guardado('adm-cod-ok');
+      $('adm-cod-informe').innerHTML = '<p class="adm-focogen-estado">✅ Listo: ' + codPropuesta.length + ' código(s) ordenados.</p>';
+      codPropuesta = []; btn.hidden = true;
+    }).catch(err => {
+      console.error(err);
+      window.alert('No se pudieron ordenar los códigos: ' + err.message);
+    }).then(() => { btn.disabled = false; btn.textContent = 'Aplicar los cambios'; });
+  });
+
   // ---------- MEDIOS DE PAGO ----------
   function poblarPagos() {
     const mp = kvMercadoPago(settings);

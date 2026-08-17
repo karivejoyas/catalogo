@@ -522,7 +522,11 @@ function kvContactoRow(settings, tipos) {
 }
 
 /* tarjeta pública (estilo Amore: foto + barra de etiqueta), clickeable para ampliar */
+var _kvSettings = null;
+function kvSetSettings(s) { _kvSettings = s; }
 function kvCardHtml(p) {
+  const rp = _kvSettings ? kvResenaPromedio(_kvSettings, p.id) : null;
+  const estrellas = rp ? '<div class="cat-card-estrellas">' + kvEstrellas(rp.prom, 'kv-estrellas chico') + '<span>(' + rp.n + ')</span></div>' : '';
   const oferta = kvPrecioOferta(p) ? '<span class="cat-card-oferta">Oferta</span>' : '';
   const pocas = kvStockBajo(p)
     ? '<span class="cat-card-pocas">¡Última' + (kvStockCantidad(p) === 1 ? '!' : 's ' + kvStockCantidad(p) + '!') + '</span>' : '';
@@ -536,6 +540,7 @@ function kvCardHtml(p) {
       '</div>' +
       '<div class="cat-card-etiqueta">' +
         '<div class="cat-card-nombre"><span>' + escapeHtml(p.name) + '</span></div>' +
+        estrellas +
         '<div class="cat-card-pie"><span class="cat-card-codigo">' + escapeHtml(p.code) + '</span>' + kvPrecioHtml(p) + '</div>' +
         '<div class="cat-card-botones">' +
           '<button type="button" class="cat-card-verbtn" data-role="cart-ver" data-id="' + p.id + '">👁 Ver</button>' +
@@ -672,6 +677,33 @@ function kvTransferencia(settings) {
 function kvTransferenciaLista(settings) {
   const t = kvTransferencia(settings);
   return !!(t.titular && t.banco && t.numero);
+}
+
+/* ============================================================
+   RESEÑAS
+   Las reseñas nuevas llegan a una colección privada y TÚ las apruebas
+   en el panel. Las aprobadas se copian a la configuración (que es
+   pública) para que el catálogo pueda mostrarlas sin dar acceso a las
+   que están pendientes.
+   ============================================================ */
+function kvResenas(settings, productoId) {
+  const r = (settings && settings.resenas) || [];
+  if (!Array.isArray(r)) return [];
+  return productoId ? r.filter(x => x.producto === productoId) : r;
+}
+function kvResenaPromedio(settings, productoId) {
+  const rs = kvResenas(settings, productoId);
+  if (!rs.length) return null;
+  const suma = rs.reduce((a, b) => a + (Number(b.estrellas) || 0), 0);
+  return { prom: Math.round((suma / rs.length) * 10) / 10, n: rs.length };
+}
+/* dibuja 5 estrellas: llenas, media y vacías */
+function kvEstrellas(valor, clase) {
+  let h = '<span class="' + (clase || 'kv-estrellas') + '" aria-label="' + valor + ' de 5">';
+  for (let i = 1; i <= 5; i++) {
+    h += '<span class="' + (valor >= i - 0.25 ? 'llena' : (valor >= i - 0.75 ? 'media' : '')) + '">★</span>';
+  }
+  return h + '</span>';
 }
 
 /* ============================================================

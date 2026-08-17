@@ -236,72 +236,18 @@
     document.body.classList.add('fb-lb-open');
   }
 
-  // ---------- reseñas del producto ----------
-  let resenaEstrellas = 0, resenaEnviando = false, resenaProd = null;
+  // ---------- opiniones del producto (solo se muestran; se cargan desde el panel) ----------
   function pintarResenas(p) {
     const cont = $('fb-lb-resenas'); if (!cont) return;
-    resenaProd = p; resenaEstrellas = 0;
     const rs = kvResenas(settings, p.id);
     const prom = kvResenaPromedio(settings, p.id);
-    let ya = false;
-    try { ya = (localStorage.getItem('kv_resenado') || '').split(',').indexOf(p.id) !== -1; } catch (e) {}
-    let h = '<div class="fb-lb-res-tit">Opiniones' + (prom ? ' ' + kvEstrellas(prom.prom) + ' <b>' + prom.prom + '</b> <span>(' + prom.n + ')</span>' : '') + '</div>';
-    if (rs.length) {
-      h += '<div class="fb-lb-res-lista">' + rs.slice(0, 4).map(r =>
+    if (!rs.length) { cont.innerHTML = ''; return; }
+    cont.innerHTML = '<div class="fb-lb-res-tit">Opiniones ' + kvEstrellas(prom.prom) +
+        ' <b>' + prom.prom + '</b> <span>(' + prom.n + ')</span></div>' +
+      '<div class="fb-lb-res-lista">' + rs.slice(0, 4).map(r =>
         '<div class="fb-lb-res"><div class="fb-lb-res-top">' + kvEstrellas(Number(r.estrellas) || 0, 'kv-estrellas chico') +
-        '<span>' + escapeHtml(r.nombre || 'Anónima') + '</span></div>' +
+        '<span>' + escapeHtml(r.nombre || '') + '</span></div>' +
         (r.texto ? '<p>' + escapeHtml(r.texto) + '</p>' : '') + '</div>').join('') + '</div>';
-    } else {
-      h += '<p class="fb-lb-res-vacio">Todavía no tiene opiniones. ¡Sé la primera! ✨</p>';
-    }
-    h += ya
-      ? '<p class="fb-lb-res-gracias">✓ ¡Gracias por tu opinión! La revisamos antes de publicarla 💜</p>'
-      : '<button type="button" class="fb-lb-res-abrir" id="fb-lb-res-abrir">✍ Escribir mi opinión</button>' +
-        '<div class="fb-lb-res-form" id="fb-lb-res-form" hidden>' +
-          '<div class="fb-lb-res-pick" id="fb-lb-res-pick">' + [1,2,3,4,5].map(i => '<button type="button" data-n="' + i + '">★</button>').join('') + '</div>' +
-          '<input type="text" id="fb-lb-res-nombre" class="fb-lb-res-inp" placeholder="Tu nombre" maxlength="40" />' +
-          '<textarea id="fb-lb-res-txt" class="fb-lb-res-inp" rows="3" placeholder="¿Qué te pareció? (opcional)" maxlength="400"></textarea>' +
-          '<div class="fb-lb-res-msg" id="fb-lb-res-msg" hidden></div>' +
-          '<button type="button" class="fb-lb-res-enviar" id="fb-lb-res-enviar">Enviar opinión</button>' +
-        '</div>';
-    cont.innerHTML = h;
-    const abrir = $('fb-lb-res-abrir');
-    if (abrir) abrir.addEventListener('click', () => { $('fb-lb-res-form').hidden = false; abrir.hidden = true; });
-    const pick = $('fb-lb-res-pick');
-    if (pick) pick.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-      resenaEstrellas = parseInt(b.dataset.n, 10);
-      pick.querySelectorAll('button').forEach(x => x.classList.toggle('on', parseInt(x.dataset.n, 10) <= resenaEstrellas));
-    }));
-    const env = $('fb-lb-res-enviar');
-    if (env) env.addEventListener('click', enviarResena);
-  }
-  async function enviarResena() {
-    if (resenaEnviando || !resenaProd) return;
-    const msg = $('fb-lb-res-msg');
-    const mostrar = (t) => { msg.textContent = t; msg.hidden = false; };
-    if (!resenaEstrellas) { mostrar('Elige cuántas estrellas le das ⭐'); return; }
-    const nombre = ($('fb-lb-res-nombre').value || '').trim();
-    if (!nombre) { mostrar('Escribe tu nombre.'); return; }
-    resenaEnviando = true;
-    const btn = $('fb-lb-res-enviar'); btn.disabled = true; btn.textContent = 'Enviando…';
-    try {
-      await kvDb.collection('catalog').doc('resenas').collection('items').add({
-        producto: resenaProd.id, productoNombre: resenaProd.name || '',
-        estrellas: resenaEstrellas, nombre: nombre.slice(0, 40),
-        texto: ($('fb-lb-res-txt').value || '').trim().slice(0, 400),
-        fecha: new Date().toISOString(), aprobada: false
-      });
-      try {
-        const prev = (localStorage.getItem('kv_resenado') || '').split(',').filter(Boolean);
-        prev.push(resenaProd.id);
-        localStorage.setItem('kv_resenado', prev.join(','));
-      } catch (e) {}
-      pintarResenas(resenaProd);
-    } catch (e) {
-      mostrar('No se pudo enviar tu opinión. Intenta más tarde 💜');
-      btn.disabled = false; btn.textContent = 'Enviar opinión';
-    }
-    resenaEnviando = false;
   }
 
   // ---------- te puede gustar ----------

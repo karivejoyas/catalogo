@@ -994,3 +994,12 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 .adm-res-com{margin:9px 0 0;font-family:'Jost',sans-serif;font-size:13px;line-height:1.55;color:var(--kv-crema);}
 .adm-res-sincom{color:#8f7aa0;font-style:italic;}
 .adm-res-acciones{display:flex;gap:9px;flex-wrap:wrap;margin-top:11px;}
+
+/* ---------- opiniones (panel admin) ---------- */
+.adm-op-form{max-width:560px;display:flex;flex-direction:column;gap:6px;}
+.adm-op-form .adm-input{width:100%;}
+.adm-op-form select.adm-input{cursor:pointer;}
+.adm-op-form select.adm-input option{color:#222;}
+.adm-op-estrellas{display:flex;gap:4px;margin-bottom:4px;}
+.adm-op-estrellas button{background:none;border:none;font-size:30px;line-height:1;color:rgba(255,255,255,0.25);cursor:pointer;padding:0 2px;transition:color .12s,transform .12s;}
+.adm-op-estrellas button.on{color:var(--kv-dorado-cl);transform:scale(1.08);}

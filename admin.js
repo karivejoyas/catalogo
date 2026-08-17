@@ -12,12 +12,10 @@
   const pedidosCol = kvDb.collection('catalog').doc('pedidos').collection('items');
   const visitasCol = kvDb.collection('catalog').doc('visitas').collection('items');
   const suscritosCol = kvDb.collection('catalog').doc('suscriptores').collection('items');
-  const resenasCol = kvDb.collection('catalog').doc('resenas').collection('items');
-  let unsubItems = null, unsubSettings = null, unsubPedidos = null, unsubVisitas = null, unsubSuscritos = null, unsubResenas = null;
+  let unsubItems = null, unsubSettings = null, unsubPedidos = null, unsubVisitas = null, unsubSuscritos = null;
   let pedidos = [];
   let visitas = [];
   let suscritos = [];
-  let resenas = [];
 
   const guardado = (id) => { const n = $(id); if (!n) return; n.hidden = false; setTimeout(() => { n.hidden = true; }, 2000); };
   const activo = () => document.activeElement;
@@ -96,6 +94,7 @@
       if (window.__focogenRefrescar) window.__focogenRefrescar();
       renderProductosGuarded();
       renderMasVistos();        // el ranking necesita los datos de los productos
+      poblarOpiniones();
       renderIG();
     }, (err) => console.error('Error leyendo productos:', err));
     unsubSettings = settingsRef.onSnapshot((doc) => {
@@ -105,6 +104,7 @@
       if (window.__focogenRefrescar) window.__focogenRefrescar();
       poblarMarketing();
       poblarPagos();
+      poblarOpiniones();
       renderMasVistos();
       poblarCampos();
       renderCatsEditorGuarded();
@@ -127,10 +127,6 @@
       suscritos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderSuscritos();
     }, (err) => console.error('Error leyendo suscriptores:', err));
-    unsubResenas = resenasCol.orderBy('fecha', 'desc').limit(300).onSnapshot((snap) => {
-      resenas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderResenas();
-    }, (err) => console.error('Error leyendo reseñas:', err));
   }
   function dejarDeEscuchar() {
     if (unsubItems) { unsubItems(); unsubItems = null; }
@@ -138,7 +134,6 @@
     if (unsubPedidos) { unsubPedidos(); unsubPedidos = null; }
     if (unsubVisitas) { unsubVisitas(); unsubVisitas = null; }
     if (unsubSuscritos) { unsubSuscritos(); unsubSuscritos = null; }
-    if (unsubResenas) { unsubResenas(); unsubResenas = null; }
     products = [];
   }
   /* Si no llega ningún producto solo se avisa: jamás se escribe nada solo.
@@ -2009,64 +2004,73 @@
       visitasCol.doc(n.dataset.id).delete().catch(err => console.error(err));
     }));
   }
-  // ---------- RESEÑAS ----------
-  /* Al aprobar/rechazar se vuelve a armar la lista PÚBLICA en la configuración.
-     Así el catálogo solo ve las aprobadas, sin acceso a las pendientes. */
-  function publicarResenas(extraAprobada) {
-    const aprobadas = resenas.filter(r => r.aprobada || (extraAprobada && r.id === extraAprobada));
-    const publica = aprobadas.map(r => ({
-      producto: r.producto || '', estrellas: Number(r.estrellas) || 0,
-      nombre: String(r.nombre || '').slice(0, 40), texto: String(r.texto || '').slice(0, 400), fecha: r.fecha || ''
-    }));
-    return settingsRef.set({ resenas: publica }, { merge: true });
+  // ---------- OPINIONES (las escribe la dueña, desde lo que le dicen sus clientas) ----------
+  let opEstrellas = 5;
+  function poblarOpiniones() {
+    const sel = $('adm-op-prod'); if (!sel) return;
+    if (document.activeElement !== sel) {
+      const antes = sel.value;
+      const cats = kvCategorias(settings);
+      sel.innerHTML = products.slice()
+        .sort((a, b) => String(a.code || '').localeCompare(String(b.code || '')))
+        .map(p => {
+          const c = cats.find(x => x.id === p.category);
+          return '<option value="' + p.id + '">' + escapeHtml((p.code || '') + ' · ' + (p.name || '')) +
+                 (c ? ' (' + escapeHtml(c.nombre) + ')' : '') + '</option>';
+        }).join('');
+      if (antes) sel.value = antes;
+    }
+    pintarEstrellasOp();
+    renderOpiniones();
   }
-  function renderResenas() {
-    const badge = $('adm-res-badge');
-    const pend = resenas.filter(r => !r.aprobada).length;
-    if (badge) { badge.textContent = pend; badge.hidden = pend === 0; }
-    const cont = $('adm-resenas-lista'); if (!cont) return;
-    if (!resenas.length) {
-      cont.innerHTML = '<p class="adm-seccion-sub">Todavía no hay opiniones. Aparecerán aquí cuando tus clientas escriban una ⭐</p>';
+  function pintarEstrellasOp() {
+    const cont = $('adm-op-estrellas'); if (!cont) return;
+    cont.querySelectorAll('button').forEach(b => b.classList.toggle('on', parseInt(b.dataset.n, 10) <= opEstrellas));
+  }
+  if ($('adm-op-estrellas')) $('adm-op-estrellas').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    opEstrellas = parseInt(b.dataset.n, 10); pintarEstrellasOp();
+  });
+  if ($('adm-op-agregar')) $('adm-op-agregar').addEventListener('click', () => {
+    const pid = $('adm-op-prod').value;
+    const nombre = $('adm-op-nombre').value.trim();
+    const texto = $('adm-op-texto').value.trim();
+    if (!pid) { window.alert('Elige el producto.'); return; }
+    if (!nombre) { window.alert('Escribe el nombre de la clienta.'); return; }
+    const lista = kvResenas(settings).concat([{
+      producto: pid, estrellas: opEstrellas, nombre: nombre.slice(0, 40),
+      texto: texto.slice(0, 400), fecha: new Date().toISOString()
+    }]);
+    settingsRef.set({ resenas: lista }, { merge: true }).then(() => {
+      guardado('adm-op-ok');
+      $('adm-op-nombre').value = ''; $('adm-op-texto').value = '';
+    }).catch(err => console.error(err));
+  });
+  function renderOpiniones() {
+    const cont = $('adm-op-lista'); if (!cont) return;
+    const lista = kvResenas(settings);
+    if (!lista.length) {
+      cont.innerHTML = '<p class="adm-seccion-sub" style="margin-top:18px;">Todavía no has publicado ninguna opinión.</p>';
       return;
     }
-    const orden = resenas.slice().sort((a, b) => (a.aprobada ? 1 : 0) - (b.aprobada ? 1 : 0));
-    cont.innerHTML = '<div class="adm-res-lista">' + orden.map(r => {
-      const p = products.find(x => x.id === r.producto);
-      const nom = (p && p.name) || r.productoNombre || 'Producto eliminado';
-      return '<div class="adm-res' + (r.aprobada ? ' aprobada' : '') + '">' +
-        '<div class="adm-res-top">' +
-          (p && p.photo ? '<span class="vis-mini-foto" style="background-image:url(\'' + p.photo + '\')"></span>' : '<span class="vis-mini-foto vis-mini-sin">✦</span>') +
-          '<div class="adm-res-txt">' +
-            '<b>' + escapeHtml(nom) + '</b>' +
-            '<span>' + kvEstrellas(Number(r.estrellas) || 0, 'kv-estrellas chico') + ' · ' + escapeHtml(r.nombre || 'Anónima') + ' · ' + pedFecha(r.fecha) + '</span>' +
+    cont.innerHTML = '<h2 class="adm-seccion-titulo" style="font-size:22px;margin-top:26px;">Publicadas (' + lista.length + ')</h2>' +
+      '<div class="adm-res-lista">' + lista.map((r, i) => {
+        const p = products.find(x => x.id === r.producto);
+        return '<div class="adm-res aprobada">' +
+          '<div class="adm-res-top">' +
+            (p && p.photo ? '<span class="vis-mini-foto" style="background-image:url(\'' + p.photo + '\')"></span>' : '<span class="vis-mini-foto vis-mini-sin">✦</span>') +
+            '<div class="adm-res-txt"><b>' + escapeHtml((p && ((p.code || '') + ' · ' + p.name)) || 'Producto eliminado') + '</b>' +
+              '<span>' + kvEstrellas(Number(r.estrellas) || 0, 'kv-estrellas chico') + ' · ' + escapeHtml(r.nombre || '') + ' · ' + pedFecha(r.fecha) + '</span></div>' +
+            '<button type="button" class="vis-borrar" data-role="op-borrar" data-i="' + i + '" title="Quitar">✕</button>' +
           '</div>' +
-          '<span class="adm-res-estado">' + (r.aprobada ? '✅ publicada' : '⏳ pendiente') + '</span>' +
-        '</div>' +
-        (r.texto ? '<p class="adm-res-com">' + escapeHtml(r.texto) + '</p>' : '<p class="adm-res-com adm-res-sincom">(solo puso estrellas, sin comentario)</p>') +
-        '<div class="adm-res-acciones">' +
-          (r.aprobada
-            ? '<button class="adm-btn-borde adm-btn-mini" data-role="res-ocultar" data-id="' + r.id + '">Quitar del catálogo</button>'
-            : '<button class="adm-btn-solido adm-btn-mini" data-role="res-aprobar" data-id="' + r.id + '">✅ Publicar</button>') +
-          '<button class="adm-btn-borde adm-btn-mini adm-btn-del-cat" data-role="res-borrar" data-id="' + r.id + '">Eliminar</button>' +
-        '</div>' +
-      '</div>';
-    }).join('') + '</div>';
-    cont.querySelectorAll('[data-role="res-aprobar"]').forEach(n => n.addEventListener('click', () => {
-      const id = n.dataset.id;
-      resenasCol.doc(id).update({ aprobada: true })
-        .then(() => publicarResenas(id)).catch(err => console.error(err));
-    }));
-    cont.querySelectorAll('[data-role="res-ocultar"]').forEach(n => n.addEventListener('click', () => {
-      const id = n.dataset.id;
-      const r = resenas.find(x => x.id === id); if (r) r.aprobada = false;
-      resenasCol.doc(id).update({ aprobada: false })
-        .then(() => publicarResenas()).catch(err => console.error(err));
-    }));
-    cont.querySelectorAll('[data-role="res-borrar"]').forEach(n => n.addEventListener('click', () => {
-      if (!window.confirm('¿Eliminar esta opinión para siempre?')) return;
-      const id = n.dataset.id;
-      resenas = resenas.filter(x => x.id !== id);
-      resenasCol.doc(id).delete().then(() => publicarResenas()).catch(err => console.error(err));
+          (r.texto ? '<p class="adm-res-com">' + escapeHtml(r.texto) + '</p>' : '') +
+        '</div>';
+      }).join('') + '</div>';
+    cont.querySelectorAll('[data-role="op-borrar"]').forEach(n => n.addEventListener('click', () => {
+      if (!window.confirm('¿Quitar esta opinión del catálogo?')) return;
+      const lista2 = kvResenas(settings).slice();
+      lista2.splice(parseInt(n.dataset.i, 10), 1);
+      settingsRef.set({ resenas: lista2 }, { merge: true }).catch(err => console.error(err));
     }));
   }
 

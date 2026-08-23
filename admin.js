@@ -1732,11 +1732,14 @@
               '<div class="ped-dato">📱 <a target="_blank" rel="noopener" href="https://wa.me/' + telLimpio + '">' + escapeHtml(cli.telefono || '') + '</a></div>' +
               '<div class="ped-sub" style="margin-top:10px;">' + (p.medioPago === 'mercadopago' ? 'Pago con tarjeta' : 'Comprobante') + '</div>' +
               (p.medioPago === 'mercadopago'
-                ? '<div class="ped-mp' + (p.pagoEstado === 'approved' ? ' ok' : (p.pagoEstado === 'por-verificar' ? ' pend' : ' mal')) + '">' +
-                    '<div>💳 Mercado Pago · N° ' + escapeHtml(p.pagoId || '—') + '</div>' +
+                ? '<div class="ped-mp' + (p.pagoEstado === 'approved' ? ' ok' : (p.pagoEstado === 'rejected' || p.pagoEstado === 'cancelled' ? ' mal' : ' pend')) + '">' +
+                    '<div>💳 Mercado Pago · ' + (p.pagoId ? 'N° ' + escapeHtml(p.pagoId) : 'ref ' + escapeHtml(p.pagoRef || '—')) + '</div>' +
                     '<div class="ped-mp-estado">' + (
                       p.pagoEstado === 'approved' ? '✅ Pago confirmado con Mercado Pago' :
+                      p.pagoEstado === 'esperando-pago' ? '⏳ Se fue a pagar con tarjeta — aprieta el botón para saber si pagó' :
                       p.pagoEstado === 'por-verificar' ? '⏳ Aún NO verificado — aprieta el botón antes de enviar' :
+                      p.pagoEstado === 'rejected' ? '❌ Mercado Pago rechazó el pago' :
+                      p.pagoEstado === 'sin-pago' ? '❌ No hay ningún pago con esta referencia (no completó la compra)' :
                       p.pagoEstado ? '⚠ ' + escapeHtml(String(p.pagoEstado)) : '—') + '</div>' +
                     (p.pagoDetalle ? '<div class="ped-mp-estado">' + escapeHtml(p.pagoDetalle) + '</div>' : '') +
                     '<button type="button" class="adm-btn-borde adm-btn-mini" data-role="ped-verificar" data-id="' + p.id + '">🔎 Verificar pago con Mercado Pago</button>' +
@@ -1810,19 +1813,26 @@
     const url = String(settings.igPubUrl || '').trim();
     const clave = pubClave();
     if (!url || !clave) { window.alert('Falta configurar la URL del publicador y tu clave secreta en "Instagram y Facebook".'); return; }
-    if (!p.pagoId) { window.alert('Este pedido no tiene número de pago de Mercado Pago.'); return; }
+    if (!p.pagoId && !p.pagoRef) { window.alert('Este pedido no tiene datos de pago de Mercado Pago.'); return; }
     const txt = btn.textContent; btn.disabled = true; btn.textContent = 'Consultando…';
     try {
       const r = await fetch(url, {
         method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ accion: 'mp-verificar', clave: clave, pagoId: p.pagoId })
+        body: JSON.stringify({ accion: 'mp-verificar', clave: clave, pagoId: p.pagoId || '', referencia: p.pagoRef || '' })
       });
       const d = await r.json();
       if (!d || !d.ok) throw new Error((d && d.error) || 'No se pudo consultar');
       const aprobado = d.estado === 'approved';
       const montoOk = Math.abs(Number(d.monto || 0) - Number(p.total || 0)) < 1;
+      if (d.estado === 'sin-pago') {
+        await pedidosCol.doc(id).update({ pagoEstado: 'sin-pago', pagoDetalle: 'Consultado el ' + new Date().toLocaleString('es-CL') + ': no hay ningún pago con esta referencia.' });
+        window.alert('❌ Mercado Pago no tiene ningún pago con esta referencia.\n\nLo más probable es que la clienta se arrepintiera antes de pagar. Puedes eliminar este pedido.');
+        btn.disabled = false; btn.textContent = txt;
+        return;
+      }
       await pedidosCol.doc(id).update({
         pagoEstado: d.estado,
+        pagoId: d.pagoId || p.pagoId || '',
         pagoDetalle: (aprobado ? 'Verificado el ' + new Date().toLocaleString('es-CL') : (d.detalle || '')) +
           (aprobado && !montoOk ? ' · ⚠ el monto pagado (' + formatCLP(d.monto) + ') NO calza con el total del pedido' : ''),
         pagoMedio: d.medio || ''

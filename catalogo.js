@@ -866,23 +866,47 @@
     };
     carroEnviando = true; carroRender();
 
-    // ---- pago con tarjeta: se guarda el pedido y se va a Mercado Pago ----
+    // ---- pago con tarjeta ----
+    // El pedido se guarda ANTES de ir a pagar. Así, si la vuelta desde Mercado
+    // Pago falla (se corta el internet, el celular abre la app aparte, etc.),
+    // el pedido igual queda registrado y nunca se pierde una venta pagada.
     if (conTarjeta) {
+      const ref = 'kv-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      const pedidoTarjeta = Object.assign({}, pedido, { pagoRef: ref });
       try {
-        const ref = 'kv-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-        const r = await fetch(url, {
+        // 1) se pide el link de pago (si esto falla, no se guarda nada)
+        const rp = await fetch(url, {
           method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ accion: 'mp-preferencia', pedido: pedido, referencia: ref, volverA: location.origin + location.pathname })
+          body: JSON.stringify({ accion: 'mp-preferencia', pedido: pedidoTarjeta, referencia: ref, volverA: location.origin + location.pathname })
         });
-        const d = await r.json();
-        if (!d || !d.ok || !d.url) throw new Error((d && d.error) || 'No se pudo iniciar el pago');
-        // se guarda el pedido para retomarlo al volver de Mercado Pago
-        try { localStorage.setItem(PEDIDO_PEND_KEY, JSON.stringify({ pedido: pedido, referencia: ref, cuando: Date.now() })); } catch (e) {}
-        location.href = d.url;
+        const dp = await rp.json();
+        if (!dp || !dp.ok || !dp.url) throw new Error((dp && dp.error) || 'No se pudo iniciar el pago');
+
+        // 2) número de pedido y aviso por correo (si falla, se sigue igual)
+        let num = 0;
+        try {
+          const rn = await fetch(url, {
+            method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ accion: 'pedido', pedido: pedidoTarjeta, comprobante: '', esperandoPago: true })
+          });
+          const dn = await rn.json();
+          if (dn && dn.ok && dn.num) num = dn.num;
+        } catch (e) { console.warn('No se pudo avisar el pedido:', e); }
+
+        // 3) se guarda el pedido ANTES de mandarla a pagar
+        await kvDb.collection('catalog').doc('pedidos').collection('items').add(Object.assign({}, pedidoTarjeta, {
+          num: num, estado: 'nuevo', fecha: new Date().toISOString(), comprobante: '',
+          pagoEstado: 'esperando-pago', pagoRef: ref, pagoId: '',
+          courier: '', tracking: '', trackingUrl: ''
+        }));
+
+        try { localStorage.setItem(PEDIDO_PEND_KEY, JSON.stringify({ num: num, total: pedido.total, ref: ref })); } catch (e) {}
+        visitaMarcarPedido();
+        location.href = dp.url;
         return;
       } catch (err) {
         carroEnviando = false; carroRender();
-        carroError('No pudimos abrir el pago con tarjeta (' + err.message + '). Prueba con transferencia o escríbenos por WhatsApp 💜');
+        carroError('No pudimos iniciar el pago con tarjeta (' + err.message + '). Prueba con transferencia o escríbenos por WhatsApp 💜');
         return;
       }
     }
@@ -919,62 +943,38 @@
      La página vuelve con ?pago=... y el id del pago. OJO: eso viene por la URL
      y NO es prueba de que se pagó (se puede escribir a mano). El pedido queda
      como "pago por verificar" y el panel lo confirma contra Mercado Pago. */
-  let pagoRetomado = false, pagoEsperaTimer = null;
-  async function retomarPagoMP(yaEsperamos) {
-    if (pagoRetomado || !settingsListos) return;
+  let pagoRetomado = false;
+  /* Vuelta desde Mercado Pago. El pedido YA quedó guardado antes de ir a pagar,
+     así que acá solo se muestra el resultado: no se escribe nada. Si el navegador
+     perdió los datos igual se agradece la compra, porque el pedido existe. */
+  function retomarPagoMP() {
+    if (pagoRetomado) return;
     const q = new URLSearchParams(location.search);
     const estado = q.get('pago');
     if (!estado) return;
-    // Sin la URL del publicador el pedido quedaría sin número. A veces los
-    // ajustes llegan en un segundo aviso, así que se espera un poco antes de
-    // rendirse (pero igual se registra, para no perder nunca el pedido).
-    if (!String(settings.igPubUrl || '').trim() && !yaEsperamos) {
-      clearTimeout(pagoEsperaTimer);
-      pagoEsperaTimer = setTimeout(() => retomarPagoMP(true), 5000);
-      return;
-    }
     pagoRetomado = true;
-    clearTimeout(pagoEsperaTimer);
     let pend = null;
     try { pend = JSON.parse(localStorage.getItem(PEDIDO_PEND_KEY) || 'null'); } catch (e) {}
-    history.replaceState(null, '', location.pathname);   // limpia la URL
-    if (!pend || !pend.pedido) return;
+    history.replaceState(null, '', location.pathname);   // limpia la dirección
     try { localStorage.removeItem(PEDIDO_PEND_KEY); } catch (e) {}
-    if (estado !== 'ok') {
+
+    if (estado === 'ok') {
+      carro = {}; carroComprobante = null;
+      carroCupon = null; carroCuponTxt = ''; carroCuponError = '';
+      carroGuardar();
+      carroPedidoOk = { num: (pend && pend.num) || '—', total: (pend && pend.total) || 0 };
+      carroVista = 'ok';
       carritoEl.hidden = false;
-      carroVista = 'checkout'; carroRender();
-      carroError(estado === 'pendiente'
-        ? 'Tu pago quedó pendiente en Mercado Pago. Si se aprueba te avisamos por correo.'
-        : 'El pago no se completó. Puedes intentar de nuevo o pagar por transferencia 💜');
+      carroRender();
       return;
     }
-    const pagoId = q.get('payment_id') || q.get('collection_id') || '';
-    const url = String(settings.igPubUrl || '').trim();
-    const pedido = Object.assign({}, pend.pedido, { pagoId: pagoId, pagoRef: pend.referencia || '' });
-    let num = null;
-    if (url) {
-      try {
-        const r = await fetch(url, {
-          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ accion: 'pedido', pedido: pedido, comprobante: '' })
-        });
-        const d = await r.json();
-        if (d && d.ok && d.num) num = d.num;
-      } catch (e) { console.warn('No se pudo avisar el pedido:', e); }
-    }
-    try {
-      await kvDb.collection('catalog').doc('pedidos').collection('items').add(Object.assign({}, pedido, {
-        num: num || 0, estado: 'nuevo', fecha: new Date().toISOString(), comprobante: '',
-        pagoEstado: 'por-verificar', courier: '', tracking: '', trackingUrl: ''
-      }));
-    } catch (e) { console.warn('No se pudo registrar el pedido:', e); }
-    visitaMarcarPedido();
-    carro = {}; carroComprobante = null;
-    carroCupon = null; carroCuponTxt = ''; carroCuponError = '';
-    carroGuardar();
-    carroPedidoOk = { num: num || '—', total: pedido.total };
+    // pago pendiente o rechazado: el pedido quedó guardado esperando el pago
     carritoEl.hidden = false;
-    carroVista = 'ok'; carroRender();
+    carroVista = 'carro';
+    carroRender();
+    carroToast(estado === 'pendiente'
+      ? 'Tu pago quedó pendiente en Mercado Pago. Si se aprueba te avisamos 💜'
+      : 'El pago no se completó. Puedes intentar de nuevo o pagar por transferencia 💜');
   }
 
   // ---------- controles ----------

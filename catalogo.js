@@ -597,11 +597,38 @@
   document.body.appendChild(carritoEl);
 
   function carroAbrir() { carritoEl.hidden = false; carroFondoEl.hidden = false; carroVista = carroPedidoOk ? 'ok' : 'carro'; carroRender(); carroAjustarVisor(); }
-  function carroCerrar() { carritoEl.hidden = true; carroFondoEl.hidden = true; carritoEl.style.transform = ''; carritoEl.classList.remove('teclado'); }
+  function carroCerrar() { carritoEl.hidden = true; carroFondoEl.hidden = true; carritoEl.style.transform = ''; carroEscribiendo = false; carritoEl.classList.remove('teclado'); }
   $('kv-cart-btn').addEventListener('click', () => { if (carritoEl.hidden) carroAbrir(); else carroCerrar(); });
   $('fb-lb-cart').addEventListener('click', () => { if (lbProd) { carroAgregar(lbProd.id); cerrarLightbox(); } });
 
   // como el chat: en celular ocupa el área visible real (se acomoda al teclado)
+  // ¿está escribiendo en un campo? Mientras el teclado esté abierto, los botones
+  // de "Enviar pedido" y "Volver al carrito" se esconden: no deben entrometerse
+  // al bajar por el formulario. Vuelven al cerrar el teclado (el ✓ del teclado).
+  // Se mira el campo con el foco y no solo el alto de la pantalla, porque esa
+  // medida no es fiable en todos los celulares.
+  let carroEscribiendo = false, carroFocoTimer = null;
+  function carroMarcarTeclado(porAltura) {
+    const chico = window.innerWidth <= 640;
+    carritoEl.classList.toggle('teclado', chico && (carroEscribiendo || !!porAltura));
+  }
+  const esCampo = (n) => !!(n && n.matches && n.matches('input, select, textarea'));
+  carritoEl.addEventListener('focusin', (e) => {
+    if (!esCampo(e.target)) return;
+    clearTimeout(carroFocoTimer);
+    carroEscribiendo = true;
+    carroMarcarTeclado();
+  });
+  carritoEl.addEventListener('focusout', () => {
+    clearTimeout(carroFocoTimer);
+    // una pausa corta: al saltar de un campo a otro los botones no deben parpadear
+    carroFocoTimer = setTimeout(() => {
+      const a = document.activeElement;
+      carroEscribiendo = esCampo(a) && carritoEl.contains(a);
+      carroMarcarTeclado();
+    }, 150);
+  });
+
   function carroAjustarVisor() {
     if (carritoEl.hidden) return;
     if (window.innerWidth > 640) { carritoEl.style.transform = ''; carritoEl.classList.remove('teclado'); return; }
@@ -609,9 +636,7 @@
     if (!vv) return;
     document.documentElement.style.setProperty('--kv-vvh', vv.height + 'px');
     carritoEl.style.transform = 'translateY(' + vv.offsetTop + 'px)';
-    // si el área visible se achicó mucho es porque salió el teclado: los botones
-    // se sueltan del borde de abajo y el formulario se queda con todo el espacio
-    carritoEl.classList.toggle('teclado', vv.height < window.innerHeight * 0.75);
+    carroMarcarTeclado(vv.height < window.innerHeight * 0.75);
   }
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', carroAjustarVisor);

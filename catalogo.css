@@ -36,7 +36,11 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 
 .fb-stage{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(4px,1.5vw,20px);padding:4px clamp(6px,2vw,20px);}
 .fb-page-wrap{height:100%;display:flex;align-items:center;justify-content:center;}
-.fb-page{width:min(97vw,64vh);width:min(97vw,64dvh);aspect-ratio:61/100;max-height:100%;border-radius:16px;overflow:hidden;position:relative;background:var(--kv-lila-fondo);box-shadow:0 22px 64px rgba(0,0,0,0.55);transition:transform .3s cubic-bezier(0.33,0,0.2,1), opacity .3s ease;}
+/* La página se mide por el ALTO disponible, no por el ancho. Antes se pedía un
+   ancho fijo y, si el alto no daba (celulares menos altos, como el iPhone 16
+   frente al Pro Max), el navegador la aplastaba: se rompía la proporción y las
+   fotos de las tarjetas quedaban recortadas. Ahora se achica entera y bien. */
+.fb-page{height:min(100%,calc(97vw * 100 / 61));width:auto;flex:0 0 auto;aspect-ratio:61/100;max-height:100%;border-radius:16px;overflow:hidden;position:relative;background:var(--kv-lila-fondo);box-shadow:0 22px 64px rgba(0,0,0,0.55);transition:transform .3s cubic-bezier(0.33,0,0.2,1), opacity .3s ease;}
 .fb-out-next{opacity:0;transform:translateX(-32px) scale(.965);}
 .fb-out-prev{opacity:0;transform:translateX(32px) scale(.965);}
 .fb-in-next{opacity:0;transform:translateX(32px) scale(.965);}
@@ -157,6 +161,19 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 .cat-card-addbtn{flex:1.7;border:none;border-radius:999px;padding:7px 8px;font-family:'Jost',sans-serif;font-size:clamp(10.5px,2.7vw,11.5px);font-weight:600;color:var(--kv-morado-osc);background:var(--kv-dorado-cl);cursor:pointer;transition:background .15s, transform .12s;box-shadow:0 4px 14px rgba(20,6,36,0.28);}
 .cat-card-addbtn:hover{filter:brightness(1.05);transform:translateY(-1px);}
 .cat-card-addbtn:active{transform:scale(0.98);}
+/* Los botones Ver / Agregar nunca parten la palabra en dos líneas: cuando lo
+   hacían, la etiqueta crecía y le robaba alto a la foto, y la foto (que se
+   recorta para llenar su hueco) se veía más cortada en los celulares chicos.
+   La medida se decide por el ancho REAL de la tarjeta y no por el de la
+   pantalla, porque la tarjeta también se achica en pantallas menos altas. */
+.cat-card-verbtn,.cat-card-addbtn{white-space:nowrap;}
+.fb-grid .cat-card{container-type:inline-size;}
+@container (max-width:158px){
+  .cat-card-botones{gap:5px;}
+  .cat-card-verbtn{padding:5px 4px;font-size:10.5px;}
+  .cat-card-addbtn{padding:5px 6px;font-size:10.5px;flex:1.5;}
+}
+
 .cat-card-edit .cat-card-botones{display:none;}
 .cat-card-edit .cat-card-addbtn{display:none;}
 
@@ -186,7 +203,7 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 @media (min-width: 641px){
   /* la página aprovecha mejor el alto disponible: fotos ~10% más grandes
      manteniendo el encuadre 4/3 igual que en el admin */
-  .fb-page{width:min(86vw,72vh);aspect-ratio:76/100;}
+  .fb-page{height:min(100%,calc(86vw * 100 / 76));width:auto;aspect-ratio:76/100;}
 }
 
 /* PC con pantalla baja (notebooks): encabezado y etiqueta compactos para que las fotos respiren */
@@ -732,7 +749,9 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 @media (max-width:640px){
   .kv-cart-fondo{display:block;position:fixed;inset:0;z-index:89;background:#241238;}
   .kv-cart-fondo[hidden]{display:none;}
-  .kv-cart.teclado .kv-cart-pie-fin{position:static;}
+  /* mientras se escribe, los botones desaparecen: no deben estorbar al bajar
+     por el formulario. Vuelven solos al cerrar el teclado (el ✓ del teclado). */
+  .kv-cart.teclado .kv-cart-pie-fin{display:none;}
   .kv-cart.teclado .kv-cart-top{padding:9px 16px;font-size:17px;}
 
   /* el carrito se despega del borde derecho: en pantallas angostas se cortaba,

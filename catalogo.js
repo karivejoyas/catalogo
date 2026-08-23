@@ -583,25 +583,35 @@
   }
 
   // ---- panel del carrito ----
+  // el fondo opaco va aparte del panel (y no dentro) porque el panel se mueve
+  // con transform, y ahí adentro "position:fixed" deja de cubrir la pantalla
+  const carroFondoEl = document.createElement('div');
+  carroFondoEl.className = 'kv-cart-fondo';
+  carroFondoEl.hidden = true;
+  document.body.appendChild(carroFondoEl);
+
   const carritoEl = document.createElement('div');
   carritoEl.className = 'kv-cart';
   carritoEl.id = 'kv-cart';
   carritoEl.hidden = true;
   document.body.appendChild(carritoEl);
 
-  function carroAbrir() { carritoEl.hidden = false; carroVista = carroPedidoOk ? 'ok' : 'carro'; carroRender(); carroAjustarVisor(); }
-  function carroCerrar() { carritoEl.hidden = true; carritoEl.style.transform = ''; }
+  function carroAbrir() { carritoEl.hidden = false; carroFondoEl.hidden = false; carroVista = carroPedidoOk ? 'ok' : 'carro'; carroRender(); carroAjustarVisor(); }
+  function carroCerrar() { carritoEl.hidden = true; carroFondoEl.hidden = true; carritoEl.style.transform = ''; carritoEl.classList.remove('teclado'); }
   $('kv-cart-btn').addEventListener('click', () => { if (carritoEl.hidden) carroAbrir(); else carroCerrar(); });
   $('fb-lb-cart').addEventListener('click', () => { if (lbProd) { carroAgregar(lbProd.id); cerrarLightbox(); } });
 
   // como el chat: en celular ocupa el área visible real (se acomoda al teclado)
   function carroAjustarVisor() {
     if (carritoEl.hidden) return;
-    if (window.innerWidth > 640) { carritoEl.style.transform = ''; return; }
+    if (window.innerWidth > 640) { carritoEl.style.transform = ''; carritoEl.classList.remove('teclado'); return; }
     const vv = window.visualViewport;
     if (!vv) return;
     document.documentElement.style.setProperty('--kv-vvh', vv.height + 'px');
     carritoEl.style.transform = 'translateY(' + vv.offsetTop + 'px)';
+    // si el área visible se achicó mucho es porque salió el teclado: los botones
+    // se sueltan del borde de abajo y el formulario se queda con todo el espacio
+    carritoEl.classList.toggle('teclado', vv.height < window.innerHeight * 0.75);
   }
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', carroAjustarVisor);
@@ -734,11 +744,12 @@
         (carroComprobante ? '<div class="kv-cart-comp-mini" style="background-image:url(\'' + carroComprobante + '\')"></div>' : '');
     }
     h += '<div class="kv-cart-error" id="kv-cart-error" hidden></div>';
-    h += '</div>';   // fin scroll
-    h += '<div class="kv-cart-pie">' +
+    // los botones van DENTRO del formulario (ver .kv-cart-pie-fin en el CSS)
+    h += '<div class="kv-cart-pie kv-cart-pie-fin">' +
       '<button class="kv-cart-btn2" data-role="cart-enviar"' + (carroEnviando ? ' disabled' : '') + '>' + (carroEnviando ? 'Enviando pedido…' : (carroMedio === 'mercadopago' && kvMercadoPago(settings).activo ? '💳 Pagar con tarjeta →' : '✨ Enviar pedido')) + '</button>' +
       '<button class="kv-cart-btn2 sec" data-role="cart-volver">← Volver al carrito</button>' +
       '</div>';
+    h += '</div>';   // fin scroll
     return h;
   }
 

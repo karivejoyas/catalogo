@@ -523,20 +523,22 @@
      galleta, que sobrevive en casos donde localStorage no, y si aun así no
      aparece, la pantalla lo dice con palabras en vez de mostrar un guión. */
   function carroPendGuardar(dato) {
-    const txt = JSON.stringify(dato);
-    try { localStorage.setItem(PEDIDO_PEND_KEY, txt); } catch (e) {}
+    try { localStorage.setItem(PEDIDO_PEND_KEY, JSON.stringify(dato)); } catch (e) {}
     try {
-      document.cookie = PEDIDO_PEND_KEY + '=' + encodeURIComponent(txt) +
+      // en la galleta va solo lo indispensable: tiene un tope de tamaño y el
+      // pedido completo (con todos los artículos) no siempre cabría
+      const chico = JSON.stringify({ total: dato.total, ref: dato.ref, docId: dato.docId });
+      document.cookie = PEDIDO_PEND_KEY + '=' + encodeURIComponent(chico) +
         ';path=/;max-age=7200;samesite=lax' + (location.protocol === 'https:' ? ';secure' : '');
     } catch (e) {}
   }
   function carroPendLeer() {
     let dato = null;
     try { dato = JSON.parse(localStorage.getItem(PEDIDO_PEND_KEY) || 'null'); } catch (e) {}
-    if (dato && dato.num) return dato;
+    if (dato && dato.pedido) return dato;      // lo completo: sirve para todo
     try {
       const m = document.cookie.match(new RegExp('(?:^|; )' + PEDIDO_PEND_KEY + '=([^;]*)'));
-      if (m) { const g = JSON.parse(decodeURIComponent(m[1])); if (g && (!dato || g.num)) return g; }
+      if (m) { const g = JSON.parse(decodeURIComponent(m[1])); if (g) return Object.assign(g, dato || {}); }
     } catch (e) {}
     return dato;
   }
@@ -825,7 +827,7 @@
         ? '<div class="kv-cart-ok-num">Pedido #' + ok.num + '</div>'
         : '<div class="kv-cart-ok-num">¡Listo!</div>') +
       '<p>¡Gracias por tu compra! 💜<br>' +
-        (conNum ? '' : 'Tu pedido quedó registrado y el número te llega al correo.<br>') +
+        (conNum ? '' : 'Tu pedido quedó registrado 💜<br>') +
         'Te enviamos un correo de confirmación.<br>Cuando verifiquemos tu pago, prepararemos tu pedido y te avisaremos cuando vaya en camino.</p>' +
       (waNum ? '<a class="kv-cart-btn2 wa" target="_blank" rel="noopener" href="' + carroWhatsappLink(ok) + '">Enviar mi pedido también por WhatsApp</a>' : '') +
       '<button class="kv-cart-btn2 sec" data-role="cart-fin">Listo</button>' +
@@ -978,25 +980,17 @@
         const dp = await rp.json();
         if (!dp || !dp.ok || !dp.url) throw new Error((dp && dp.error) || 'No se pudo iniciar el pago');
 
-        // 2) número de pedido y aviso por correo (si falla, se sigue igual)
-        let num = 0;
-        try {
-          const rn = await fetch(url, {
-            method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ accion: 'pedido', pedido: pedidoTarjeta, comprobante: '', esperandoPago: true })
-          });
-          const dn = await rn.json();
-          if (dn && dn.ok && dn.num) num = dn.num;
-        } catch (e) { console.warn('No se pudo avisar el pedido:', e); }
-
-        // 3) se guarda el pedido ANTES de mandarla a pagar
-        await kvDb.collection('catalog').doc('pedidos').collection('items').add(Object.assign({}, pedidoTarjeta, {
-          num: num, estado: 'nuevo', fecha: new Date().toISOString(), comprobante: '',
+        // 2) se guarda el pedido ANTES de mandarla a pagar, pero SIN número y SIN
+        //    correo: el aviso "recibimos tu pedido" no puede salir mientras la
+        //    clienta todavía está pagando. El número y el correo se piden al
+        //    volver (o, si no vuelve, desde el panel al verificar el pago).
+        const doc = await kvDb.collection('catalog').doc('pedidos').collection('items').add(Object.assign({}, pedidoTarjeta, {
+          num: 0, estado: 'nuevo', fecha: new Date().toISOString(), comprobante: '',
           pagoEstado: 'esperando-pago', pagoRef: ref, pagoId: '',
           courier: '', tracking: '', trackingUrl: ''
         }));
 
-        carroPendGuardar({ num: num, total: pedido.total, ref: ref });
+        carroPendGuardar({ total: pedido.total, ref: ref, docId: doc.id, pedido: pedidoTarjeta });
         visitaMarcarPedido();
         location.href = dp.url;
         return;
@@ -1043,7 +1037,36 @@
   /* Vuelta desde Mercado Pago. El pedido YA quedó guardado antes de ir a pagar,
      así que acá solo se muestra el resultado: no se escribe nada. Si el navegador
      perdió los datos igual se agradece la compra, porque el pedido existe. */
-  function retomarPagoMP() {
+  /* Los ajustes (entre ellos la dirección del publicador) llegan de la base un
+     instante después de cargar la página. Al volver de pagar hay que esperarlos
+     para poder pedir el número y disparar el correo. */
+  function carroEsperarPublicador() {
+    return new Promise(listo => {
+      const mirar = (quedan) => {
+        const u = String(settings.igPubUrl || '').trim();
+        if (u || quedan <= 0) return listo(u);
+        setTimeout(() => mirar(quedan - 1), 400);
+      };
+      mirar(25);   // hasta unos 10 segundos
+    });
+  }
+
+  /* Pide el número del pedido, que es lo mismo que dispara el correo de
+     "recibimos tu pedido". Se llama SOLO cuando ya pagó. */
+  async function carroNumeroYCorreo(pedido) {
+    const url = await carroEsperarPublicador();
+    if (!url) return 0;
+    try {
+      const r = await fetch(url, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ accion: 'pedido', pedido: pedido, comprobante: '' })
+      });
+      const d = await r.json();
+      return (d && d.ok && d.num) ? d.num : 0;
+    } catch (e) { console.warn('No se pudo pedir el número del pedido:', e); return 0; }
+  }
+
+  async function retomarPagoMP() {
     if (pagoRetomado) return;
     const q = new URLSearchParams(location.search);
     const estado = q.get('pago');
@@ -1061,6 +1084,17 @@
       carroVista = 'ok';
       carritoEl.hidden = false;
       carroRender();
+      // recién ahora que pagó se pide el número y sale el correo de confirmación
+      if (pend && pend.pedido) {
+        const num = await carroNumeroYCorreo(pend.pedido);
+        if (num) {
+          carroPedidoOk.num = num;
+          if (carroVista === 'ok') carroRender();
+          if (pend.docId) {
+            try { await kvDb.collection('catalog').doc('pedidos').collection('items').doc(pend.docId).update({ num: num }); } catch (e) { console.warn('No se pudo guardar el número:', e); }
+          }
+        }
+      }
       return;
     }
     // pago pendiente o rechazado: el pedido quedó guardado esperando el pago

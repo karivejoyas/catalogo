@@ -1698,12 +1698,25 @@
     const nuevos = pedidos.filter(p => (p.estado || 'nuevo') === 'nuevo').length;
     if (badge) { badge.textContent = nuevos; badge.hidden = nuevos === 0; }
     const cont = $('adm-pedidos-lista'); if (!cont) return;
+    /* La clave secreta se guarda en cada dispositivo por separado (a propósito:
+       si viviera en la base, cualquiera podría leerla). Si en este aparato no
+       está, los correos a las clientas fallan. Mejor avisar ANTES de preparar
+       un envío que después con un error. */
+    const avisoClave = (String(settings.igPubUrl || '').trim() && !pubClave())
+      ? '<div class="ped-nota" style="margin:0 0 14px;">⚠ En <b>este</b> dispositivo no está guardada tu clave secreta, así que los correos a las clientas no se van a enviar. Escríbela una vez aquí, en la pestaña <b>«Instagram y Facebook»</b> — es la misma clave del computador.</div>'
+      : '';
     if (!pedidos.length) {
-      cont.innerHTML = '<p class="adm-seccion-sub">Aún no hay pedidos. Cuando una clienta compre desde el carrito del catálogo, aparecerá aquí. 🛒</p>';
+      cont.innerHTML = avisoClave + '<p class="adm-seccion-sub">Aún no hay pedidos. Cuando una clienta compre desde el carrito del catálogo, aparecerá aquí. 🛒</p>';
       return;
     }
-    const lista = pedidos.slice().sort((a, b) => (b.num || 0) - (a.num || 0));
-    cont.innerHTML = lista.map(p => {
+    const lista = pedidos.slice().sort((a, b) => {
+      // los que todavía no tienen número son los más nuevos (se fueron a pagar
+      // recién): van arriba, no enterrados al final de la lista
+      if (!a.num !== !b.num) return a.num ? 1 : -1;
+      if (!a.num && !b.num) return String(b.fecha || '').localeCompare(String(a.fecha || ''));
+      return (b.num || 0) - (a.num || 0);
+    });
+    cont.innerHTML = avisoClave + lista.map(p => {
       const est = kvPedidoEstado(p.estado);
       const abierto = !!pedidosAbiertos[p.id];
       const items = (p.items || []).map(it => '<div class="ped-item"><span>' + it.qty + '× ' + escapeHtml(it.name) + ' <i>' + escapeHtml(it.code || '') + '</i></span><span>' + formatCLP((it.precio || 0) * it.qty) + '</span></div>').join('');
@@ -1711,7 +1724,7 @@
       const telLimpio = String(cli.telefono || '').replace(/[^0-9]/g, '');
       return '<div class="ped-card' + (abierto ? ' abierto' : '') + '" data-id="' + p.id + '">' +
         '<button type="button" class="ped-head" data-role="ped-toggle" data-id="' + p.id + '">' +
-          '<span class="ped-num">#' + (p.num || '—') + '</span>' +
+          '<span class="ped-num">' + (p.num ? '#' + p.num : 'sin N°') + '</span>' +
           '<span class="ped-quien"><b>' + escapeHtml(cli.nombre || 'Sin nombre') + '</b><span>' + pedFecha(p.fecha) + ' · ' + (p.items || []).reduce((s, i) => s + i.qty, 0) + ' art.</span></span>' +
           '<span class="ped-total">' + formatCLP(p.total || 0) + '</span>' +
           '<span class="ped-estado ped-est-' + est.id + '">' + est.emoji + ' ' + est.nombre + '</span>' +
@@ -1840,14 +1853,49 @@
           (aprobado && !montoOk ? ' · ⚠ el monto pagado (' + formatCLP(d.monto) + ') NO calza con el total del pedido' : ''),
         pagoMedio: d.medio || ''
       });
-      window.alert(aprobado
+      // Red de seguridad: el número y el correo de "recibimos tu pedido" se piden
+      // cuando la clienta vuelve de Mercado Pago. Si nunca volvió, el pedido quedó
+      // sin número y sin aviso; al confirmarse el pago se resuelve aquí.
+      let avisoNum = '';
+      if (aprobado && !p.num) {
+        const numNuevo = await pedPedirNumero(p);
+        if (numNuevo) {
+          await pedidosCol.doc(id).update({ num: numNuevo });
+          avisoNum = '\n\nComo la clienta no volvió del pago, recién ahora se le asignó el número #' + numNuevo + ' y se le mandó el correo de confirmación.';
+        } else {
+          avisoNum = '\n\n⚠ No se pudo asignar el número ni mandar el correo de confirmación (revisa la URL del publicador). El pedido igual está aquí.';
+        }
+      }
+      window.alert((aprobado
         ? (montoOk ? '✅ Pago CONFIRMADO por ' + formatCLP(d.monto) + '.\n\nYa puedes preparar el pedido.'
                    : '⚠ El pago está aprobado pero por ' + formatCLP(d.monto) + ', y el pedido es de ' + formatCLP(p.total) + '.\n\nRevisa antes de enviar.')
-        : '⚠ Mercado Pago dice que el pago está en estado "' + d.estado + '".\n\nNO envíes el pedido hasta que aparezca como aprobado.');
+        : '⚠ Mercado Pago dice que el pago está en estado "' + d.estado + '".\n\nNO envíes el pedido hasta que aparezca como aprobado.') + avisoNum);
     } catch (e) {
       window.alert('No se pudo verificar el pago: ' + e.message);
     }
     btn.disabled = false; btn.textContent = txt;
+  }
+
+  /* Pide el número del pedido al publicador. Esa misma llamada es la que manda
+     el correo de "recibimos tu pedido" a la clienta. No necesita la clave
+     secreta, así que funciona aunque este dispositivo no la tenga guardada. */
+  async function pedPedirNumero(p) {
+    const url = String(settings.igPubUrl || '').trim();
+    if (!url) return 0;
+    const pedido = {
+      cliente: p.cliente || {}, direccion: p.direccion || {}, items: p.items || [],
+      subtotal: p.subtotal || 0, cupon: p.cupon || null, envio: p.envio || null,
+      total: p.total || 0, notas: p.notas || '', medioPago: p.medioPago || '',
+      pagoRef: p.pagoRef || ''
+    };
+    try {
+      const r = await fetch(url, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ accion: 'pedido', pedido: pedido, comprobante: '' })
+      });
+      const d = await r.json();
+      return (d && d.ok && d.num) ? d.num : 0;
+    } catch (e) { console.warn('No se pudo pedir el número:', e); return 0; }
   }
 
   async function pedMarcarEnviado(id, btn) {
@@ -1863,8 +1911,10 @@
     const correoCli = String((p.cliente || {}).correo || '').trim();
     // se dice EXACTAMENTE por qué no salió el correo: antes el aviso siempre
     // culpaba a la URL y a la clave, aunque el problema fuera otro
-    if (!url || !clave) {
-      motivo = 'Falta la URL del publicador o tu clave secreta, en la pestaña "Instagram y Facebook".';
+    if (!url) {
+      motivo = 'Falta la URL del publicador, en la pestaña "Instagram y Facebook".';
+    } else if (!clave) {
+      motivo = 'En ESTE dispositivo no está guardada tu clave secreta. Por seguridad la clave no se comparte entre el teléfono y el computador: hay que escribirla una vez en cada uno, en la pestaña "Instagram y Facebook". Es la misma clave.';
     } else if (!correoCli) {
       motivo = 'Este pedido no trae el correo de la clienta.';
     } else {

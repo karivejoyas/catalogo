@@ -1635,7 +1635,7 @@
     const info = Object.assign({}, KV_INFO_DEFAULT, settings.info || {});
     ['titulo', 'b1', 'b2', 'b3', 'b4'].forEach(k => { const inp = $('adm-info-' + k); if (inp && activo() !== inp) inp.value = info[k] || ''; });
 
-    const howto = Object.assign({}, KV_HOWTO_DEFAULT, settings.howto || {});
+    const howto = Object.assign({}, kvHowtoDefault(settings), settings.howto || {});
     if (activo() !== $('adm-howto-titulo')) $('adm-howto-titulo').value = howto.titulo || '';
     for (let i = 1; i <= 6; i++) {
       ['t', 'd'].forEach(s => { const inp = $('adm-howto-p' + i + s); if (inp && activo() !== inp) inp.value = howto['p' + i + s] || ''; });

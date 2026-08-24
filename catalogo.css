@@ -22,8 +22,13 @@ input::placeholder{color:rgba(255,255,255,0.4);}
 /* ============================================================
    FLIPBOOK (catálogo público estilo revista)
    ============================================================ */
-.fb-body{height:100vh;height:100dvh;overflow:hidden;}
-.fb-app{height:100vh;height:100dvh;display:flex;flex-direction:column;background:radial-gradient(120% 100% at 50% 0%, #1e0f30 0%, var(--kv-morado-osc) 80%);}
+/* El alto se mide con svh (la pantalla MAS CHICA posible, o sea con la barra
+   de abajo de Safari a la vista) y no con dvh. Con dvh, cuando esa barra
+   aparecia de golpe el catalogo quedaba mas alto que lo que se veia y se
+   cortaba la fila de abajo. Con svh nunca se corta; a cambio, cuando la barra
+   se esconde queda una franja abajo del mismo color del fondo, que no se nota. */
+.fb-body{height:100vh;height:100svh;overflow:hidden;}
+.fb-app{height:100vh;height:100svh;display:flex;flex-direction:column;background:radial-gradient(120% 100% at 50% 0%, #1e0f30 0%, var(--kv-morado-osc) 80%);}
 
 .fb-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px clamp(12px,3vw,28px);flex:0 0 auto;}
 .fb-logo img{display:block;height:56px;width:auto;filter:drop-shadow(0 0 6px rgba(255,255,255,0.3)) brightness(1.25);}

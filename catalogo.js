@@ -98,7 +98,7 @@
       );
     }
     if (s.type === 'howto') {
-      const h = Object.assign({}, KV_HOWTO_DEFAULT, settings.howto || {});
+      const h = Object.assign({}, kvHowtoDefault(settings), settings.howto || {});
       let pasos = '';
       for (let i = 1; i <= 6; i++) {
         const t = h['p' + i + 't'], d = h['p' + i + 'd'];
@@ -706,10 +706,17 @@
       inp('telefono', 'Teléfono (ej: +56 9 1234 5678) *', 'tel') +
       '<div class="kv-cart-sec-tit">Envío</div>' +
       inp('direccion', 'Dirección (calle y número, depto…) *') +
-      inp('comuna', 'Comuna *') +
+      // primero la región y después la comuna: la lista de comunas depende de ella
       '<div class="kv-cart-selwrap"><select class="kv-cart-inp kv-cart-sel' + (f.region ? '' : ' vacio') + '" data-campo="region">' +
         '<option value="" disabled' + (f.region ? '' : ' selected') + '>Región *</option>' +
         KV_REGIONES.map(r => '<option value="' + r + '"' + (f.region === r ? ' selected' : '') + '>' + r + '</option>').join('') + '</select><span class="kv-cart-selflecha">▾</span></div>' +
+      (() => {
+        const comunas = kvComunasDe(f.region);
+        return '<div class="kv-cart-selwrap"><select class="kv-cart-inp kv-cart-sel' + (f.comuna ? '' : ' vacio') + '" data-campo="comuna"' + (comunas.length ? '' : ' disabled') + '>' +
+          '<option value="" disabled' + (f.comuna ? '' : ' selected') + '>' + (comunas.length ? 'Comuna *' : 'Elige primero tu región') + '</option>' +
+          comunas.map(c => '<option value="' + escapeHtml(c) + '"' + (f.comuna === c ? ' selected' : '') + '>' + escapeHtml(c) + '</option>').join('') +
+          '</select><span class="kv-cart-selflecha">▾</span></div>';
+      })() +
       inp('notas', 'Nota para tu pedido (opcional)');
     // cupón de descuento
     h += '<div class="kv-cart-sec-tit">¿Tienes un cupón?</div>' +
@@ -827,7 +834,11 @@
       n.addEventListener(ev, () => {
         carroForm[n.dataset.campo] = n.value;
         visitaGuardarContacto();                           // por si abandona el pedido a medias
-        if (n.dataset.campo === 'region') carroRender();   // recalcula el envío
+        if (n.dataset.campo === 'region') {
+          // la comuna elegida antes puede no existir en la región nueva
+          if (carroForm.comuna && kvComunasDe(n.value).indexOf(carroForm.comuna) === -1) carroForm.comuna = '';
+          carroRender();                                   // recalcula el envío y la lista de comunas
+        }
       });
     });
     const cpt = carritoEl.querySelector('[data-role="copiar-transf"]');
@@ -879,8 +890,9 @@
     if (!f.nombre.trim()) { carroError('Escribe tu nombre.'); return; }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.correo.trim())) { carroError('Revisa tu correo electrónico.'); return; }
     if (!f.telefono.trim()) { carroError('Escribe tu teléfono.'); return; }
-    if (!f.direccion.trim() || !f.comuna.trim()) { carroError('Completa tu dirección y comuna.'); return; }
+    if (!f.direccion.trim()) { carroError('Escribe tu dirección.'); return; }
     if (!f.region) { carroError('Elige tu región para calcular el envío.'); return; }
+    if (!f.comuna.trim()) { carroError('Elige tu comuna en la lista.'); return; }
     const conTarjeta = carroMedio === 'mercadopago' && kvMercadoPago(settings).activo;
     if (!conTarjeta && !carroComprobante) { carroError('Adjunta el comprobante de tu transferencia para confirmar el pedido.'); return; }
     const url = String(settings.igPubUrl || '').trim();

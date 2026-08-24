@@ -1775,11 +1775,19 @@
                 '<input class="adm-input" id="ped-courier-' + p.id + '" placeholder="Courier" value="' + escapeHtml(p.courier || 'Bluexpress') + '" />' +
                 '<input class="adm-input" id="ped-track-' + p.id + '" placeholder="N° de seguimiento" value="' + escapeHtml(p.tracking || '') + '" />' +
                 '<input class="adm-input" id="ped-turl-' + p.id + '" placeholder="Link de seguimiento (pégalo aquí)" value="' + escapeHtml(p.trackingUrl || '') + '" />' +
-                '<button class="adm-btn-solido adm-btn-mini" data-role="ped-enviar" data-id="' + p.id + '">🚚 Marcar enviado y avisar por correo</button>' +
+                // dos botones separados: marcar enviado NO manda nada. El correo
+                // a la clienta sale solo cuando se aprieta el otro botón.
+                '<button class="adm-btn-solido adm-btn-mini" data-role="ped-enviar" data-id="' + p.id + '">📦 Marcar enviado</button>' +
+                '<button class="adm-btn-borde adm-btn-mini" data-role="ped-avisar" data-id="' + p.id + '">✉️ Avisar por correo</button>' +
               '</div>' : '') +
             (est.id === 'enviado' ?
               '<div class="ped-enviado-info">🚚 ' + escapeHtml(p.courier || 'Bluexpress') + (p.tracking ? ' · ' + escapeHtml(p.tracking) : '') +
-              (p.trackingUrl ? ' · <a href="' + escapeHtml(p.trackingUrl) + '" target="_blank" rel="noopener">ver seguimiento</a>' : '') + '</div>' : '') +
+              (p.trackingUrl ? ' · <a href="' + escapeHtml(p.trackingUrl) + '" target="_blank" rel="noopener">ver seguimiento</a>' : '') +
+              (p.avisoFecha
+                ? '<div class="ped-aviso-ok">✉️ Avisada por correo el ' + escapeHtml(pedFecha(p.avisoFecha)) + '</div>'
+                : '<div class="ped-aviso-no">✉️ Todavía no le has avisado por correo</div>') +
+              '</div>' +
+              (p.avisoFecha ? '' : '<button class="adm-btn-borde adm-btn-mini" data-role="ped-avisar" data-id="' + p.id + '">✉️ Avisar por correo</button>') : '') +
             (est.id !== 'nuevo' ? '<button class="adm-btn-borde adm-btn-mini" data-role="ped-estado" data-id="' + p.id + '" data-est="' + KV_PEDIDO_ESTADOS[Math.max(0, KV_PEDIDO_ESTADOS.findIndex(e => e.id === est.id) - 1)].id + '">↩ Retroceder</button>' : '') +
             '<button class="adm-btn-borde adm-btn-mini ped-borrar" data-role="ped-borrar" data-id="' + p.id + '">Eliminar</button>' +
           '</div>' +
@@ -1804,6 +1812,7 @@
       pedidosCol.doc(n.dataset.id).delete().catch(err => console.error(err));
     }));
     cont.querySelectorAll('[data-role="ped-enviar"]').forEach(n => n.addEventListener('click', () => pedMarcarEnviado(n.dataset.id, n)));
+    cont.querySelectorAll('[data-role="ped-avisar"]').forEach(n => n.addEventListener('click', () => pedAvisarCorreo(n.dataset.id, n)));
     cont.querySelectorAll('[data-role="ped-verificar"]').forEach(n => n.addEventListener('click', () => pedVerificarPago(n.dataset.id, n)));
     // corregir los datos de la clienta
     cont.querySelectorAll('[data-role="ped-editar"]').forEach(n => n.addEventListener('click', () => { pedEditando = n.dataset.id; renderPedidos(); }));
@@ -1975,32 +1984,62 @@
     } catch (e) { console.warn('No se pudo pedir el número:', e); return 0; }
   }
 
+  /* Marcar enviado NO avisa a nadie: solo anota el courier y el seguimiento.
+     El correo a la clienta sale con el otro botón, cuando ella quiera. Antes
+     iban juntos y no había forma de guardar el despacho sin escribirle. */
   async function pedMarcarEnviado(id, btn) {
     const p = pedidos.find(x => x.id === id); if (!p) return;
-    const courier = ($('ped-courier-' + id).value || 'Bluexpress').trim();
-    const tracking = $('ped-track-' + id).value.trim();
-    const trackingUrl = $('ped-turl-' + id).value.trim();
-    if (!tracking && !window.confirm('No pusiste número de seguimiento. ¿Avisar igual a la clienta?')) return;
+    const datos = pedDatosEnvio(id, p);
+    const txt = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+      await pedidosCol.doc(id).update({
+        estado: 'enviado', courier: datos.courier, tracking: datos.tracking,
+        trackingUrl: datos.trackingUrl, enviadoFecha: new Date().toISOString()
+      });
+    } catch (e) {
+      window.alert('No se pudo guardar: ' + e.message);
+      btn.disabled = false; btn.textContent = txt;
+    }
+  }
+
+  // lee el courier y el seguimiento de los campos, o de lo que ya estaba guardado
+  function pedDatosEnvio(id, p) {
+    const c = $('ped-courier-' + id), t = $('ped-track-' + id), u = $('ped-turl-' + id);
+    return {
+      courier: ((c ? c.value : '') || p.courier || 'Bluexpress').trim(),
+      tracking: ((t ? t.value : '') || p.tracking || '').trim(),
+      trackingUrl: ((u ? u.value : '') || p.trackingUrl || '').trim()
+    };
+  }
+
+  /* Le escribe a la clienta con su número de seguimiento. Va aparte porque a
+     veces el pedido se despacha antes de tener el número, o ella prefiere
+     avisar por WhatsApp. */
+  async function pedAvisarCorreo(id, btn) {
+    const p = pedidos.find(x => x.id === id); if (!p) return;
+    const datos = pedDatosEnvio(id, p);
+    if (!datos.tracking && !window.confirm('Este pedido no tiene número de seguimiento.\n\n¿Le mando el correo igual?')) return;
     const url = String(settings.igPubUrl || '').trim();
     const clave = pubClave();
+    const correoCli = String((p.cliente || {}).correo || '').trim();
+    const txt = btn.textContent;
     btn.disabled = true; btn.textContent = 'Enviando correo…';
     let correoOk = false, motivo = '';
-    const correoCli = String((p.cliente || {}).correo || '').trim();
-    // se dice EXACTAMENTE por qué no salió el correo: antes el aviso siempre
-    // culpaba a la URL y a la clave, aunque el problema fuera otro
+    // se dice EXACTAMENTE por qué no salió el correo
     if (!url) {
       motivo = 'Falta la URL del publicador, en la pestaña "Instagram y Facebook".';
     } else if (!clave) {
       motivo = 'En ESTE dispositivo no está guardada tu clave secreta. Por seguridad la clave no se comparte entre el teléfono y el computador: hay que escribirla una vez en cada uno, en la pestaña "Instagram y Facebook". Es la misma clave.';
     } else if (!correoCli) {
-      motivo = 'Este pedido no trae el correo de la clienta.';
+      motivo = 'Este pedido no trae el correo de la clienta. Puedes ponerlo con el botón «Corregir».';
     } else {
       const sugerido = kvCorreoOjo(correoCli);
       try {
         const r = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ accion: 'pedido-envio', clave: clave, num: p.num, correo: correoCli, nombre: p.cliente.nombre, courier: courier, tracking: tracking, trackingUrl: trackingUrl })
+          body: JSON.stringify({ accion: 'pedido-envio', clave: clave, num: p.num, correo: correoCli, nombre: (p.cliente || {}).nombre || '', courier: datos.courier, tracking: datos.tracking, trackingUrl: datos.trackingUrl })
         });
         const d = await r.json();
         correoOk = !!(d && d.ok);
@@ -2009,12 +2048,21 @@
         motivo = 'No se pudo hablar con el publicador (' + e.message + ').';
       }
       if (!correoOk && sugerido) {
-        motivo += '\n\n⚠ Ojo: el correo dice "' + correoCli + '" y parece mal escrito. Quizás es "' + sugerido + '".';
+        motivo += '\n\n\u26A0 Ojo: el correo dice \"' + correoCli + '\" y parece mal escrito. Quizás es \"' + sugerido + '\".';
       }
     }
-    pedidosCol.doc(id).update({ estado: 'enviado', courier: courier, tracking: tracking, trackingUrl: trackingUrl, enviadoFecha: new Date().toISOString() })
-      .catch(err => console.error(err));
-    if (!correoOk) window.alert('El pedido quedó marcado como ENVIADO, pero el correo a la clienta no se pudo mandar.\n\nMotivo: ' + motivo + '\n\nPuedes avisarle por WhatsApp.');
+    if (correoOk) {
+      try {
+        await pedidosCol.doc(id).update({
+          courier: datos.courier, tracking: datos.tracking, trackingUrl: datos.trackingUrl,
+          avisoFecha: new Date().toISOString()
+        });
+      } catch (e) { console.warn('No se pudo anotar el aviso:', e); }
+      window.alert('\u2705 Correo enviado a ' + correoCli + '.');
+    } else {
+      window.alert('No se pudo mandar el correo a la clienta.\n\nMotivo: ' + motivo + '\n\nEl pedido no cambió. Puedes avisarle por WhatsApp.');
+      btn.disabled = false; btn.textContent = txt;
+    }
   }
 
   // ---------- VISITAS ----------

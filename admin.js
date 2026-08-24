@@ -1668,6 +1668,7 @@
   });
 
   const pedidosAbiertos = {};   // id -> true (detalle expandido)
+  let pedEditando = '';         // id del pedido cuyos datos se están corrigiendo
 
   /* Aviso anti-abuso del cupón: marca si esta persona YA hizo un pedido antes
      (mismo correo, teléfono o dirección). No bloquea nada — tú decides. */
@@ -1738,14 +1739,17 @@
               '<div class="ped-item ped-tot"><span>Total</span><span>' + formatCLP(p.total || 0) + '</span></div>' +
               (p.notas ? '<div class="ped-nota">📝 ' + escapeHtml(p.notas) + '</div>' : '') +
             '</div>' +
-            '<div><div class="ped-sub">Cliente y envío</div>' +
-              '<div class="ped-dato">' + escapeHtml(cli.nombre || '') + '</div>' +
-              '<div class="ped-dato">📍 ' + escapeHtml(dir.calle || '') + ', ' + escapeHtml(dir.comuna || '') + '<br>' + escapeHtml(dir.region || '') + '</div>' +
-              '<div class="ped-dato">✉️ <a href="mailto:' + escapeHtml(cli.correo || '') + '">' + escapeHtml(cli.correo || '') + '</a>' +
+            '<div><div class="ped-sub">Cliente y envío' +
+                (pedEditando === p.id ? '' : ' <button type="button" class="adm-btn-borde adm-btn-mini" data-role="ped-editar" data-id="' + p.id + '">✏️ Corregir</button>') +
+              '</div>' +
+              (pedEditando === p.id ? pedFormEditar(p) : '') +
+              '<div class="ped-dato"' + (pedEditando === p.id ? ' hidden' : '') + '>' + escapeHtml(cli.nombre || '') + '</div>' +
+              '<div class="ped-dato"' + (pedEditando === p.id ? ' hidden' : '') + '>📍 ' + escapeHtml(dir.calle || '') + ', ' + escapeHtml(dir.comuna || '') + '<br>' + escapeHtml(dir.region || '') + '</div>' +
+              '<div class="ped-dato"' + (pedEditando === p.id ? ' hidden' : '') + '>✉️ <a href="mailto:' + escapeHtml(cli.correo || '') + '">' + escapeHtml(cli.correo || '') + '</a>' +
                 // avisa antes de preparar el envío: con el correo malo no le llega nada
                 (kvCorreoOjo(cli.correo || '') ? '<div class="ped-nota">⚠ Este correo parece mal escrito. ¿Será <b>' + escapeHtml(kvCorreoOjo(cli.correo)) + '</b>? Conviene confirmarlo por WhatsApp antes de enviar.</div>' : '') +
               '</div>' +
-              '<div class="ped-dato">📱 <a target="_blank" rel="noopener" href="https://wa.me/' + telLimpio + '">' + escapeHtml(cli.telefono || '') + '</a></div>' +
+              '<div class="ped-dato"' + (pedEditando === p.id ? ' hidden' : '') + '>📱 <a target="_blank" rel="noopener" href="https://wa.me/' + telLimpio + '">' + escapeHtml(cli.telefono || '') + '</a></div>' +
               '<div class="ped-sub" style="margin-top:10px;">' + (p.medioPago === 'mercadopago' ? 'Pago con tarjeta' : 'Comprobante') + '</div>' +
               (p.medioPago === 'mercadopago'
                 ? '<div class="ped-mp' + (p.pagoEstado === 'approved' ? ' ok' : (p.pagoEstado === 'rejected' || p.pagoEstado === 'cancelled' ? ' mal' : ' pend')) + '">' +
@@ -1801,6 +1805,17 @@
     }));
     cont.querySelectorAll('[data-role="ped-enviar"]').forEach(n => n.addEventListener('click', () => pedMarcarEnviado(n.dataset.id, n)));
     cont.querySelectorAll('[data-role="ped-verificar"]').forEach(n => n.addEventListener('click', () => pedVerificarPago(n.dataset.id, n)));
+    // corregir los datos de la clienta
+    cont.querySelectorAll('[data-role="ped-editar"]').forEach(n => n.addEventListener('click', () => { pedEditando = n.dataset.id; renderPedidos(); }));
+    cont.querySelectorAll('[data-role="ped-cancelar-datos"]').forEach(n => n.addEventListener('click', () => { pedEditando = ''; renderPedidos(); }));
+    cont.querySelectorAll('[data-role="ped-guardar-datos"]').forEach(n => n.addEventListener('click', () => pedGuardarDatos(n.dataset.id)));
+    // al cambiar de región se rehace la lista de comunas, sin perder lo escrito
+    cont.querySelectorAll('[data-role="ped-ed-region"]').forEach(n => n.addEventListener('change', () => {
+      const id = n.dataset.id, sel = $('ped-ed-comuna-' + id);
+      if (!sel) return;
+      const comunas = kvComunasDe(n.value);
+      sel.innerHTML = comunas.map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join('');
+    }));
   }
   /* descuenta del stock lo que lleva el pedido. Solo afecta a los productos que
      tienen una cantidad anotada; los que están "sin control" quedan igual.
@@ -1879,6 +1894,68 @@
   /* Pide el número del pedido al publicador. Esa misma llamada es la que manda
      el correo de "recibimos tu pedido" a la clienta. No necesita la clave
      secreta, así que funciona aunque este dispositivo no la tenga guardada. */
+  /* Corregir los datos de una clienta. Pasa seguido: escribe mal el correo o
+     da la dirección incompleta, y después la manda bien por WhatsApp. Se puede
+     arreglar sin tener que rehacer el pedido. Los artículos y el total NO se
+     tocan aquí: eso es lo que ella compró y pagó. */
+  function pedFormEditar(p) {
+    const cli = p.cliente || {}, dir = p.direccion || {};
+    const campo = (id, etiqueta, valor, tipo) =>
+      '<label class="ped-edit-campo"><span>' + etiqueta + '</span>' +
+      '<input class="adm-input" id="ped-ed-' + id + '-' + p.id + '" type="' + (tipo || 'text') + '" value="' + escapeHtml(valor || '') + '" /></label>';
+    const comunas = kvComunasDe(dir.region || '');
+    return '<div class="ped-edit">' +
+      campo('nombre', 'Nombre', cli.nombre) +
+      campo('correo', 'Correo', cli.correo, 'email') +
+      campo('telefono', 'Teléfono', cli.telefono, 'tel') +
+      campo('calle', 'Dirección', dir.calle) +
+      '<label class="ped-edit-campo"><span>Región</span>' +
+        '<select class="adm-input" id="ped-ed-region-' + p.id + '" data-role="ped-ed-region" data-id="' + p.id + '">' +
+        KV_REGIONES.map(r => '<option value="' + escapeHtml(r) + '"' + (dir.region === r ? ' selected' : '') + '>' + escapeHtml(r) + '</option>').join('') +
+        '</select></label>' +
+      '<label class="ped-edit-campo"><span>Comuna</span>' +
+        '<select class="adm-input" id="ped-ed-comuna-' + p.id + '">' +
+        (dir.comuna && comunas.indexOf(dir.comuna) < 0 ? '<option value="' + escapeHtml(dir.comuna) + '" selected>' + escapeHtml(dir.comuna) + ' (como venía)</option>' : '') +
+        comunas.map(c => '<option value="' + escapeHtml(c) + '"' + (dir.comuna === c ? ' selected' : '') + '>' + escapeHtml(c) + '</option>').join('') +
+        '</select></label>' +
+      '<div class="ped-edit-nota">El envío se recalcula solo si cambias de región.</div>' +
+      '<div class="ped-edit-botones">' +
+        '<button type="button" class="adm-btn" data-role="ped-guardar-datos" data-id="' + p.id + '">Guardar</button>' +
+        '<button type="button" class="adm-btn-borde" data-role="ped-cancelar-datos">Cancelar</button>' +
+      '</div></div>';
+  }
+
+  async function pedGuardarDatos(id) {
+    const p = pedidos.find(x => x.id === id); if (!p) return;
+    const v = (c) => { const n = $('ped-ed-' + c + '-' + id); return n ? n.value.trim() : ''; };
+    const correo = v('correo');
+    if (!correo || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) { window.alert('Revisa el correo: no parece válido.'); return; }
+    const sugerido = kvCorreoOjo(correo);
+    if (sugerido && !window.confirm('El correo "' + correo + '" parece mal escrito.\n\n¿Quisiste poner "' + sugerido + '"?\n\nAceptar = guardar igual lo que escribiste.')) return;
+
+    const region = v('region');
+    const cambioRegion = region !== ((p.direccion || {}).region || '');
+    const cambios = {
+      cliente: Object.assign({}, p.cliente || {}, { nombre: v('nombre'), correo: correo, telefono: v('telefono') }),
+      direccion: Object.assign({}, p.direccion || {}, { calle: v('calle'), comuna: v('comuna'), region: region }),
+      datosCorregidos: new Date().toISOString()
+    };
+    // si cambió la región cambia el costo del envío, y con él el total
+    if (cambioRegion) {
+      const envioNuevo = kvEnvioCosto(region);
+      const totalNuevo = Math.max(0, Number(p.total || 0) - Number((p.envio || {}).costo || 0)) + envioNuevo;
+      if (!window.confirm('Cambiaste la región.' + '\n\n' + 'El envío pasa de ' + formatCLP((p.envio || {}).costo || 0) + ' a ' + formatCLP(envioNuevo) +
+                          ', y el total del pedido de ' + formatCLP(p.total || 0) + ' a ' + formatCLP(totalNuevo) + '.' + '\n\n' + '¿Lo dejo así?')) return;
+      cambios.envio = Object.assign({}, p.envio || {}, { region: region, costo: envioNuevo });
+      cambios.total = totalNuevo;
+    }
+    try {
+      await pedidosCol.doc(id).update(cambios);
+      pedEditando = '';
+      renderPedidos();
+    } catch (e) { window.alert('No se pudo guardar: ' + e.message); }
+  }
+
   async function pedPedirNumero(p) {
     const url = String(settings.igPubUrl || '').trim();
     if (!url) return 0;

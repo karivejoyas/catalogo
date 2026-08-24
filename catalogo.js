@@ -516,11 +516,40 @@
   let carroPedidoOk = null;          // {num, total} tras enviar
   let carroEnviando = false;
   const PEDIDO_PEND_KEY = 'kv_pedido_pendiente';   // pedido guardado mientras se paga en Mercado Pago
+  /* Al volver de Mercado Pago hay que recordar el número del pedido. Guardarlo
+     solo en localStorage no basta: si el pago abre la app de Mercado Pago y la
+     vuelta cae en otra ventana de Safari, ese dato a veces se pierde y el
+     "¡Pedido recibido!" salía como "Pedido #—". Se guarda también en una
+     galleta, que sobrevive en casos donde localStorage no, y si aun así no
+     aparece, la pantalla lo dice con palabras en vez de mostrar un guión. */
+  function carroPendGuardar(dato) {
+    const txt = JSON.stringify(dato);
+    try { localStorage.setItem(PEDIDO_PEND_KEY, txt); } catch (e) {}
+    try {
+      document.cookie = PEDIDO_PEND_KEY + '=' + encodeURIComponent(txt) +
+        ';path=/;max-age=7200;samesite=lax' + (location.protocol === 'https:' ? ';secure' : '');
+    } catch (e) {}
+  }
+  function carroPendLeer() {
+    let dato = null;
+    try { dato = JSON.parse(localStorage.getItem(PEDIDO_PEND_KEY) || 'null'); } catch (e) {}
+    if (dato && dato.num) return dato;
+    try {
+      const m = document.cookie.match(new RegExp('(?:^|; )' + PEDIDO_PEND_KEY + '=([^;]*)'));
+      if (m) { const g = JSON.parse(decodeURIComponent(m[1])); if (g && (!dato || g.num)) return g; }
+    } catch (e) {}
+    return dato;
+  }
+  function carroPendBorrar() {
+    try { localStorage.removeItem(PEDIDO_PEND_KEY); } catch (e) {}
+    try { document.cookie = PEDIDO_PEND_KEY + '=;path=/;max-age=0'; } catch (e) {}
+  }
   let carroMedio = 'transferencia';  // 'transferencia' | 'mercadopago'
   let carroCupon = null;             // cupón aplicado {codigo, tipo, valor…}
   let carroCuponTxt = '';            // lo que la clienta escribió en la casilla
   let carroCuponError = '';
   const carroForm = { nombre: '', correo: '', telefono: '', direccion: '', comuna: '', region: '', notas: '' };
+  let carroCorreoAvisado = '';   // correo sobre el que ya se avisó (para no insistir)
 
   function carroGuardar() {
     try { localStorage.setItem(CARRO_KEY, JSON.stringify(carro)); } catch (e) {}
@@ -788,9 +817,16 @@
   function carroHtmlOk() {
     const ok = carroPedidoOk;
     const waNum = carroWhatsappNum();
+    // si el número no llegó de vuelta (ver carroPendLeer) igual se agradece bien:
+    // el pedido está guardado y el número va en el correo
+    const conNum = !!ok.num && ok.num !== '—';
     return '<div class="kv-cart-ok">' +
-      '<div class="kv-cart-ok-num">Pedido #' + ok.num + '</div>' +
-      '<p>¡Gracias por tu compra! 💜<br>Te enviamos un correo de confirmación.<br>Cuando verifiquemos tu pago, prepararemos tu pedido y te avisaremos cuando vaya en camino.</p>' +
+      (conNum
+        ? '<div class="kv-cart-ok-num">Pedido #' + ok.num + '</div>'
+        : '<div class="kv-cart-ok-num">¡Listo!</div>') +
+      '<p>¡Gracias por tu compra! 💜<br>' +
+        (conNum ? '' : 'Tu pedido quedó registrado y el número te llega al correo.<br>') +
+        'Te enviamos un correo de confirmación.<br>Cuando verifiquemos tu pago, prepararemos tu pedido y te avisaremos cuando vaya en camino.</p>' +
       (waNum ? '<a class="kv-cart-btn2 wa" target="_blank" rel="noopener" href="' + carroWhatsappLink(ok) + '">Enviar mi pedido también por WhatsApp</a>' : '') +
       '<button class="kv-cart-btn2 sec" data-role="cart-fin">Listo</button>' +
       '</div>';
@@ -804,7 +840,12 @@
   }
   function carroWhatsappLink(ok) {
     const num = carroWhatsappNum();
-    const txt = 'Hola Karivé 💜 Soy ' + carroForm.nombre + ', acabo de hacer el pedido #' + ok.num + ' por ' + formatCLP(ok.total) + ' en el catálogo. ¡Quedo atenta!';
+    const conNum = !!ok.num && ok.num !== '—';
+    // al volver de Mercado Pago la página se recarga y el nombre puede venir vacío
+    const quien = carroForm.nombre.trim() ? 'Soy ' + carroForm.nombre.trim() + ', acabo' : 'Acabo';
+    const txt = 'Hola Karivé 💜 ' + quien + ' de hacer ' +
+      (conNum ? 'el pedido #' + ok.num : 'un pedido') +
+      (ok.total ? ' por ' + formatCLP(ok.total) : '') + ' en el catálogo. ¡Quedo atenta!';
     return 'https://wa.me/' + num + '?text=' + encodeURIComponent(txt);
   }
 
@@ -889,6 +930,13 @@
     if (!items.length) { carroError('Tu carrito quedó vacío.'); return; }
     if (!f.nombre.trim()) { carroError('Escribe tu nombre.'); return; }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.correo.trim())) { carroError('Revisa tu correo electrónico.'); return; }
+    // errores de tipeo típicos: se avisa una vez y, si insiste, se respeta lo que escribió
+    const sugerido = kvCorreoOjo(f.correo);
+    if (sugerido && carroCorreoAvisado !== f.correo.trim()) {
+      carroCorreoAvisado = f.correo.trim();
+      carroError('¿Escribiste bien tu correo? Quizás quisiste poner ' + sugerido + '. Si tu correo está bien, vuelve a tocar el botón. Es importante: ahí te llega tu pedido.');
+      return;
+    }
     if (!f.telefono.trim()) { carroError('Escribe tu teléfono.'); return; }
     if (!f.direccion.trim()) { carroError('Escribe tu dirección.'); return; }
     if (!f.region) { carroError('Elige tu región para calcular el envío.'); return; }
@@ -948,7 +996,7 @@
           courier: '', tracking: '', trackingUrl: ''
         }));
 
-        try { localStorage.setItem(PEDIDO_PEND_KEY, JSON.stringify({ num: num, total: pedido.total, ref: ref })); } catch (e) {}
+        carroPendGuardar({ num: num, total: pedido.total, ref: ref });
         visitaMarcarPedido();
         location.href = dp.url;
         return;
@@ -1001,16 +1049,15 @@
     const estado = q.get('pago');
     if (!estado) return;
     pagoRetomado = true;
-    let pend = null;
-    try { pend = JSON.parse(localStorage.getItem(PEDIDO_PEND_KEY) || 'null'); } catch (e) {}
+    const pend = carroPendLeer();
     history.replaceState(null, '', location.pathname);   // limpia la dirección
-    try { localStorage.removeItem(PEDIDO_PEND_KEY); } catch (e) {}
+    carroPendBorrar();
 
     if (estado === 'ok') {
       carro = {}; carroComprobante = null;
       carroCupon = null; carroCuponTxt = ''; carroCuponError = '';
       carroGuardar();
-      carroPedidoOk = { num: (pend && pend.num) || '—', total: (pend && pend.total) || 0 };
+      carroPedidoOk = { num: (pend && pend.num) || 0, total: (pend && pend.total) || 0 };
       carroVista = 'ok';
       carritoEl.hidden = false;
       carroRender();

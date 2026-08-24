@@ -1728,7 +1728,10 @@
             '<div><div class="ped-sub">Cliente y envío</div>' +
               '<div class="ped-dato">' + escapeHtml(cli.nombre || '') + '</div>' +
               '<div class="ped-dato">📍 ' + escapeHtml(dir.calle || '') + ', ' + escapeHtml(dir.comuna || '') + '<br>' + escapeHtml(dir.region || '') + '</div>' +
-              '<div class="ped-dato">✉️ <a href="mailto:' + escapeHtml(cli.correo || '') + '">' + escapeHtml(cli.correo || '') + '</a></div>' +
+              '<div class="ped-dato">✉️ <a href="mailto:' + escapeHtml(cli.correo || '') + '">' + escapeHtml(cli.correo || '') + '</a>' +
+                // avisa antes de preparar el envío: con el correo malo no le llega nada
+                (kvCorreoOjo(cli.correo || '') ? '<div class="ped-nota">⚠ Este correo parece mal escrito. ¿Será <b>' + escapeHtml(kvCorreoOjo(cli.correo)) + '</b>? Conviene confirmarlo por WhatsApp antes de enviar.</div>' : '') +
+              '</div>' +
               '<div class="ped-dato">📱 <a target="_blank" rel="noopener" href="https://wa.me/' + telLimpio + '">' + escapeHtml(cli.telefono || '') + '</a></div>' +
               '<div class="ped-sub" style="margin-top:10px;">' + (p.medioPago === 'mercadopago' ? 'Pago con tarjeta' : 'Comprobante') + '</div>' +
               (p.medioPago === 'mercadopago'
@@ -1856,22 +1859,35 @@
     const url = String(settings.igPubUrl || '').trim();
     const clave = pubClave();
     btn.disabled = true; btn.textContent = 'Enviando correo…';
-    let correoOk = false;
-    if (url && clave && (p.cliente || {}).correo) {
+    let correoOk = false, motivo = '';
+    const correoCli = String((p.cliente || {}).correo || '').trim();
+    // se dice EXACTAMENTE por qué no salió el correo: antes el aviso siempre
+    // culpaba a la URL y a la clave, aunque el problema fuera otro
+    if (!url || !clave) {
+      motivo = 'Falta la URL del publicador o tu clave secreta, en la pestaña "Instagram y Facebook".';
+    } else if (!correoCli) {
+      motivo = 'Este pedido no trae el correo de la clienta.';
+    } else {
+      const sugerido = kvCorreoOjo(correoCli);
       try {
         const r = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ accion: 'pedido-envio', clave: clave, num: p.num, correo: p.cliente.correo, nombre: p.cliente.nombre, courier: courier, tracking: tracking, trackingUrl: trackingUrl })
+          body: JSON.stringify({ accion: 'pedido-envio', clave: clave, num: p.num, correo: correoCli, nombre: p.cliente.nombre, courier: courier, tracking: tracking, trackingUrl: trackingUrl })
         });
         const d = await r.json();
         correoOk = !!(d && d.ok);
-        if (!correoOk) console.warn('Correo de envío:', d && d.error);
-      } catch (e) { console.warn('Correo de envío falló:', e); }
+        if (!correoOk) motivo = (d && d.error) ? String(d.error) : 'El publicador respondió que no pudo enviarlo.';
+      } catch (e) {
+        motivo = 'No se pudo hablar con el publicador (' + e.message + ').';
+      }
+      if (!correoOk && sugerido) {
+        motivo += '\n\n⚠ Ojo: el correo dice "' + correoCli + '" y parece mal escrito. Quizás es "' + sugerido + '".';
+      }
     }
     pedidosCol.doc(id).update({ estado: 'enviado', courier: courier, tracking: tracking, trackingUrl: trackingUrl, enviadoFecha: new Date().toISOString() })
       .catch(err => console.error(err));
-    if (!correoOk) window.alert('El pedido quedó marcado como ENVIADO, pero el correo a la clienta no se pudo mandar (revisa la URL del publicador y tu clave secreta en "Instagram y Facebook", o avísale por WhatsApp).');
+    if (!correoOk) window.alert('El pedido quedó marcado como ENVIADO, pero el correo a la clienta no se pudo mandar.\n\nMotivo: ' + motivo + '\n\nPuedes avisarle por WhatsApp.');
   }
 
   // ---------- VISITAS ----------

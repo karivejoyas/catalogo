@@ -691,6 +691,30 @@ var KV_COMUNAS = {
 function kvComunasDe(region) { return (region && KV_COMUNAS[region]) || []; }
 function kvEnvioCosto(region) { return region === KV_REGION_RM ? 2990 : 3990; }
 
+/* Un correo mal escrito es una venta que se pierde en silencio: la clienta no
+   recibe nada y despues el panel no puede avisarle el envio. Estas son las
+   equivocaciones tipicas al teclear ('.con' por '.com', 'gmial' por 'gmail').
+   No se rechaza el correo: se sugiere el arreglo y ella decide. */
+var KV_TLD_MALOS = { 'con':'com', 'cmo':'com', 'ocm':'com', 'xom':'com', 'vom':'com', 'clm':'com', 'coom':'com', 'comm':'com', 'cpm':'com' };
+var KV_DOMINIOS_MALOS = {
+  'gmial.com':'gmail.com', 'gmai.com':'gmail.com', 'gamil.com':'gmail.com', 'gmaill.com':'gmail.com', 'gmail.cl':'gmail.com',
+  'hotmial.com':'hotmail.com', 'hotmai.com':'hotmail.com', 'hotmail.cl':'hotmail.com', 'hotmial.cl':'hotmail.com',
+  'outlok.com':'outlook.com', 'outllok.com':'outlook.com', 'yahho.com':'yahoo.com', 'yaho.com':'yahoo.com'
+};
+/* Devuelve el correo corregido si parece un error de tipeo, o "" si se ve bien. */
+function kvCorreoOjo(correo) {
+  const c = String(correo || '').trim().toLowerCase();
+  const arroba = c.lastIndexOf('@');
+  if (arroba < 1) return '';
+  const dom = c.slice(arroba + 1);
+  if (KV_DOMINIOS_MALOS[dom]) return c.slice(0, arroba + 1) + KV_DOMINIOS_MALOS[dom];
+  const punto = dom.lastIndexOf('.');
+  if (punto < 1) return '';
+  const tld = dom.slice(punto + 1);
+  if (KV_TLD_MALOS[tld]) return c.slice(0, arroba + 1) + dom.slice(0, punto + 1) + KV_TLD_MALOS[tld];
+  return '';
+}
+
 var KV_PEDIDO_ESTADOS = [
   { id: 'nuevo',      nombre: 'Nuevo',            emoji: '🆕' },
   { id: 'verificado', nombre: 'Pago verificado',  emoji: '✅' },

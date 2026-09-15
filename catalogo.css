@@ -1152,3 +1152,14 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
   .ml-pub-campos label{flex:1;min-width:110px;}
   .ml-pub-campos button{flex:1;min-width:130px;}
 }
+
+/* avisos repetidos en Mercado Libre */
+/* el display:flex le gana al atributo hidden, así que hay que decirlo aparte */
+.ml-dup-barra[hidden]{display:none;}
+.ml-dup-barra{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;max-width:880px;margin:14px 0;padding:13px 16px;border-radius:14px;background:rgba(200,60,60,0.12);border:1px solid rgba(200,60,60,0.45);font-family:'Jost',sans-serif;font-size:13.5px;line-height:1.5;color:var(--kv-lavanda);}
+.ml-dup-barra b{color:#ffc9c9;}
+.ml-dup-btns{display:flex;gap:9px;flex-wrap:wrap;}
+.ml-pub-dup{border-color:rgba(200,60,60,0.5);background:rgba(200,60,60,0.07);}
+.ml-btn-cerrar{color:#ffc9c9;border-color:rgba(200,60,60,0.55);}
+.ml-btn-cerrar:hover{color:#2A1245;background:#ffc9c9;border-color:#ffc9c9;}
+@media (max-width:560px){ .ml-dup-btns{width:100%;} .ml-dup-btns button{flex:1;} }

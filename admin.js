@@ -1273,6 +1273,34 @@
   // ---------- publicaciones ya hechas (precio, stock, pausar) ----------
   $('adm-ml-ver-pubs').addEventListener('click', () => mlCargarPubs());
 
+  /* deja un título comparable: sin tildes, sin signos y sin las palabras de
+     relleno que Mercado Libre agrega, para reconocer dos avisos del mismo aro */
+  function mlTituloClave(t) {
+    return String(t || '').toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/\b(mujer|karive|joyas|acero|quirurgico|hechos?|a|mano|artesanales?|aros?)\b/g, ' ')
+      .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  /* agrupa las publicaciones que apuntan al mismo producto.
+     Se conserva la que tiene ventas; si ninguna vendió, la primera. */
+  function mlAgruparDuplicadas(ps) {
+    const grupos = {};
+    ps.forEach(p => { const k = mlTituloClave(p.titulo); (grupos[k] = grupos[k] || []).push(p); });
+    const dup = {};
+    Object.keys(grupos).forEach(k => {
+      const g = grupos[k];
+      if (g.length < 2) return;
+      const conVentas = g.slice().sort((a, b) => (b.vendidos || 0) - (a.vendidos || 0));
+      const quedarse = conVentas[0];
+      g.forEach(p => { dup[p.id] = { total: g.length, sobra: p.id !== quedarse.id }; });
+    });
+    return dup;
+  }
+
+  let mlPubsCache = [];
+  let mlSoloDup = false;
+
   async function mlCargarPubs() {
     const cont = $('adm-ml-pubs'), info = $('adm-ml-pubs-contador');
     info.textContent = 'Consultando a Mercado Libre…';
@@ -1280,28 +1308,115 @@
     try {
       const d = await mlPublicador({ accion: 'ml-publicaciones' });
       if (!d || !d.ok) { info.textContent = '❌ ' + ((d && d.error) || 'No se pudo consultar.'); return; }
-      const ps = d.publicaciones || [];
-      const activas = ps.filter(p => p.estado === 'active').length;
-      info.textContent = ps.length ? (ps.length + ' publicación(es) · ' + activas + ' activas') : 'Todavía no tienes publicaciones.';
-      cont.innerHTML = ps.map(p =>
-        '<div class="ml-pub" data-item="' + escapeHtml(p.id) + '">' +
-          '<div class="ml-pub-tit">' +
-            (p.url ? '<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener">' + escapeHtml(p.titulo || p.id) + '</a>' : escapeHtml(p.titulo || p.id)) +
-            '<span class="ml-badge ' + (p.estado === 'active' ? 'ml-badge-pub' : 'ml-badge-mal') + '">' +
-              (p.estado === 'active' ? 'activa' : p.estado === 'paused' ? 'pausada' : escapeHtml(p.estado || '')) + '</span>' +
-          '</div>' +
-          '<div class="ml-pub-campos">' +
-            '<label>Precio <input class="adm-input" type="number" min="0" step="10" data-role="ml-precio" value="' + (p.precio || 0) + '" /></label>' +
-            '<label>Stock <input class="adm-input" type="number" min="0" step="1" data-role="ml-stock" value="' + (p.stock || 0) + '" /></label>' +
-            '<span class="ml-pub-vend">Vendidos <b>' + (p.vendidos || 0) + '</b></span>' +
-            '<button class="adm-btn-solido" data-role="ml-guardar-pub">Guardar</button>' +
-            '<button class="adm-btn-borde" data-role="ml-pausar" data-estado="' + escapeHtml(p.estado || '') + '">' +
-              (p.estado === 'active' ? 'Pausar' : 'Activar') + '</button>' +
-          '</div>' +
-          '<div class="ml-pub-msg"></div>' +
-        '</div>').join('');
+      mlPubsCache = d.publicaciones || [];
+      mlPintarPubs();
     } catch (e) { info.textContent = '❌ ' + e.message; }
   }
+
+  function mlPintarPubs() {
+    const cont = $('adm-ml-pubs'), info = $('adm-ml-pubs-contador');
+    const ps = mlPubsCache;
+    const dup = mlAgruparDuplicadas(ps);
+    const sobran = ps.filter(p => dup[p.id] && dup[p.id].sobra && p.estado !== 'closed');
+
+    const activas = ps.filter(p => p.estado === 'active').length;
+    info.textContent = ps.length
+      ? (ps.length + ' publicación(es) · ' + activas + ' activas' + (sobran.length ? ' · ⚠ ' + sobran.length + ' repetidas' : ''))
+      : 'Todavía no tienes publicaciones.';
+
+    const barra = $('adm-ml-dup-barra');
+    if (barra) {
+      barra.hidden = !sobran.length;
+      if (sobran.length) {
+        barra.innerHTML =
+          '<span>⚠ Hay <b>' + sobran.length + '</b> aviso(s) repetido(s): más de uno para el mismo aro. ' +
+          'Se conserva el que tiene ventas y sobran los demás. Dos avisos del mismo producto se quitan visitas entre ellos.</span>' +
+          '<div class="ml-dup-btns">' +
+            '<button type="button" class="adm-btn-borde" data-role="ml-ver-dup">' + (mlSoloDup ? 'Ver todas' : 'Ver solo las repetidas') + '</button>' +
+            '<button type="button" class="adm-btn-solido" data-role="ml-cerrar-dup">Cerrar las ' + sobran.length + ' repetidas</button>' +
+          '</div>';
+      }
+    }
+
+    const lista = mlSoloDup ? ps.filter(p => dup[p.id]) : ps;
+    cont.innerHTML = lista.map(p => {
+      const dd = dup[p.id];
+      const sobra = dd && dd.sobra && p.estado !== 'closed';
+      let etq = '<span class="ml-badge ' + (p.estado === 'active' ? 'ml-badge-pub' : 'ml-badge-mal') + '">' +
+        (p.estado === 'active' ? 'activa' : p.estado === 'paused' ? 'pausada' : p.estado === 'closed' ? 'cerrada' : escapeHtml(p.estado || '')) + '</span>';
+      if (dd) etq += '<span class="ml-badge ' + (sobra ? 'ml-badge-mal' : 'ml-badge-pub') + '">' +
+        (sobra ? 'repetida — sobra' : 'repetida — esta se queda') + '</span>';
+      return '<div class="ml-pub' + (sobra ? ' ml-pub-dup' : '') + '" data-item="' + escapeHtml(p.id) + '">' +
+        '<div class="ml-pub-tit">' +
+          (p.url ? '<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener">' + escapeHtml(p.titulo || p.id) + '</a>' : escapeHtml(p.titulo || p.id)) +
+          etq +
+        '</div>' +
+        '<div class="ml-pub-campos">' +
+          '<label>Precio <input class="adm-input" type="number" min="0" step="10" data-role="ml-precio" value="' + (p.precio || 0) + '" /></label>' +
+          '<label>Stock <input class="adm-input" type="number" min="0" step="1" data-role="ml-stock" value="' + (p.stock || 0) + '" /></label>' +
+          '<span class="ml-pub-vend">Vendidos <b>' + (p.vendidos || 0) + '</b></span>' +
+          '<button class="adm-btn-solido" data-role="ml-guardar-pub">Guardar</button>' +
+          '<button class="adm-btn-borde" data-role="ml-pausar" data-estado="' + escapeHtml(p.estado || '') + '">' +
+            (p.estado === 'active' ? 'Pausar' : 'Activar') + '</button>' +
+          (sobra ? '<button class="adm-btn-borde ml-btn-cerrar" data-role="ml-cerrar">Cerrar esta</button>' : '') +
+        '</div>' +
+        '<div class="ml-pub-msg"></div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ver solo las repetidas
+  document.addEventListener('click', e => {
+    if (!e.target.closest('[data-role="ml-ver-dup"]')) return;
+    mlSoloDup = !mlSoloDup;
+    mlPintarPubs();
+  });
+
+  /* cerrar un aviso: deja de aparecer y nadie lo puede comprar.
+     Mercado Libre lo guarda en tu historial, no lo borra del todo. */
+  async function mlCerrarAviso(itemId) {
+    const d = await mlPublicador({ accion: 'ml-actualizar', itemId: itemId, estado: 'closed' });
+    if (!d || !d.ok) throw new Error((d && d.error) || 'no se pudo cerrar');
+    const p = mlPubsCache.find(x => x.id === itemId);
+    if (p) p.estado = 'closed';
+  }
+
+  // cerrar una sola
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('button[data-role="ml-cerrar"]'); if (!b) return;
+    const caja = b.closest('.ml-pub'); if (!caja) return;
+    const tit = (caja.querySelector('.ml-pub-tit a') || caja.querySelector('.ml-pub-tit')).textContent.trim();
+    if (!window.confirm('Se va a CERRAR este aviso en Mercado Libre:\n\n' + tit +
+      '\n\nDeja de aparecer y nadie puede comprarlo. Queda en tu historial, no se borra.\n\n¿Seguimos?')) return;
+    b.disabled = true;
+    const msg = caja.querySelector('.ml-pub-msg');
+    msg.textContent = 'Cerrando…';
+    try { await mlCerrarAviso(caja.dataset.item); mlPintarPubs(); }
+    catch (err) { msg.textContent = '❌ ' + err.message; b.disabled = false; }
+  });
+
+  // cerrar todas las que sobran
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('button[data-role="ml-cerrar-dup"]'); if (!b) return;
+    const dup = mlAgruparDuplicadas(mlPubsCache);
+    const sobran = mlPubsCache.filter(p => dup[p.id] && dup[p.id].sobra && p.estado !== 'closed');
+    if (!sobran.length) return;
+    if (!window.confirm('Se van a CERRAR ' + sobran.length + ' avisos repetidos en Mercado Libre.\n\n' +
+      'De cada aro repetido se conserva el que tiene ventas; se cierran los demás.\n' +
+      'Los cerrados dejan de aparecer, pero quedan en tu historial.\n\n¿Seguimos?')) return;
+    b.disabled = true;
+    const info = $('adm-ml-pubs-contador');
+    let ok = 0; const malos = [];
+    for (let i = 0; i < sobran.length; i++) {
+      info.textContent = 'Cerrando ' + (i + 1) + ' de ' + sobran.length + '…';
+      try { await mlCerrarAviso(sobran[i].id); ok++; }
+      catch (err) { malos.push(sobran[i].titulo + ': ' + err.message); }
+    }
+    mlPintarPubs();
+    info.textContent = '✓ Cerrados ' + ok + ' de ' + sobran.length +
+      (malos.length ? ' · no se pudo con ' + malos.length + ' (' + malos[0] + ')' : '');
+    b.disabled = false;
+  });
 
   document.addEventListener('click', async (e) => {
     const bG = e.target.closest('button[data-role="ml-guardar-pub"]');

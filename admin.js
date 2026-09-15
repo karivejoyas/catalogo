@@ -95,6 +95,7 @@
       renderMasVistos();        // el ranking necesita los datos de los productos
       poblarOpiniones();
       renderIG();
+      renderML();
     }, (err) => console.error('Error leyendo productos:', err));
     unsubSettings = settingsRef.onSnapshot((doc) => {
       settings = doc.data() || {};
@@ -107,6 +108,8 @@
       renderCatsEditorGuarded();
       renderProductosGuarded();
       renderIG();
+      poblarML();
+      renderML();
     }, (err) => console.error('Error leyendo configuración:', err));
     unsubPedidos = pedidosCol.onSnapshot((snap) => {
       pedidos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -820,6 +823,310 @@
       igEstado('❌ No se pudo contactar al publicador: ' + err.message);
     }
     btn.disabled = false;
+  });
+
+  // ---------- MERCADO LIBRE ----------
+  // Publica productos del catálogo como avisos de Mercado Libre. El panel solo
+  // arma y revisa los datos; quien habla con Mercado Libre es el publicador de
+  // Google (Apps Script), que es donde viven los tokens.
+  //
+  // ⚠ Nada de esto toca los productos. El registro de lo ya publicado vive en
+  // su propio documento (catalog/mercadolibre), no dentro de cada producto.
+  const mlRef = kvDb.collection('catalog').doc('mercadolibre');
+  let mlDatos = {};            // { items: { CODIGO: {itemId, permalink, fecha} } }
+  const mlSel = new Set();
+  let mlRevData = [];          // lo que quedó en la pantalla de revisión
+  const ML_MAX_LOTE = 20;      // el publicador de Google se corta a los 6 minutos
+
+  mlRef.onSnapshot(
+    (doc) => { mlDatos = doc.data() || {}; renderML(); },
+    (err) => console.warn('No se pudo leer el registro de Mercado Libre:', err)
+  );
+
+  function mlEstado(msg) { const n = $('adm-ml-estado'); if (n) n.textContent = msg || ''; }
+  function mlPublicados() { return kvMlPublicados(mlDatos); }
+  function mlYaPublicado(p) { return !!(p.code && mlPublicados()[p.code]); }
+
+  /* la foto tal como la necesita el publicador: las guardadas como archivo van
+     por URL absoluta, las pegadas a mano van como base64 para que él las suba. */
+  function mlFoto(p) {
+    const f = String(p.photo || '');
+    if (!f) return null;
+    if (/^data:/i.test(f)) return { base64: f.split(',')[1] || '', tipo: (f.match(/^data:([^;]+)/) || [])[1] || 'image/jpeg' };
+    try { return { url: new URL(f, location.href).href }; } catch (e) { return { url: f }; }
+  }
+
+  function mlActualizarBarra() {
+    const n = mlSel.size;
+    $('adm-ml-selcount').textContent = n + (n === 1 ? ' producto seleccionado' : ' productos seleccionados');
+    $('adm-ml-revisar').disabled = n === 0;
+    const des = $('adm-ml-deseleccionar'); if (des) des.hidden = n === 0;
+  }
+
+  function renderML() {
+    const cont = $('adm-ml-lista'); if (!cont) return;
+    const enStock = products.filter(kvEnStock);
+    [...mlSel].forEach(id => { if (!enStock.some(p => p.id === id)) mlSel.delete(id); });
+
+    const pubs = mlPublicados();
+    const yaN = enStock.filter(mlYaPublicado).length;
+    $('adm-ml-contador').textContent = enStock.length + ' productos con stock · ' + yaN + ' ya publicados';
+
+    const fila = p => {
+      const problemas = kvMlProblemas(p, settings);
+      const ya = mlYaPublicado(p);
+      const reg = ya ? pubs[p.code] : null;
+      let etiqueta = '';
+      if (ya) etiqueta = '<span class="ml-badge ml-badge-pub">✓ publicado</span>';
+      else if (problemas.length) etiqueta = '<span class="ml-badge ml-badge-mal">' + escapeHtml(problemas[0]) + '</span>';
+      const bloqueado = ya || problemas.length > 0;
+      return '<div class="ig-fila' + (bloqueado ? ' ml-fila-mal' : '') + '" data-id="' + p.id + '">' +
+        '<label class="ig-check"><input type="checkbox" data-role="ml-sel" data-id="' + p.id + '"' +
+          (mlSel.has(p.id) ? ' checked' : '') + (bloqueado ? ' disabled' : '') + ' /><span></span></label>' +
+        '<div class="ig-thumb"' + (p.photo ? ' style="background-image:url(\'' + p.photo + '\')"' : '') + '>' + (p.photo ? '' : '✦') + '</div>' +
+        '<div class="ig-info">' +
+          '<div class="ig-nombre">' + escapeHtml(p.name || '') + etiqueta + '</div>' +
+          '<div class="ig-precio">' + formatCLP(kvMlPrecio(p, settings)) + '</div>' +
+          '<div class="ig-codigo">' + escapeHtml(p.code || '') +
+            (reg && reg.permalink ? ' · <a href="' + escapeHtml(reg.permalink) + '" target="_blank" rel="noopener">ver el aviso</a>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    };
+
+    const cats = kvCategorias(settings);
+    const huer = enStock.filter(p => !cats.some(c => c.id === p.category));
+    let nav = '<div class="adm-secnav">';
+    cats.forEach(cat => {
+      const n = enStock.filter(p => p.category === cat.id).length;
+      if (n) nav += '<button type="button" class="adm-secnav-btn" data-goto="ml-grupo-' + cat.id + '">' + escapeHtml(cat.nombre) + ' <span>' + n + '</span></button>';
+    });
+    if (huer.length) nav += '<button type="button" class="adm-secnav-btn" data-goto="ml-grupo-otros">Otros <span>' + huer.length + '</span></button>';
+    nav += '<button type="button" class="adm-secnav-btn adm-secnav-cfg" data-goto="ml-sec-config">⚙ Configuración</button>';
+    nav += '</div>';
+
+    let html = nav;
+    const grupo = (id, nombre, items) => {
+      if (!items.length) return '';
+      const libres = items.filter(p => !mlYaPublicado(p) && !kvMlProblemas(p, settings).length);
+      return '<div class="ig-grupo" id="' + id + '">' +
+        '<div class="adm-barra-sup"><h3 class="adm-seccion-titulo">' + escapeHtml(nombre) + '</h3>' +
+        (libres.length ? '<button type="button" class="adm-btn-borde" data-role="ml-todos" data-grupo="' + id + '">Marcar los ' + libres.length + ' que faltan</button>' : '') +
+        '</div>' + items.map(fila).join('') + '</div>';
+    };
+    cats.forEach(cat => { html += grupo('ml-grupo-' + cat.id, cat.nombre, enStock.filter(p => p.category === cat.id)); });
+    html += grupo('ml-grupo-otros', 'Otros', huer);
+
+    cont.innerHTML = html;
+    mlActualizarBarra();
+  }
+
+  // marcar / desmarcar
+  document.addEventListener('change', (e) => {
+    const c = e.target.closest('input[data-role="ml-sel"]'); if (!c) return;
+    if (c.checked) mlSel.add(c.dataset.id); else mlSel.delete(c.dataset.id);
+    mlActualizarBarra();
+  });
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-role="ml-todos"]'); if (!b) return;
+    const cont = document.getElementById(b.dataset.grupo); if (!cont) return;
+    cont.querySelectorAll('input[data-role="ml-sel"]:not(:disabled)').forEach(c => { c.checked = true; mlSel.add(c.dataset.id); });
+    mlActualizarBarra();
+  });
+  const mlDes = $('adm-ml-deseleccionar');
+  if (mlDes) mlDes.addEventListener('click', () => { mlSel.clear(); renderML(); });
+  const mlRef2 = $('adm-ml-refrescar');
+  if (mlRef2) mlRef2.addEventListener('click', () => { renderML(); mlEstado(''); });
+
+  // ---------- revisión ----------
+  $('adm-ml-revisar').addEventListener('click', () => {
+    const elegidos = products.filter(p => mlSel.has(p.id));
+    if (!elegidos.length) return;
+    mlRevData = elegidos.map(p => ({ prod: p, item: kvMlItem(p, settings) }));
+    const cont = $('adm-ml-revision');
+    cont.innerHTML = mlRevData.map((r, i) => {
+      const it = r.item;
+      return '<div class="ml-rev">' +
+        '<div class="ml-rev-top">' +
+          '<div class="ml-rev-thumb"' + (it.foto ? ' style="background-image:url(\'' + it.foto + '\')"' : '') + '></div>' +
+          '<div class="ml-rev-campos">' +
+            '<input class="adm-input ml-rev-titulo" data-role="ml-titulo" data-i="' + i + '" value="' + escapeHtml(it.titulo) + '" maxlength="' + KV_ML_TITULO_MAX + '" />' +
+            '<div class="ml-rev-cuenta" data-role="ml-cuenta" data-i="' + i + '"><b>' + it.titulo.length + '</b> de ' + KV_ML_TITULO_MAX + ' caracteres</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ml-rev-datos">' +
+          '<span>Precio <b>' + formatCLP(it.precio) + '</b></span>' +
+          '<span>Stock <b>' + it.cantidad + '</b></span>' +
+          '<span>Código <b>' + escapeHtml(it.codigo || '—') + '</b></span>' +
+        '</div>' +
+        '<details class="ml-rev-desc"><summary>Ver la descripción</summary><pre>' + escapeHtml(it.descripcion) + '</pre></details>' +
+      '</div>';
+    }).join('');
+    $('ml-sec-revision').hidden = false;
+    mlEstado(mlRevData.length > ML_MAX_LOTE
+      ? '⚠ Elegiste ' + mlRevData.length + '. Se publican de a ' + ML_MAX_LOTE + ' para que no se corte el publicador: los que sobren quedan marcados para la próxima tanda.'
+      : '');
+    $('ml-sec-revision').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // editar el título en la revisión (solo para esta publicación)
+  document.addEventListener('input', (e) => {
+    const c = e.target.closest('input[data-role="ml-titulo"]'); if (!c) return;
+    const i = +c.dataset.i;
+    if (!mlRevData[i]) return;
+    mlRevData[i].item.titulo = c.value;
+    const n = document.querySelector('[data-role="ml-cuenta"][data-i="' + i + '"]');
+    if (n) {
+      n.innerHTML = '<b>' + c.value.length + '</b> de ' + KV_ML_TITULO_MAX + ' caracteres';
+      n.classList.toggle('ml-pasado', c.value.length > KV_ML_TITULO_MAX);
+    }
+  });
+
+  // ---------- publicar ----------
+  async function mlEnviar(soloProbar) {
+    const url = String(settings.igPubUrl || '').trim();
+    const clave = pubClave();
+    if (!url) { mlEstado('⚠ Falta la URL del publicador. Se configura en la pestaña «Instagram y Facebook».'); return; }
+    if (!clave) { mlEstado('⚠ Falta la clave secreta en este navegador. Se escribe en la pestaña «Instagram y Facebook».'); return; }
+    if (!mlRevData.length) { mlEstado('⚠ Primero elige productos y aprieta «Revisar».'); return; }
+
+    const lote = mlRevData.slice(0, ML_MAX_LOTE);
+    const malos = lote.filter(r => r.item.titulo.length > KV_ML_TITULO_MAX);
+    if (malos.length) { mlEstado('⚠ ' + malos.length + ' título(s) pasan los ' + KV_ML_TITULO_MAX + ' caracteres. Acórtalos antes de publicar.'); return; }
+
+    const btnP = $('adm-ml-publicar'), btnT = $('adm-ml-probar');
+    btnP.disabled = true; btnT.disabled = true;
+    mlEstado(soloProbar ? 'Consultando a Mercado Libre… ⏳' : 'Publicando ' + lote.length + ' producto(s)… no cierres esta ventana ⏳');
+
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // simple request: evita bloqueos CORS
+        body: JSON.stringify({
+          clave: clave,
+          accion: soloProbar ? 'ml-validar' : 'ml-publicar',
+          items: lote.map(r => Object.assign({}, r.item, { foto: undefined, imagen: mlFoto(r.prod) }))
+        })
+      });
+      const d = await r.json();
+      if (!d || !d.ok) { mlEstado('❌ ' + ((d && d.error) || 'Error desconocido.')); btnP.disabled = false; btnT.disabled = false; return; }
+
+      const res = d.resultados || [];
+      const bien = res.filter(x => x.ok), mal = res.filter(x => !x.ok);
+      let msg = soloProbar
+        ? '🧪 Prueba: ' + bien.length + ' de ' + res.length + ' están correctos (no se publicó nada).'
+        : '✅ Publicados ' + bien.length + ' de ' + res.length + '.';
+      if (mal.length) msg += '\n\nCon problemas:\n' + mal.map(x => '• ' + x.codigo + ': ' + x.error).join('\n');
+      mlEstado(msg);
+
+      if (!soloProbar && bien.length) {
+        // se anota lo publicado en su propio documento, nunca en los productos
+        const mapa = Object.assign({}, mlPublicados());
+        bien.forEach(x => { mapa[x.codigo] = { itemId: x.itemId || '', permalink: x.permalink || '', fecha: new Date().toISOString() }; });
+        await mlRef.set({ items: mapa }, { merge: true });
+        bien.forEach(x => {
+          const p = products.find(pp => pp.code === x.codigo);
+          if (p) mlSel.delete(p.id);
+        });
+        mlRevData = mlRevData.filter(r => !bien.some(x => x.codigo === r.item.codigo));
+        renderML();
+        if (!mlRevData.length) $('ml-sec-revision').hidden = true;
+      }
+    } catch (err) {
+      mlEstado('❌ No se pudo contactar al publicador: ' + err.message);
+    }
+    btnP.disabled = false; btnT.disabled = false;
+  }
+  $('adm-ml-probar').addEventListener('click', () => mlEnviar(true));
+  $('adm-ml-publicar').addEventListener('click', () => {
+    const n = Math.min(mlRevData.length, ML_MAX_LOTE);
+    if (!window.confirm('Se van a crear ' + n + ' aviso(s) REALES en Mercado Libre, a la venta.\n\n¿Seguimos?')) return;
+    mlEnviar(false);
+  });
+
+  // ---------- configuración ----------
+  $('adm-ml-guardar-cfg').addEventListener('click', () => {
+    settingsRef.set({
+      mlCategoria: $('adm-ml-categoria').value.trim(),
+      mlTipo: $('adm-ml-tipo').value,
+      mlCantidad: Math.max(1, parseInt($('adm-ml-cantidad').value, 10) || 1),
+      mlUsarOferta: $('adm-ml-oferta').checked
+    }, { merge: true }).then(() => guardado('adm-ml-cfg-ok')).catch(err => console.error(err));
+  });
+  $('adm-ml-guardar-txt').addEventListener('click', () => {
+    settingsRef.set({ mlExtras: $('adm-ml-extras').value.trim(), mlDescripcion: $('adm-ml-desc').value }, { merge: true })
+      .then(() => guardado('adm-ml-txt-ok')).catch(err => console.error(err));
+  });
+  $('adm-ml-reset-txt').addEventListener('click', () => {
+    $('adm-ml-extras').value = KV_ML_EXTRAS_DEFAULT;
+    $('adm-ml-desc').value = KV_ML_DESC_DEFAULT;
+  });
+
+  function poblarML() {
+    const act = document.activeElement;
+    const set = (id, v) => { const n = $(id); if (n && act !== n) n.value = v; };
+    set('adm-ml-categoria', settings.mlCategoria || '');
+    set('adm-ml-tipo', settings.mlTipo || 'gold_special');
+    set('adm-ml-cantidad', settings.mlCantidad || 1);
+    set('adm-ml-extras', settings.mlExtras != null ? settings.mlExtras : KV_ML_EXTRAS_DEFAULT);
+    set('adm-ml-desc', settings.mlDescripcion != null ? settings.mlDescripcion : KV_ML_DESC_DEFAULT);
+    const of = $('adm-ml-oferta'); if (of && act !== of) of.checked = !!settings.mlUsarOferta;
+  }
+
+  // ---------- conexión con Mercado Libre ----------
+  async function mlPublicador(cuerpo) {
+    const url = String(settings.igPubUrl || '').trim();
+    const clave = pubClave();
+    if (!url) throw new Error('Falta la URL del publicador (pestaña «Instagram y Facebook»).');
+    if (!clave) throw new Error('Falta la clave secreta en este navegador (pestaña «Instagram y Facebook»).');
+    const r = await fetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ clave: clave }, cuerpo))
+    });
+    return r.json();
+  }
+  function mlCuenta(msg) { const n = $('adm-ml-cuenta'); if (n) n.textContent = msg || ''; }
+
+  $('adm-ml-guardar-cred').addEventListener('click', async () => {
+    const id = $('adm-ml-clientid').value.trim(), sec = $('adm-ml-secret').value.trim();
+    if (!id || !sec) { mlCuenta('⚠ Faltan el Client ID o el Client Secret.'); return; }
+    mlCuenta('Guardando…');
+    try {
+      const d = await mlPublicador({ accion: 'ml-credenciales', clientId: id, clientSecret: sec });
+      if (d && d.ok) { guardado('adm-ml-cred-ok'); $('adm-ml-secret').value = ''; mlCuenta('✓ Guardadas dentro del publicador. Ahora aprieta «Conectar mi cuenta».'); }
+      else mlCuenta('❌ ' + ((d && d.error) || 'No se pudieron guardar.'));
+    } catch (e) { mlCuenta('❌ ' + e.message); }
+  });
+
+  $('adm-ml-conectar').addEventListener('click', async () => {
+    mlCuenta('Pidiendo el enlace de autorización…');
+    try {
+      const d = await mlPublicador({ accion: 'ml-autorizar' });
+      if (d && d.ok && d.url) { mlCuenta('Se abrió Mercado Libre en otra pestaña. Autoriza ahí y vuelve a apretar «Ver estado».'); window.open(d.url, '_blank', 'noopener'); }
+      else mlCuenta('❌ ' + ((d && d.error) || 'No se pudo obtener el enlace.'));
+    } catch (e) { mlCuenta('❌ ' + e.message); }
+  });
+
+  $('adm-ml-estado-cuenta').addEventListener('click', async () => {
+    mlCuenta('Consultando…');
+    try {
+      const d = await mlPublicador({ accion: 'ml-estado' });
+      if (d && d.ok) mlCuenta(d.conectado ? ('✓ Conectado como ' + (d.nick || d.userId || 'tu cuenta') + '.') : '⚠ Todavía no está conectada. Aprieta «Conectar mi cuenta».');
+      else mlCuenta('❌ ' + ((d && d.error) || 'No se pudo consultar.'));
+    } catch (e) { mlCuenta('❌ ' + e.message); }
+  });
+
+  $('adm-ml-buscarcat').addEventListener('click', async () => {
+    const p = products.filter(kvEnStock)[0];
+    if (!p) { mlCuenta('No hay productos con stock para usar de ejemplo.'); return; }
+    const n = $('adm-ml-catnombre'); if (n) n.textContent = 'Buscando…';
+    try {
+      const d = await mlPublicador({ accion: 'ml-categoria', titulo: kvMlTitulo(p, settings) });
+      if (d && d.ok && d.categoria) {
+        $('adm-ml-categoria').value = d.categoria;
+        if (n) n.textContent = '→ ' + (d.nombre || d.categoria) + ' (revisa que corresponda y Guarda)';
+      } else if (n) n.textContent = '❌ ' + ((d && d.error) || 'No se pudo averiguar.');
+    } catch (e) { if (n) n.textContent = '❌ ' + e.message; }
   });
 
   // ---------- IA (Gemini principal / Groq respaldo) ----------

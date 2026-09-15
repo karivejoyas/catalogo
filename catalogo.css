@@ -1096,3 +1096,32 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 .adm-cats-pend{font-family:'Jost',sans-serif;font-size:12.5px;font-weight:600;color:#f0d79a;margin-right:auto;}
 .adm-cats-pend.ok{color:#8f7aa0;font-weight:400;}
 .adm-cats-barra button:disabled{opacity:.45;cursor:default;}
+
+/* ===== MERCADO LIBRE (panel) ===== */
+.adm-check-linea{display:flex;align-items:center;gap:9px;margin-top:14px;font-family:'Jost',sans-serif;font-size:14px;color:var(--kv-lavanda);cursor:pointer;}
+.adm-check-linea input{width:17px;height:17px;accent-color:var(--kv-dorado-cl);cursor:pointer;flex:none;}
+.ml-acciones{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+.ml-estado{margin-top:14px;font-family:'Jost',sans-serif;font-size:13.5px;line-height:1.55;color:var(--kv-lavanda);white-space:pre-wrap;}
+.ml-estado:empty{display:none;}
+.ml-badge{display:inline-block;font-family:'Jost',sans-serif;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;}
+.ml-badge-pub{color:#9ff5c4;background:rgba(46,160,96,0.18);border:1px solid rgba(46,160,96,0.5);}
+.ml-badge-mal{color:#ffc9c9;background:rgba(200,60,60,0.18);border:1px solid rgba(200,60,60,0.5);}
+.ml-fila-mal{opacity:0.55;}
+.ml-rev{border:1px solid rgba(201,162,75,0.22);border-radius:14px;padding:14px;margin-bottom:12px;background:rgba(255,255,255,0.04);max-width:880px;}
+.ml-rev-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.ml-rev-thumb{width:54px;height:54px;border-radius:10px;background:rgba(255,255,255,0.06) center/cover no-repeat;flex:none;}
+.ml-rev-campos{flex:1;min-width:240px;}
+.ml-rev-titulo{width:100%;font-family:'Jost',sans-serif;font-size:14px;}
+.ml-rev-cuenta{font-family:'Jost',sans-serif;font-size:11.5px;color:var(--kv-lavanda);opacity:0.75;margin-top:4px;}
+.ml-rev-cuenta b{color:var(--kv-dorado-cl);}
+.ml-rev-cuenta.ml-pasado b{color:#ff9b9b;}
+.ml-rev-datos{display:flex;gap:18px;flex-wrap:wrap;font-family:'Jost',sans-serif;font-size:13px;color:var(--kv-lavanda);margin-top:12px;}
+.ml-rev-datos b{color:var(--kv-dorado-cl);font-weight:600;}
+.ml-rev-desc{margin-top:10px;}
+.ml-rev-desc summary{font-family:'Jost',sans-serif;font-size:12.5px;color:var(--kv-dorado-cl);cursor:pointer;}
+.ml-rev-desc pre{white-space:pre-wrap;font-family:'Jost',sans-serif;font-size:12.5px;line-height:1.55;color:var(--kv-lavanda);margin:8px 0 0;opacity:0.9;}
+@media (max-width:560px){
+  .ml-rev-top{gap:10px;}
+  .ml-rev-campos{min-width:0;flex-basis:100%;}
+  .ml-acciones .adm-btn-solido,.ml-acciones .adm-btn-borde{flex:1;min-width:150px;}
+}

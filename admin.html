@@ -54,6 +54,7 @@
       <button class="adm-tab" data-tab="portada">Portada e info</button>
       <button class="adm-tab" data-tab="contacto">Contacto</button>
       <button class="adm-tab" data-tab="instagram">Instagram y Facebook</button>
+      <button class="adm-tab" data-tab="mercadolibre">🛒 Mercado Libre</button>
       <button class="adm-tab" data-tab="ia">Asistente IA</button>
     </div>
   </nav>
@@ -328,6 +329,106 @@
           <button id="adm-ig-pubguardar" class="adm-btn-solido">Guardar conexión</button>
           <span id="adm-ig-pub-ok" class="adm-guardado" hidden>✓ Guardado</span>
         </div>
+      </div>
+    </section>
+    <div style="height:60px;"></div>
+  </div>
+
+  <!-- ===== MERCADO LIBRE ===== -->
+  <div class="adm-panel" data-panel="mercadolibre" hidden>
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Publicar en Mercado Libre</h2>
+      <p class="adm-seccion-sub">Marca uno o varios productos y revisa, antes de publicar, exactamente cómo va a quedar cada aviso: título, precio, stock y descripción. Los productos <b>ya publicados</b> aparecen marcados y no se vuelven a subir.</p>
+      <div class="adm-barra-sup">
+        <span class="cat-contador" id="adm-ml-contador"></span>
+        <button id="adm-ml-refrescar" class="adm-btn-borde">↻ Revisar estado</button>
+      </div>
+      <div id="adm-ml-lista"></div>
+    </section>
+
+    <div class="ig-stickybar">
+      <span id="adm-ml-selcount" class="cat-contador">0 productos seleccionados</span>
+      <div class="ig-stickybar-btns">
+        <button id="adm-ml-deseleccionar" class="adm-btn-borde" hidden>Deseleccionar todos</button>
+        <button id="adm-ml-revisar" class="adm-btn-solido" disabled>👁 Revisar antes de publicar</button>
+      </div>
+    </div>
+
+    <section class="adm-seccion" id="ml-sec-revision" hidden>
+      <h2 class="adm-seccion-titulo">Revisión</h2>
+      <p class="adm-seccion-sub">Esto es lo que se va a mandar a Mercado Libre. Puedes corregir el título de cada uno aquí mismo — se usa solo para esta publicación y <b>no cambia nada de tu producto</b>.</p>
+      <div id="adm-ml-revision"></div>
+      <div class="ml-acciones">
+        <button id="adm-ml-probar" class="adm-btn-borde">🧪 Probar sin publicar</button>
+        <button id="adm-ml-publicar" class="adm-btn-solido">🚀 Publicar en Mercado Libre</button>
+      </div>
+      <p class="adm-seccion-sub" style="margin-top:10px;">«Probar sin publicar» le pregunta a Mercado Libre si los datos están correctos <b>sin crear ningún aviso</b>. Conviene usarlo la primera vez.</p>
+      <div id="adm-ml-estado" class="ml-estado"></div>
+    </section>
+
+    <section class="adm-seccion" id="ml-sec-config">
+      <h2 class="adm-seccion-titulo">Cómo se publica</h2>
+      <div class="adm-contacto">
+        <label class="adm-etiqueta">Categoría de Mercado Libre (empieza con MLC…)</label>
+        <input id="adm-ml-categoria" class="adm-input" placeholder="MLC…" autocomplete="off" />
+        <p class="adm-seccion-sub" style="margin:4px 0 0;">Es la categoría donde quedan tus aros. Si no la sabes, aprieta <b>Buscar categoría</b>: Mercado Libre la adivina a partir del nombre de un producto.</p>
+        <div class="adm-guardar-fila">
+          <button id="adm-ml-buscarcat" class="adm-btn-borde">🔎 Buscar categoría</button>
+          <span id="adm-ml-catnombre" class="cat-contador"></span>
+        </div>
+
+        <label class="adm-etiqueta">Tipo de publicación</label>
+        <select id="adm-ml-tipo" class="adm-input">
+          <option value="gold_special">Clásica — comisión más baja</option>
+          <option value="gold_pro">Premium — comisión más alta, con cuotas sin interés</option>
+        </select>
+        <p class="adm-seccion-sub" style="margin:4px 0 0;">⚠ Premium <b>no te da más visibilidad</b> que Clásica: lo que agrega son cuotas sin interés para quien compra. Con productos bajo $10.000, la diferencia de comisión se nota. Revisa «Costos de venta» en tu cuenta de Mercado Libre antes de elegir.</p>
+
+        <label class="adm-etiqueta">Stock por defecto (para los productos que no tienen cantidad puesta)</label>
+        <input id="adm-ml-cantidad" class="adm-input" type="number" min="1" step="1" style="max-width:140px;" />
+
+        <label class="adm-check-linea"><input type="checkbox" id="adm-ml-oferta" /> <span>Publicar con el precio de oferta en vez del precio normal</span></label>
+        <p class="adm-seccion-sub" style="margin:4px 0 0;">Por defecto va el <b>precio normal</b>. Un descuento del catálogo es una promoción de tu tienda y, si lo publicas, queda como precio fijo en Mercado Libre.</p>
+
+        <div class="adm-guardar-fila">
+          <button id="adm-ml-guardar-cfg" class="adm-btn-solido">Guardar</button>
+          <span id="adm-ml-cfg-ok" class="adm-guardado" hidden>✓ Guardado</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Título y descripción</h2>
+      <p class="adm-seccion-sub">Mercado Libre corta los títulos en <b>60 caracteres</b>. El título parte con el nombre del producto y se le van agregando estas palabras mientras quepan — las que no caben se omiten.</p>
+      <label class="adm-etiqueta">Palabras que se agregan al título (separadas por coma, en orden de importancia)</label>
+      <input id="adm-ml-extras" class="adm-input" placeholder="Acero Quirúrgico, Mujer, Hechos A Mano" />
+      <label class="adm-etiqueta" style="margin-top:14px;">Descripción estándar</label>
+      <p class="adm-seccion-sub">Marcadores: <b>{nombre}</b> · <b>{medida}</b> · <b>{codigo}</b> · <b>{coleccion}</b> · <b>{precio}</b></p>
+      <textarea id="adm-ml-desc" class="adm-input" rows="9" style="font-family:'Jost',sans-serif;"></textarea>
+      <div class="adm-guardar-fila">
+        <button id="adm-ml-guardar-txt" class="adm-btn-solido">Guardar</button>
+        <button id="adm-ml-reset-txt" class="adm-btn-borde">Volver a la de por defecto</button>
+        <span id="adm-ml-txt-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      </div>
+    </section>
+
+    <section class="adm-seccion">
+      <h2 class="adm-seccion-titulo">Conexión con Mercado Libre</h2>
+      <p class="adm-seccion-sub">Se usa el <b>mismo publicador de Google</b> que Instagram y Facebook (se configura en esa pestaña). Lo que falta acá son los datos de tu aplicación de Mercado Libre. 🔒 Se guardan <b>dentro del publicador</b>, nunca en la base pública del catálogo.</p>
+      <div class="adm-contacto">
+        <label class="adm-etiqueta">Client ID de tu aplicación</label>
+        <input id="adm-ml-clientid" class="adm-input" placeholder="1234567890123456" autocomplete="off" />
+        <label class="adm-etiqueta">Client Secret</label>
+        <input id="adm-ml-secret" class="adm-input" placeholder="••••••••" autocomplete="off" />
+        <div class="adm-guardar-fila">
+          <button id="adm-ml-guardar-cred" class="adm-btn-solido">Guardar en el publicador</button>
+          <span id="adm-ml-cred-ok" class="adm-guardado" hidden>✓ Guardado</span>
+        </div>
+        <div class="adm-guardar-fila" style="margin-top:14px;">
+          <button id="adm-ml-conectar" class="adm-btn-borde">🔗 Conectar mi cuenta de Mercado Libre</button>
+          <button id="adm-ml-estado-cuenta" class="adm-btn-borde">Ver estado</button>
+        </div>
+        <div id="adm-ml-cuenta" class="ml-estado"></div>
       </div>
     </section>
     <div style="height:60px;"></div>

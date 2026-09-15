@@ -440,6 +440,116 @@ function kvCaptionMulti(prods, settings, tags) {
     .trim();
 }
 
+/* ===================== MERCADO LIBRE =====================
+   Con qué título, precio, cantidad y descripción se publica un producto en
+   Mercado Libre. Todo se arma al vuelo a partir de plantillas editables desde
+   el panel: NADA de esto se guarda dentro del producto ni lo modifica. */
+
+/* Mercado Libre corta los títulos en 60 caracteres. */
+var KV_ML_TITULO_MAX = 60;
+
+/* Palabras que se agregan al título mientras quepan, en este orden. */
+const KV_ML_EXTRAS_DEFAULT = 'Acero Quirúrgico, Mujer, Hechos A Mano, Artesanales';
+
+const KV_ML_DESC_DEFAULT =
+  '{nombre} de Karivé Joyas.\n\n' +
+  'Aros hechos a mano en Chile, con base de acero quirúrgico.\n' +
+  '{medida}\n\n' +
+  'Al ser artesanales, cada par puede tener pequeñas diferencias entre uno y otro: ' +
+  'eso es parte de que sean hechos a mano y no en serie.\n' +
+  'Se envían en su empaque, listos para regalo.\n' +
+  'Despacho desde Santiago a todo Chile.';
+
+function kvMlExtras(settings) {
+  const t = (settings && settings.mlExtras != null) ? settings.mlExtras : KV_ML_EXTRAS_DEFAULT;
+  return String(t).split(',').map(s => s.trim()).filter(Boolean);
+}
+
+/* título para Mercado Libre: el nombre del producto (siempre empezando por
+   "Aros") más las palabras extra que alcancen a caber en los 60 caracteres.
+   Las que no caben se omiten: nunca se corta una palabra por la mitad. */
+function kvMlTitulo(p, settings) {
+  let t = String((p && p.name) || '').replace(/\s+/g, ' ').trim();
+  if (!t) return '';
+  if (!/^aros\b/i.test(t)) t = 'Aros ' + t;
+  kvMlExtras(settings).forEach(ex => {
+    if ((t + ' ' + ex).length <= KV_ML_TITULO_MAX) t += ' ' + ex;
+  });
+  return t.slice(0, KV_ML_TITULO_MAX);
+}
+
+/* descripción a partir de la plantilla editable */
+function kvMlDescripcion(p, settings) {
+  p = p || {};
+  const plantilla = (settings && settings.mlDescripcion != null) ? settings.mlDescripcion : KV_ML_DESC_DEFAULT;
+  const cruda = String(p.detail || '').replace(/^aprox\.?\s*/i, '').trim();
+  return String(plantilla)
+    .replace(/\{nombre\}/g, p.name || '')
+    .replace(/\{medida\}/g, cruda ? 'Medida aproximada: ' + cruda + '.' : '')
+    .replace(/\{detalle\}/g, cruda)
+    .replace(/\{codigo\}/g, p.code || '')
+    .replace(/\{coleccion\}/g, kvCat(p.category, settings).nombre || '')
+    .replace(/\{precio\}/g, formatCLP(kvMlPrecio(p, settings)))
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/* precio con que se publica. Por defecto va el precio NORMAL: un descuento
+   global del catálogo es una promoción de la tienda y no tiene por qué quedar
+   congelado como precio de Mercado Libre. Se puede cambiar en el panel. */
+function kvMlPrecio(p, settings) {
+  const normal = Number((p && p.price) || 0);
+  if (settings && settings.mlUsarOferta) return kvPrecioOferta(p) || normal;
+  return normal;
+}
+
+/* cantidad a publicar: la del producto si la tiene, si no la de por defecto */
+function kvMlCantidad(p, settings) {
+  const c = kvStockCantidad(p);
+  if (c !== null) return Math.max(0, c);
+  const d = parseInt((settings && settings.mlCantidad) || 1, 10);
+  return isNaN(d) || d < 1 ? 1 : d;
+}
+
+/* todo lo que se manda al publicador para un producto */
+function kvMlItem(p, settings) {
+  p = p || {};
+  return {
+    id: p.id || '',
+    codigo: p.code || '',
+    titulo: kvMlTitulo(p, settings),
+    precio: kvMlPrecio(p, settings),
+    cantidad: kvMlCantidad(p, settings),
+    descripcion: kvMlDescripcion(p, settings),
+    categoria: String((settings && settings.mlCategoria) || '').trim(),
+    tipo: String((settings && settings.mlTipo) || 'gold_special'),
+    foto: p.photo || ''
+  };
+}
+
+/* revisa un producto antes de publicarlo. Devuelve la lista de problemas:
+   vacía = se puede publicar. Vale más avisar acá que recibir un error de
+   Mercado Libre a mitad de camino. */
+function kvMlProblemas(p, settings) {
+  const m = [];
+  const it = kvMlItem(p, settings);
+  if (!it.titulo) m.push('no tiene nombre');
+  if (it.titulo.length > KV_ML_TITULO_MAX) m.push('el título pasa los ' + KV_ML_TITULO_MAX + ' caracteres');
+  if (!it.precio || it.precio <= 0) m.push('no tiene precio');
+  if (!it.foto) m.push('no tiene foto');
+  if (it.cantidad < 1) m.push('no hay stock');
+  if (!it.categoria) m.push('falta elegir la categoría de Mercado Libre');
+  return m;
+}
+
+/* publicaciones ya hechas: { CODIGO: {itemId, permalink, fecha} }.
+   Vive en su propio documento (catalog/mercadolibre), NO dentro de los
+   productos, para no tocarlos nunca. */
+function kvMlPublicados(ml) {
+  return (ml && ml.items) || {};
+}
+
 /* color de fondo de una foto: promedio de sus bordes (para rellenar sin cortar el producto) */
 function kvColorFondo(img) {
   try {

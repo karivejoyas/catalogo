@@ -902,6 +902,8 @@
       if (n) nav += '<button type="button" class="adm-secnav-btn" data-goto="ml-grupo-' + cat.id + '">' + escapeHtml(cat.nombre) + ' <span>' + n + '</span></button>';
     });
     if (huer.length) nav += '<button type="button" class="adm-secnav-btn" data-goto="ml-grupo-otros">Otros <span>' + huer.length + '</span></button>';
+    nav += '<button type="button" class="adm-secnav-btn" data-goto="ml-sec-ventas">💰 Mis ventas</button>';
+    nav += '<button type="button" class="adm-secnav-btn" data-goto="ml-sec-publicadas">📦 Mis publicaciones</button>';
     nav += '<button type="button" class="adm-secnav-btn adm-secnav-cfg" data-goto="ml-sec-config">⚙ Configuración</button>';
     nav += '</div>';
 
@@ -1114,6 +1116,96 @@
       if (d && d.ok) mlCuenta(d.conectado ? ('✓ Conectado como ' + (d.nick || d.userId || 'tu cuenta') + '.') : '⚠ Todavía no está conectada. Aprieta «Conectar mi cuenta».');
       else mlCuenta('❌ ' + ((d && d.error) || 'No se pudo consultar.'));
     } catch (e) { mlCuenta('❌ ' + e.message); }
+  });
+
+  // ---------- ventas hechas en Mercado Libre ----------
+  const ML_ESTADO_VENTA = {
+    paid: '✓ pagada', confirmed: 'confirmada', payment_required: 'esperando pago',
+    payment_in_process: 'pago en proceso', cancelled: '✕ cancelada', invalid: 'inválida'
+  };
+  $('adm-ml-ver-ventas').addEventListener('click', async () => {
+    const cont = $('adm-ml-ventas'), info = $('adm-ml-ventas-contador');
+    info.textContent = 'Consultando a Mercado Libre…';
+    cont.innerHTML = '';
+    try {
+      const d = await mlPublicador({ accion: 'ml-ventas', limite: 50 });
+      if (!d || !d.ok) { info.textContent = '❌ ' + ((d && d.error) || 'No se pudo consultar.'); return; }
+      const v = d.ventas || [];
+      info.textContent = v.length ? (v.length + ' venta(s) · ' + (d.total || v.length) + ' en total') : 'Todavía no tienes ventas en Mercado Libre.';
+      cont.innerHTML = v.map(x => {
+        const prods = (x.productos || []).map(p =>
+          '<div class="ml-vta-prod">' + escapeHtml(p.titulo) + ' <b>×' + p.cantidad + '</b> · ' + formatCLP(p.precio) + '</div>').join('');
+        const f = x.fecha ? new Date(x.fecha).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+        return '<div class="ml-vta">' +
+          '<div class="ml-vta-top">' +
+            '<span class="ml-vta-fecha">' + escapeHtml(f) + '</span>' +
+            '<span class="ml-vta-estado">' + escapeHtml(ML_ESTADO_VENTA[x.estado] || x.estado || '') + '</span>' +
+            '<span class="ml-vta-total">' + formatCLP(x.total || 0) + '</span>' +
+          '</div>' + prods +
+          (x.comprador ? '<div class="ml-vta-comp">Compradora: ' + escapeHtml(x.comprador) + '</div>' : '') +
+        '</div>';
+      }).join('');
+    } catch (e) { info.textContent = '❌ ' + e.message; }
+  });
+
+  // ---------- publicaciones ya hechas (precio, stock, pausar) ----------
+  $('adm-ml-ver-pubs').addEventListener('click', () => mlCargarPubs());
+
+  async function mlCargarPubs() {
+    const cont = $('adm-ml-pubs'), info = $('adm-ml-pubs-contador');
+    info.textContent = 'Consultando a Mercado Libre…';
+    cont.innerHTML = '';
+    try {
+      const d = await mlPublicador({ accion: 'ml-publicaciones' });
+      if (!d || !d.ok) { info.textContent = '❌ ' + ((d && d.error) || 'No se pudo consultar.'); return; }
+      const ps = d.publicaciones || [];
+      const activas = ps.filter(p => p.estado === 'active').length;
+      info.textContent = ps.length ? (ps.length + ' publicación(es) · ' + activas + ' activas') : 'Todavía no tienes publicaciones.';
+      cont.innerHTML = ps.map(p =>
+        '<div class="ml-pub" data-item="' + escapeHtml(p.id) + '">' +
+          '<div class="ml-pub-tit">' +
+            (p.url ? '<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener">' + escapeHtml(p.titulo || p.id) + '</a>' : escapeHtml(p.titulo || p.id)) +
+            '<span class="ml-badge ' + (p.estado === 'active' ? 'ml-badge-pub' : 'ml-badge-mal') + '">' +
+              (p.estado === 'active' ? 'activa' : p.estado === 'paused' ? 'pausada' : escapeHtml(p.estado || '')) + '</span>' +
+          '</div>' +
+          '<div class="ml-pub-campos">' +
+            '<label>Precio <input class="adm-input" type="number" min="0" step="10" data-role="ml-precio" value="' + (p.precio || 0) + '" /></label>' +
+            '<label>Stock <input class="adm-input" type="number" min="0" step="1" data-role="ml-stock" value="' + (p.stock || 0) + '" /></label>' +
+            '<span class="ml-pub-vend">Vendidos <b>' + (p.vendidos || 0) + '</b></span>' +
+            '<button class="adm-btn-solido" data-role="ml-guardar-pub">Guardar</button>' +
+            '<button class="adm-btn-borde" data-role="ml-pausar" data-estado="' + escapeHtml(p.estado || '') + '">' +
+              (p.estado === 'active' ? 'Pausar' : 'Activar') + '</button>' +
+          '</div>' +
+          '<div class="ml-pub-msg"></div>' +
+        '</div>').join('');
+    } catch (e) { info.textContent = '❌ ' + e.message; }
+  }
+
+  document.addEventListener('click', async (e) => {
+    const bG = e.target.closest('button[data-role="ml-guardar-pub"]');
+    const bP = e.target.closest('button[data-role="ml-pausar"]');
+    if (!bG && !bP) return;
+    const caja = (bG || bP).closest('.ml-pub'); if (!caja) return;
+    const msg = caja.querySelector('.ml-pub-msg');
+    const itemId = caja.dataset.item;
+    const cuerpo = { accion: 'ml-actualizar', itemId: itemId };
+    if (bG) {
+      cuerpo.precio = caja.querySelector('[data-role="ml-precio"]').value;
+      cuerpo.stock = caja.querySelector('[data-role="ml-stock"]').value;
+    } else {
+      cuerpo.estado = bP.dataset.estado === 'active' ? 'paused' : 'active';
+      if (!window.confirm(cuerpo.estado === 'paused'
+        ? 'La publicación se va a pausar: deja de aparecer y nadie puede comprarla. ¿Seguimos?'
+        : 'La publicación se va a activar y vuelve a quedar a la venta. ¿Seguimos?')) return;
+    }
+    (bG || bP).disabled = true;
+    msg.textContent = 'Guardando…';
+    try {
+      const d = await mlPublicador(cuerpo);
+      msg.textContent = (d && d.ok) ? '✓ Guardado en Mercado Libre' : ('❌ ' + ((d && d.error) || 'No se pudo guardar.'));
+      if (d && d.ok && bP) mlCargarPubs();
+    } catch (err) { msg.textContent = '❌ ' + err.message; }
+    (bG || bP).disabled = false;
   });
 
   $('adm-ml-buscarcat').addEventListener('click', async () => {

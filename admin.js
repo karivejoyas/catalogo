@@ -844,6 +844,7 @@
   );
 
   function mlEstado(msg) { const n = $('adm-ml-estado'); if (n) n.textContent = msg || ''; }
+  function mlEstadoLista(msg) { const n = $('adm-ml-estado-lista'); if (n) n.textContent = msg || ''; }
   function mlPublicados() { return kvMlPublicados(mlDatos); }
   function mlYaPublicado(p) { return !!(p.code && mlPublicados()[p.code]); }
 
@@ -920,6 +921,11 @@
     html += grupo('ml-grupo-otros', 'Otros', huer);
 
     cont.innerHTML = html;
+    // los atajos de arriba (colecciones, ventas, publicaciones, configuración)
+    cont.querySelectorAll('[data-goto]').forEach(n => n.addEventListener('click', e => {
+      const s = document.getElementById(e.currentTarget.dataset.goto);
+      if (s) s.scrollIntoView({ behavior: 'smooth', block: /^ml-sec-/.test(e.currentTarget.dataset.goto) ? 'start' : 'center' });
+    }));
     mlActualizarBarra();
   }
 
@@ -939,6 +945,34 @@
   if (mlDes) mlDes.addEventListener('click', () => { mlSel.clear(); renderML(); });
   const mlRef2 = $('adm-ml-refrescar');
   if (mlRef2) mlRef2.addEventListener('click', () => { renderML(); mlEstado(''); });
+
+  // ---------- reconocer publicaciones hechas por fuera del panel ----------
+  // Si publicaste antes con la planilla de carga masiva, el panel no sabe
+  // cuáles ya están arriba y te dejaría subirlas de nuevo, duplicadas.
+  $('adm-ml-sincronizar').addEventListener('click', async () => {
+    const btn = $('adm-ml-sincronizar');
+    btn.disabled = true;
+    mlEstadoLista('Comparando tu catálogo con lo que ya tienes publicado…');
+    try {
+      const d = await mlPublicador({
+        accion: 'ml-sincronizar',
+        productos: products.filter(p => p.code).map(p => ({ codigo: p.code, nombre: p.name || '' }))
+      });
+      if (!d || !d.ok) { mlEstadoLista('❌ ' + ((d && d.error) || 'No se pudo.')); btn.disabled = false; return; }
+      if (d.emparejados) {
+        await mlRef.set({ items: Object.assign({}, mlPublicados(), d.items) }, { merge: true });
+      }
+      let msg = '✓ Reconocidos ' + d.emparejados + ' de ' + d.total + ' avisos que ya tenías en Mercado Libre. '
+              + 'Esos quedan marcados y no se pueden volver a publicar.';
+      if ((d.sinDueno || []).length) {
+        msg += '\n\nNo pude emparejar ' + d.sinDueno.length + ' (revísalos por si están duplicados o ya no están en tu catálogo):\n'
+             + d.sinDueno.map(t => '• ' + t).join('\n');
+      }
+      mlEstadoLista(msg);
+      renderML();
+    } catch (e) { mlEstadoLista('❌ ' + e.message); }
+    btn.disabled = false;
+  });
 
   // ---------- revisión ----------
   $('adm-ml-revisar').addEventListener('click', () => {
@@ -982,6 +1016,47 @@
       n.innerHTML = '<b>' + c.value.length + '</b> de ' + KV_ML_TITULO_MAX + ' caracteres';
       n.classList.toggle('ml-pasado', c.value.length > KV_ML_TITULO_MAX);
     }
+  });
+
+  // ---------- variar las descripciones con IA ----------
+  // Cada aviso lleva una descripción distinta pero con el mismo estándar:
+  // Mercado Libre penaliza las publicaciones que repiten el mismo texto, y a
+  // quien compra le da más confianza leer algo escrito para ese producto.
+  $('adm-ml-ia').addEventListener('click', async () => {
+    if (!mlRevData.length) return;
+    const btn = $('adm-ml-ia'), info = $('adm-ml-ia-estado');
+    btn.disabled = true;
+    info.textContent = 'Escribiendo ' + mlRevData.length + ' descripción(es)…';
+    try {
+      const d = await mlPublicador({
+        accion: 'ml-descripcion',
+        plantilla: settings.mlDescripcion != null ? settings.mlDescripcion : KV_ML_DESC_DEFAULT,
+        items: mlRevData.map(r => ({
+          codigo: r.item.codigo,
+          nombre: r.prod.name || '',
+          medida: String(r.prod.detail || '').replace(/^aprox\.?\s*/i, '').trim(),
+          coleccion: kvCat(r.prod.category, settings).nombre || '',
+          material: String(settings.mlMaterial || 'Acero quirúrgico'),
+          base: r.item.descripcion
+        }))
+      });
+      if (!d || !d.ok) { info.textContent = '❌ ' + ((d && d.error) || 'No se pudo.'); btn.disabled = false; return; }
+      let n = 0;
+      (d.descripciones || []).forEach(x => {
+        const i = mlRevData.findIndex(r => r.item.codigo === x.codigo);
+        if (i < 0 || !x.texto) return;
+        mlRevData[i].item.descripcion = x.texto;
+        const pre = document.querySelectorAll('#adm-ml-revision .ml-rev-desc pre')[i];
+        if (pre) pre.textContent = x.texto;
+        const det = document.querySelectorAll('#adm-ml-revision .ml-rev-desc')[i];
+        if (det) det.open = true;
+        n++;
+      });
+      info.textContent = n
+        ? '✓ ' + n + ' descripción(es) nuevas. Revísalas: si alguna no te gusta, aprieta de nuevo.'
+        : '⚠ La IA no devolvió nada. Se mantienen las de siempre.';
+    } catch (e) { info.textContent = '❌ ' + e.message; }
+    btn.disabled = false;
   });
 
   // ---------- publicar ----------
@@ -1052,7 +1127,11 @@
       mlCategoria: $('adm-ml-categoria').value.trim(),
       mlTipo: $('adm-ml-tipo').value,
       mlCantidad: Math.max(1, parseInt($('adm-ml-cantidad').value, 10) || 1),
-      mlUsarOferta: $('adm-ml-oferta').checked
+      mlUsarOferta: $('adm-ml-oferta').checked,
+      mlEnvio: $('adm-ml-envio').value,
+      mlEnvioGratis: $('adm-ml-enviogratis').checked,
+      mlMarca: $('adm-ml-marca').value.trim(),
+      mlMaterial: $('adm-ml-material').value.trim()
     }, { merge: true }).then(() => guardado('adm-ml-cfg-ok')).catch(err => console.error(err));
   });
   $('adm-ml-guardar-txt').addEventListener('click', () => {
@@ -1072,7 +1151,11 @@
     set('adm-ml-cantidad', settings.mlCantidad || 1);
     set('adm-ml-extras', settings.mlExtras != null ? settings.mlExtras : KV_ML_EXTRAS_DEFAULT);
     set('adm-ml-desc', settings.mlDescripcion != null ? settings.mlDescripcion : KV_ML_DESC_DEFAULT);
+    set('adm-ml-envio', settings.mlEnvio || 'me2');
+    set('adm-ml-marca', settings.mlMarca != null ? settings.mlMarca : 'Karivé Joyas');
+    set('adm-ml-material', settings.mlMaterial != null ? settings.mlMaterial : 'Acero quirúrgico');
     const of = $('adm-ml-oferta'); if (of && act !== of) of.checked = !!settings.mlUsarOferta;
+    const eg = $('adm-ml-enviogratis'); if (eg && act !== eg) eg.checked = !!settings.mlEnvioGratis;
   }
 
   // ---------- conexión con Mercado Libre ----------

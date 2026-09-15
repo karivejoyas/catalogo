@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260915" />
+<link rel="stylesheet" href="catalogo.css?v=20260916" />
 </head>
 <body>
 
@@ -341,8 +341,10 @@
       <p class="adm-seccion-sub">Marca uno o varios productos y revisa, antes de publicar, exactamente cómo va a quedar cada aviso: título, precio, stock y descripción. Los productos <b>ya publicados</b> aparecen marcados y no se vuelven a subir.</p>
       <div class="adm-barra-sup">
         <span class="cat-contador" id="adm-ml-contador"></span>
+        <button id="adm-ml-sincronizar" class="adm-btn-borde">🔗 Reconocer lo ya publicado</button>
         <button id="adm-ml-refrescar" class="adm-btn-borde">↻ Revisar estado</button>
       </div>
+      <div id="adm-ml-estado-lista" class="ml-estado"></div>
       <div id="adm-ml-lista"></div>
     </section>
 
@@ -357,6 +359,10 @@
     <section class="adm-seccion" id="ml-sec-revision" hidden>
       <h2 class="adm-seccion-titulo">Revisión</h2>
       <p class="adm-seccion-sub">Esto es lo que se va a mandar a Mercado Libre. Puedes corregir el título de cada uno aquí mismo — se usa solo para esta publicación y <b>no cambia nada de tu producto</b>.</p>
+      <div class="adm-barra-sup">
+        <span class="cat-contador" id="adm-ml-ia-estado"></span>
+        <button id="adm-ml-ia" class="adm-btn-borde">✨ Variar las descripciones con IA</button>
+      </div>
       <div id="adm-ml-revision"></div>
       <div class="ml-acciones">
         <button id="adm-ml-probar" class="adm-btn-borde">🧪 Probar sin publicar</button>
@@ -405,6 +411,20 @@
 
         <label class="adm-etiqueta">Stock por defecto (para los productos que no tienen cantidad puesta)</label>
         <input id="adm-ml-cantidad" class="adm-input" type="number" min="1" step="1" style="max-width:140px;" />
+
+        <label class="adm-etiqueta">Forma de envío</label>
+        <select id="adm-ml-envio" class="adm-input">
+          <option value="me2">Mercado Envíos (lo normal)</option>
+          <option value="not_specified">Lo acuerdo yo con la compradora</option>
+          <option value="custom">Envío propio con costo fijo</option>
+        </select>
+        <label class="adm-check-linea"><input type="checkbox" id="adm-ml-enviogratis" /> <span>Ofrecer envío gratis (lo pagas tú)</span></label>
+
+        <label class="adm-etiqueta">Marca</label>
+        <input id="adm-ml-marca" class="adm-input" placeholder="Karivé Joyas" />
+        <label class="adm-etiqueta">Material</label>
+        <input id="adm-ml-material" class="adm-input" placeholder="Acero quirúrgico" />
+        <p class="adm-seccion-sub" style="margin:4px 0 0;">Mercado Libre pide marca, material y modelo. Como <b>modelo</b> se manda el código del producto (FL-001, MA-004…), que es único.</p>
 
         <label class="adm-check-linea"><input type="checkbox" id="adm-ml-oferta" /> <span>Publicar con el precio de oferta en vez del precio normal</span></label>
         <p class="adm-seccion-sub" style="margin:4px 0 0;">Por defecto va el <b>precio normal</b>. Un descuento del catálogo es una promoción de tu tienda y, si lo publicas, queda como precio fijo en Mercado Libre.</p>
@@ -719,8 +739,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260915"></script>
-<script src="comun.js?v=20260915"></script>
-<script src="admin.js?v=20260915"></script>
+<script src="firebase-config.js?v=20260916"></script>
+<script src="comun.js?v=20260916"></script>
+<script src="admin.js?v=20260916"></script>
 </body>
 </html>

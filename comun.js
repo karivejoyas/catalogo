@@ -524,6 +524,13 @@ function kvMlItem(p, settings) {
     descripcion: kvMlDescripcion(p, settings),
     categoria: String((settings && settings.mlCategoria) || '').trim(),
     tipo: String((settings && settings.mlTipo) || 'gold_special'),
+    // Mercado Libre exige estos datos según la categoría. "Modelo" es
+    // obligatorio en joyas: se usa el código del producto, que es único.
+    marca: String((settings && settings.mlMarca) || 'Karivé Joyas'),
+    material: String((settings && settings.mlMaterial) || 'Acero quirúrgico'),
+    modelo: String(p.code || p.name || '').trim(),
+    envio: String((settings && settings.mlEnvio) || 'me2'),
+    envioGratis: !!(settings && settings.mlEnvioGratis),
     foto: p.photo || ''
   };
 }

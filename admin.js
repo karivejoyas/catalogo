@@ -1022,40 +1022,79 @@
   // Cada aviso lleva una descripción distinta pero con el mismo estándar:
   // Mercado Libre penaliza las publicaciones que repiten el mismo texto, y a
   // quien compra le da más confianza leer algo escrito para ese producto.
+  //
+  // Usa iaLlamar, la MISMA vía que el generador de Instagram: las claves viven
+  // en este navegador. Antes iba por el publicador de Google, que guarda otras
+  // claves aparte y estaban vacías o vencidas.
+  const ML_IA_LOTE = 6;   // de a pocos: pedir 20 de una vez trunca la respuesta
+
+  const ML_IA_SISTEMA =
+    'Redactas las descripciones de Karivé Joyas, marca chilena de joyas artesanales hechas a mano, ' +
+    'para publicaciones de Mercado Libre. Español de Chile, cercano pero sobrio.\n\n' +
+    'CADA descripción DEBE decir: que son hechos a mano en Chile, el material, la medida si la hay, ' +
+    'que al ser artesanales cada par puede variar un poco, que se envían en su empaque listos para regalo, ' +
+    'y que se despacha desde Santiago a todo Chile.\n\n' +
+    'PROHIBIDO: inventar materiales, medidas, piedras, colores o garantías que no estén en los datos; ' +
+    'poner precios, teléfonos, correos, links ni otras tiendas; usar emojis; escribir en MAYÚSCULAS; ' +
+    'repetir signos de exclamación.\n\n' +
+    'FORMATO: entre 60 y 130 palabras, en 3 o 4 párrafos cortos separados por una línea en blanco. ' +
+    'VARÍA la redacción entre un producto y otro: distinto comienzo, distinto orden. Que no parezcan copiadas.\n\n' +
+    'Responde SOLO un JSON válido, sin explicaciones y sin comillas de bloque:\n' +
+    '[{"codigo":"FL-001","texto":"..."}]  — una entrada por producto.';
+
+  /* las IA a veces envuelven el JSON en comillas de bloque o le agregan
+     texto alrededor: esto rescata el arreglo que viene adentro */
+  function mlLeerJson(txt) {
+    const s = String(txt || '').replace(/```json/gi, '').replace(/```/g, '').trim();
+    const a = s.indexOf('['), b = s.lastIndexOf(']');
+    if (a < 0 || b < a) return null;
+    try { const arr = JSON.parse(s.slice(a, b + 1)); return Array.isArray(arr) ? arr : null; }
+    catch (e) { return null; }
+  }
+
   $('adm-ml-ia').addEventListener('click', async () => {
     if (!mlRevData.length) return;
     const btn = $('adm-ml-ia'), info = $('adm-ml-ia-estado');
     btn.disabled = true;
-    info.textContent = 'Escribiendo ' + mlRevData.length + ' descripción(es)…';
-    try {
-      const d = await mlPublicador({
-        accion: 'ml-descripcion',
-        plantilla: settings.mlDescripcion != null ? settings.mlDescripcion : KV_ML_DESC_DEFAULT,
-        items: mlRevData.map(r => ({
-          codigo: r.item.codigo,
-          nombre: r.prod.name || '',
-          medida: String(r.prod.detail || '').replace(/^aprox\.?\s*/i, '').trim(),
-          coleccion: kvCat(r.prod.category, settings).nombre || '',
-          material: String(settings.mlMaterial || 'Acero quirúrgico'),
-          base: r.item.descripcion
-        }))
-      });
-      if (!d || !d.ok) { info.textContent = '❌ ' + ((d && d.error) || 'No se pudo.'); btn.disabled = false; return; }
-      let n = 0;
-      (d.descripciones || []).forEach(x => {
-        const i = mlRevData.findIndex(r => r.item.codigo === x.codigo);
-        if (i < 0 || !x.texto) return;
-        mlRevData[i].item.descripcion = x.texto;
-        const pre = document.querySelectorAll('#adm-ml-revision .ml-rev-desc pre')[i];
-        if (pre) pre.textContent = x.texto;
-        const det = document.querySelectorAll('#adm-ml-revision .ml-rev-desc')[i];
-        if (det) det.open = true;
-        n++;
-      });
-      info.textContent = n
-        ? '✓ ' + n + ' descripción(es) nuevas. Revísalas: si alguna no te gusta, aprieta de nuevo.'
-        : '⚠ La IA no devolvió nada. Se mantienen las de siempre.';
-    } catch (e) { info.textContent = '❌ ' + e.message; }
+    let hechas = 0; const fallos = [];
+
+    // de a ML_IA_LOTE para que la respuesta no se corte a la mitad
+    for (let d = 0; d < mlRevData.length; d += ML_IA_LOTE) {
+      const lote = mlRevData.slice(d, d + ML_IA_LOTE);
+      info.textContent = 'Escribiendo… (' + Math.min(d + lote.length, mlRevData.length) + ' de ' + mlRevData.length + ')';
+      const datos = lote.map(r =>
+        '- codigo: ' + r.item.codigo +
+        ' | nombre: ' + (r.prod.name || '') +
+        ' | coleccion: ' + (kvCat(r.prod.category, settings).nombre || '') +
+        ' | material: ' + (settings.mlMaterial || 'Acero quirúrgico') +
+        ' | medida: ' + (String(r.prod.detail || '').replace(/^aprox\.?\s*/i, '').trim() || 'no indicada')
+      ).join('\n');
+
+      try {
+        const txt = await iaLlamar([
+          { role: 'system', content: ML_IA_SISTEMA },
+          { role: 'user', content: 'Escribe una descripción para cada uno de estos productos:\n\n' + datos }
+        ], false);
+        const arr = mlLeerJson(txt);
+        if (!arr || !arr.length) { fallos.push('la IA contestó, pero no en el formato pedido'); continue; }
+        arr.forEach(x => {
+          const i = mlRevData.findIndex(r => String(r.item.codigo) === String(x.codigo));
+          const t = String((x && x.texto) || '').trim();
+          if (i < 0 || t.length < 40) return;            // si se saltó uno, ese conserva su texto normal
+          mlRevData[i].item.descripcion = t;
+          const pre = document.querySelectorAll('#adm-ml-revision .ml-rev-desc pre')[i];
+          if (pre) pre.textContent = t;
+          const det = document.querySelectorAll('#adm-ml-revision .ml-rev-desc')[i];
+          if (det) det.open = true;
+          hechas++;
+        });
+      } catch (err) { fallos.push(err.message); }
+    }
+
+    info.textContent = hechas
+      ? ('✓ ' + hechas + ' descripción(es) nuevas. Revísalas: si alguna no te gusta, aprieta de nuevo.' +
+         (fallos.length ? ' (' + fallos.length + ' lote(s) fallaron: ' + fallos[0] + ')' : ''))
+      : ('❌ No se pudo: ' + (fallos[0] || 'la IA no devolvió nada') + '. Se mantienen las descripciones de siempre.');
     btn.disabled = false;
   });
 

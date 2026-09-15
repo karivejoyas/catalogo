@@ -1445,6 +1445,18 @@
     (bG || bP).disabled = false;
   });
 
+  // revisar qué admite la cuenta (en vez de adivinar con los errores de ML)
+  $('adm-ml-diagnostico').addEventListener('click', async () => {
+    const btn = $('adm-ml-diagnostico');
+    btn.disabled = true;
+    mlCuenta('Preguntándole a Mercado Libre por tu cuenta…');
+    try {
+      const d = await mlPublicador({ accion: 'ml-diagnostico', categoria: String(settings.mlCategoria || '').trim() });
+      mlCuenta((d && d.ok) ? (d.texto || 'Sin datos.') : ('❌ ' + ((d && d.error) || 'No se pudo.')));
+    } catch (e) { mlCuenta('❌ ' + e.message); }
+    btn.disabled = false;
+  });
+
   $('adm-ml-buscarcat').addEventListener('click', async () => {
     const p = products.filter(kvEnStock)[0];
     if (!p) { mlCuenta('No hay productos con stock para usar de ejemplo.'); return; }

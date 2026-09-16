@@ -1368,6 +1368,93 @@
   // ---------- publicaciones ya hechas (precio, stock, pausar) ----------
   $('adm-ml-ver-pubs').addEventListener('click', () => mlCargarPubs());
 
+  // ---------- ponerle su código a cada aviso ----------
+  // Mientras los avisos no traigan el código del producto hay que adivinar
+  // comparando nombres, y eso confunde productos parecidos. Con el código
+  // grabado dentro del aviso, todo pasa a ser exacto.
+  let mlSkuPlan = [];
+
+  function mlArmarPlanSku() {
+    mlSkuPlan = [];
+    mlPubsCache.forEach(pub => {
+      if (pub.estado === 'closed') return;
+      const prod = mlProductoDeAviso(pub);
+      const yaOk = pub.sku && prod && String(pub.sku).toUpperCase() === String(prod.code || '').toUpperCase();
+      if (yaOk) return;                                   // ya lo tiene bien
+      mlSkuPlan.push({
+        itemId: pub.id, titulo: pub.titulo, skuActual: pub.sku || '',
+        codigo: prod ? (prod.code || '') : '', producto: prod ? prod.name : '',
+        marcado: !!(prod && prod.code)                    // los sin producto van desmarcados
+      });
+    });
+    return mlSkuPlan;
+  }
+
+  function mlPintarPlanSku() {
+    const cont = $('adm-ml-sku-plan'); if (!cont) return;
+    if (!mlPubsCache.length) { cont.innerHTML = '<p class="adm-seccion-sub">Primero aprieta «Ver mis publicaciones».</p>'; $('adm-ml-sku-aplicar').hidden = true; return; }
+    if (!mlSkuPlan.length) { cont.innerHTML = '<p class="adm-seccion-sub">✓ Todos tus avisos ya tienen su código puesto.</p>'; $('adm-ml-sku-aplicar').hidden = true; return; }
+
+    const sinProd = mlSkuPlan.filter(x => !x.codigo).length;
+    // los códigos repetidos en la propuesta casi siempre son un emparejamiento malo
+    const cuenta = {};
+    mlSkuPlan.forEach(x => { if (x.codigo) cuenta[x.codigo] = (cuenta[x.codigo] || 0) + 1; });
+
+    cont.innerHTML =
+      '<p class="adm-seccion-sub"><b>' + mlSkuPlan.length + '</b> aviso(s) sin código. Revisa que cada uno apunte al producto correcto y ' +
+      '<b>desmarca los que estén mal</b> antes de aplicar.' +
+      (sinProd ? ' ' + sinProd + ' no calzan con ningún producto (van desmarcados).' : '') + '</p>' +
+      '<table class="ml-precio-tabla ml-sku-tabla"><tr><th></th><th>Aviso en Mercado Libre</th><th>Se le pondría</th></tr>' +
+      mlSkuPlan.map((x, i) => {
+        const dup = x.codigo && cuenta[x.codigo] > 1;
+        return '<tr class="' + (dup ? 'ml-sku-dudoso' : '') + '">' +
+          '<td><input type="checkbox" data-role="ml-sku-chk" data-i="' + i + '"' + (x.marcado ? ' checked' : '') + (x.codigo ? '' : ' disabled') + ' /></td>' +
+          '<td>' + escapeHtml(String(x.titulo || '').slice(0, 52)) + (x.skuActual ? ' <span>(hoy: ' + escapeHtml(x.skuActual) + ')</span>' : '') + '</td>' +
+          '<td>' + (x.codigo
+            ? '<b>' + escapeHtml(x.codigo) + '</b> · ' + escapeHtml(String(x.producto || '').slice(0, 34)) +
+              (dup ? ' <span class="ml-precio-malo">⚠ repetido, revísalo</span>' : '')
+            : '<span class="ml-precio-malo">sin producto que calce</span>') + '</td>' +
+        '</tr>';
+      }).join('') + '</table>';
+    $('adm-ml-sku-aplicar').hidden = false;
+  }
+
+  document.addEventListener('change', e => {
+    const c = e.target.closest('input[data-role="ml-sku-chk"]'); if (!c) return;
+    const i = +c.dataset.i;
+    if (mlSkuPlan[i]) mlSkuPlan[i].marcado = c.checked;
+  });
+
+  const btnSkuVer = $('adm-ml-sku-ver');
+  if (btnSkuVer) btnSkuVer.addEventListener('click', () => { mlArmarPlanSku(); mlPintarPlanSku(); });
+
+  const btnSkuAplicar = $('adm-ml-sku-aplicar');
+  if (btnSkuAplicar) btnSkuAplicar.addEventListener('click', async () => {
+    const elegidos = mlSkuPlan.filter(x => x.marcado && x.codigo);
+    if (!elegidos.length) { $('adm-ml-sku-estado').textContent = 'No hay ninguno marcado.'; return; }
+    if (!window.confirm('Se le va a grabar su código a ' + elegidos.length + ' aviso(s) de Mercado Libre.\n\n' +
+      'Es solo una etiqueta interna: no cambia el título, el precio ni nada que vea quien compra.\n\n¿Seguimos?')) return;
+    btnSkuAplicar.disabled = true;
+    let ok = 0; const malos = [];
+    const LOTE = 25;
+    for (let d = 0; d < elegidos.length; d += LOTE) {
+      const lote = elegidos.slice(d, d + LOTE);
+      $('adm-ml-sku-estado').textContent = 'Grabando ' + Math.min(d + lote.length, elegidos.length) + ' de ' + elegidos.length + '…';
+      try {
+        const r = await mlPublicador({ accion: 'ml-sku', pares: lote.map(x => ({ itemId: x.itemId, codigo: x.codigo })) });
+        if (!r || !r.ok) { malos.push((r && r.error) || 'error desconocido'); continue; }
+        (r.resultados || []).forEach(x => {
+          if (x.ok) { ok++; const p = mlPubsCache.find(pp => pp.id === x.itemId); if (p) p.sku = x.codigo; }
+          else malos.push((x.codigo || x.itemId) + ': ' + x.error);
+        });
+      } catch (e) { malos.push(e.message); }
+    }
+    $('adm-ml-sku-estado').textContent = '✓ Grabados ' + ok + ' de ' + elegidos.length +
+      (malos.length ? ' · no se pudo con ' + malos.length + ' (' + malos[0] + ')' : '');
+    mlArmarPlanSku(); mlPintarPlanSku(); mlPintarPubs();
+    btnSkuAplicar.disabled = false;
+  });
+
   // ---------- subir los precios de lo que ya está publicado ----------
   // Compara lo que cobra hoy cada aviso con lo que debería cobrar según el
   // recargo configurado, y deja aplicar los cambios después de revisarlos.
@@ -1542,7 +1629,14 @@
      Se conserva la que tiene ventas; si ninguna vendió, la primera. */
   function mlAgruparDuplicadas(ps) {
     const grupos = {};
-    ps.forEach(p => { const k = mlTituloClave(p.titulo); (grupos[k] = grupos[k] || []).push(p); });
+    ps.forEach(p => {
+      // Dos avisos son el mismo producto si apuntan al MISMO producto del
+      // catálogo. Antes bastaba con que el título se pareciera, y eso juntaba
+      // productos distintos que se llaman casi igual.
+      const prod = mlProductoDeAviso(p);
+      const k = prod ? ('cod:' + prod.code) : ('tit:' + mlTituloClave(p.titulo));
+      (grupos[k] = grupos[k] || []).push(p);
+    });
     const dup = {};
     Object.keys(grupos).forEach(k => {
       const g = grupos[k];

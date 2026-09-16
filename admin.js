@@ -992,7 +992,7 @@
         '</div>' +
         '<div class="ml-rev-datos">' +
           '<span>Precio <b>' + formatCLP(it.precio) + '</b></span>' +
-          '<span>Stock <b>' + it.cantidad + '</b></span>' +
+          '<label class="ml-rev-stock">Stock <input class="adm-input" type="number" min="1" step="1" data-role="ml-stock-rev" data-i="' + i + '" value="' + it.cantidad + '" /></label>' +
           '<span>Código <b>' + escapeHtml(it.codigo || '—') + '</b></span>' +
         '</div>' +
         '<details class="ml-rev-desc"><summary>Ver la descripción</summary><pre>' + escapeHtml(it.descripcion) + '</pre></details>' +
@@ -1096,6 +1096,27 @@
          (fallos.length ? ' (' + fallos.length + ' lote(s) fallaron: ' + fallos[0] + ')' : ''))
       : ('❌ No se pudo: ' + (fallos[0] || 'la IA no devolvió nada') + '. Se mantienen las descripciones de siempre.');
     btn.disabled = false;
+  });
+
+  // stock por producto, editable justo antes de publicar
+  document.addEventListener('input', (e) => {
+    const c = e.target.closest('input[data-role="ml-stock-rev"]'); if (!c) return;
+    const i = +c.dataset.i;
+    if (!mlRevData[i]) return;
+    const n = parseInt(c.value, 10);
+    mlRevData[i].item.cantidad = (isNaN(n) || n < 1) ? 1 : n;
+  });
+
+  // todos con el mismo stock, de una
+  const mlStockTodos = $('adm-ml-stock-todos');
+  if (mlStockTodos) mlStockTodos.addEventListener('click', () => {
+    const v = parseInt($('adm-ml-stock-todos-n').value, 10);
+    if (isNaN(v) || v < 1) return;
+    mlRevData.forEach((r, i) => {
+      r.item.cantidad = v;
+      const c = document.querySelector('input[data-role="ml-stock-rev"][data-i="' + i + '"]');
+      if (c) c.value = v;
+    });
   });
 
   // ---------- publicar ----------

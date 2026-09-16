@@ -1163,3 +1163,9 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 .ml-btn-cerrar{color:#ffc9c9;border-color:rgba(200,60,60,0.55);}
 .ml-btn-cerrar:hover{color:#2A1245;background:#ffc9c9;border-color:#ffc9c9;}
 @media (max-width:560px){ .ml-dup-btns{width:100%;} .ml-dup-btns button{flex:1;} }
+.ml-rev-stock{display:inline-flex;align-items:center;gap:7px;font-family:'Jost',sans-serif;font-size:13px;color:var(--kv-lavanda);}
+.ml-rev-stock input{width:72px;padding:5px 8px;font-size:13px;}
+.ml-stock-todos{display:inline-flex;align-items:center;gap:7px;font-family:'Jost',sans-serif;font-size:13px;color:var(--kv-lavanda);}
+.ml-stock-todos input{width:76px;padding:6px 9px;font-size:13px;}
+.ml-aviso-validar{max-width:880px;margin:12px 0 0;padding:12px 15px;border-radius:12px;background:rgba(227,197,114,0.12);border:1px solid rgba(227,197,114,0.45);font-family:'Jost',sans-serif;font-size:13px;line-height:1.55;color:var(--kv-lavanda);}
+.ml-aviso-validar b{color:var(--kv-dorado-cl);}

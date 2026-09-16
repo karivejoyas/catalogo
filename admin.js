@@ -1662,7 +1662,7 @@
 
     btnCompletar.disabled = true;
     const cont = $('adm-ml-calidad');
-    let ok = 0, notas = []; const malos = [];
+    let ok = 0, puestas = 0, pedidas = 0, notas = []; const malos = [];
     const LOTE = 20;
     for (let d = 0; d < trabajo.length; d += LOTE) {
       const lote = trabajo.slice(d, d + LOTE);
@@ -1671,13 +1671,16 @@
         const r = await mlPublicador({ accion: 'ml-completar', categoria: cat, items: lote });
         if (!r || !r.ok) { malos.push((r && r.error) || 'error desconocido'); continue; }
         (r.resultados || []).forEach(x => {
+          puestas += (x.puestos || 0);
+          pedidas += (x.pedidos || 0);
           if (x.ok) { ok++; if (x.nota != null) notas.push(x.nota); }
-          else malos.push(x.itemId + ': ' + x.error);
+          else malos.push(x.itemId + ': ' + (x.error || 'sin detalle'));
         });
       } catch (e) { malos.push(e.message); }
     }
 
-    let h = '<p class="adm-seccion-sub">✓ Completadas <b>' + ok + '</b> de ' + trabajo.length + ' publicaciones.' +
+    let h = '<p class="adm-seccion-sub">Quedaron completas <b>' + ok + '</b> de ' + trabajo.length + ' publicaciones · ' +
+      '<b>' + puestas + '</b> de ' + pedidas + ' características entraron de verdad.' +
       (notas.length ? ' Nota promedio ahora: <b>' + Math.round(notas.reduce((a, n) => a + n, 0) / notas.length) + '%</b>.' : '') +
       (sinProducto ? ' (' + sinProducto + ' avisos no calzan con ningún producto del catálogo.)' : '') + '</p>';
     if (malos.length) {
@@ -1717,7 +1720,7 @@
     const peores = (d.avisos || []).filter(a => a.nota != null).sort((a, b) => a.nota - b.nota).slice(0, 10);
 
     let h = '<p class="adm-seccion-sub">Revisé <b>' + d.revisados + '</b> de tus ' + d.total + ' avisos activos' +
-      (d.notaPromedio != null ? ' · nota promedio <b>' + d.notaPromedio + '%</b>' : '') +
+      (d.notaPromedio != null ? ' · nota promedio <b>' + d.notaPromedio + '%</b>' : ' · <b>la nota no la entrega Mercado Libre por esta vía</b>, míralas en tu lista de publicaciones') +
       ' · <b>' + d.fotosPromedio + '</b> fotos por aviso.</p>';
 
     // lo que más se repite, que es por donde conviene partir
@@ -1725,8 +1728,8 @@
     const pasos = [];
     if (d.unaFoto) pasos.push({ t: '<b>' + d.unaFoto + ' aviso(s) tienen una sola foto.</b> Mercado Libre pide varias y es lo que más pesa en la nota. Con 3 o 4 fotos por aro (puesto, de cerca, con la mano para el tamaño) la nota sube parejo.', peso: 'alto' });
     if (faltan.length) pasos.push({ t: '<b>Faltan características.</b> La categoría pide ' + d.pideCategoria + ' y a tus avisos les faltan varias — abajo está el detalle.', peso: 'alto' });
-    const sinDesc = (d.avisos || []).filter(a => !a.descripcion).length;
-    if (sinDesc) pasos.push({ t: '<b>' + sinDesc + ' aviso(s) sin descripción.</b> Se arregla republicando desde el panel.', peso: 'medio' });
+    // la descripción no viene en los datos del aviso, así que no se puede
+    // saber desde acá si falta. Antes se avisaba que faltaban y era falso.
     h += pasos.length
       ? '<ul class="adm-ayuda">' + pasos.map(p => '<li>' + p.t + '</li>').join('') + '</ul>'
       : '<p class="adm-seccion-sub">No encontré nada grande que arreglar.</p>';

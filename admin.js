@@ -1484,6 +1484,18 @@
       .catch(err => mlCuenta('❌ ' + err.message));
   });
 
+  // ver (y volver a leer) el molde: la forma de un aviso que ya está vendiendo
+  $('adm-ml-plantilla').addEventListener('click', async () => {
+    const btn = $('adm-ml-plantilla');
+    btn.disabled = true;
+    mlCuenta('Leyendo el molde…');
+    try {
+      const d = await mlPublicador({ accion: 'ml-plantilla', forzar: true });
+      mlCuenta((d && d.ok) ? (d.texto || '') : ('❌ ' + ((d && d.error) || 'No se pudo.')));
+    } catch (e) { mlCuenta('❌ ' + e.message); }
+    btn.disabled = false;
+  });
+
   $('adm-ml-buscarcat').addEventListener('click', async () => {
     const p = products.filter(kvEnStock)[0];
     if (!p) { mlCuenta('No hay productos con stock para usar de ejemplo.'); return; }

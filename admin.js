@@ -1632,6 +1632,50 @@
     btnAplicarPrecios.disabled = false;
   });
 
+  // ---------- borrar definitivamente los avisos cerrados ----------
+  // Un aviso cerrado deja de venderse pero sigue ocupando lugar en la lista.
+  // Borrarlo lo saca del todo, y ESO NO TIENE VUELTA ATRÁS.
+  async function mlBorrarCerrados() {
+    const cerrados = mlPubsCache.filter(p => p.estado === 'closed' && !p.vendidos);
+    const conVentas = mlPubsCache.filter(p => p.estado === 'closed' && p.vendidos);
+    if (!cerrados.length) {
+      $('adm-ml-pubs-contador').textContent = conVentas.length
+        ? 'No hay avisos cerrados para borrar. Los ' + conVentas.length + ' que quedan tienen ventas y conviene conservarlos.'
+        : 'No hay avisos cerrados para borrar.';
+      return;
+    }
+    if (!window.confirm('Se van a BORRAR ' + cerrados.length + ' aviso(s) cerrados de Mercado Libre.\n\n' +
+      'Esto NO tiene vuelta atrás: desaparecen del todo, con sus preguntas y sus visitas.\n' +
+      (conVentas.length ? '\nLos ' + conVentas.length + ' cerrados que SÍ tienen ventas no se tocan, para no perder ese historial.\n' : '') +
+      '\n¿Seguimos?')) return;
+    if (!window.confirm('Última confirmación.\n\nBorrar ' + cerrados.length + ' aviso(s) definitivamente. No se pueden recuperar.\n\n¿Lo hago?')) return;
+
+    const btn = $('adm-ml-borrar');
+    if (btn) btn.disabled = true;
+    const info = $('adm-ml-pubs-contador');
+    let ok = 0; const malos = [];
+    const LOTE = 25;
+    for (let d = 0; d < cerrados.length; d += LOTE) {
+      const lote = cerrados.slice(d, d + LOTE);
+      info.textContent = 'Borrando ' + Math.min(d + lote.length, cerrados.length) + ' de ' + cerrados.length + '…';
+      try {
+        const r = await mlPublicador({ accion: 'ml-borrar', itemIds: lote.map(p => p.id) });
+        if (!r || !r.ok) { malos.push((r && r.error) || 'error desconocido'); continue; }
+        (r.resultados || []).forEach(x => {
+          if (x.ok) { ok++; mlPubsCache = mlPubsCache.filter(p => p.id !== x.itemId); }
+          else malos.push(x.itemId + ': ' + x.error);
+        });
+      } catch (e) { malos.push(e.message); }
+    }
+    const resumen = '✓ Borrados ' + ok + ' de ' + cerrados.length +
+      (malos.length ? ' · no se pudo con ' + malos.length + ' (' + malos[0] + ')' : '');
+    mlPintarPubs();
+    info.textContent = resumen;
+    if (btn) btn.disabled = false;
+  }
+  const btnBorrar = $('adm-ml-borrar');
+  if (btnBorrar) btnBorrar.addEventListener('click', mlBorrarCerrados);
+
   // ---------- pasar publicaciones de Premium a Clásica (o al revés) ----------
   const ML_TIPO_NOMBRE = { gold_pro: 'Premium', gold_special: 'Clásica' };
   const ML_TIPO_LOTE = 25;   // el publicador de Google se corta a los 6 minutos
@@ -1731,9 +1775,14 @@
     const sobran = ps.filter(p => dup[p.id] && dup[p.id].sobra && p.estado !== 'closed');
 
     const activas = ps.filter(p => p.estado === 'active').length;
+    const cerradas = ps.filter(p => p.estado === 'closed').length;
     info.textContent = ps.length
-      ? (ps.length + ' publicación(es) · ' + activas + ' activas' + (sobran.length ? ' · ⚠ ' + sobran.length + ' repetidas' : ''))
+      ? (ps.length + ' publicación(es) · ' + activas + ' activas' +
+         (cerradas ? ' · ' + cerradas + ' cerradas' : '') +
+         (sobran.length ? ' · ⚠ ' + sobran.length + ' repetidas' : ''))
       : 'Todavía no tienes publicaciones.';
+    const bb = document.getElementById('adm-ml-borrar');
+    if (bb) bb.hidden = !cerradas;
 
     const barra = $('adm-ml-dup-barra');
     if (barra) {

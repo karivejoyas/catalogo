@@ -577,6 +577,11 @@ function kvMlItem(p, settings) {
     envio: String((settings && settings.mlEnvio) || ''),
     envioGratis: !!(settings && settings.mlEnvioGratis),
     retiro: !!(settings && settings.mlRetiro),
+    // color y largo, sacados del nombre y de la medida. Van desde el primer
+    // día para que los avisos nuevos no nazcan con la nota baja y haya que
+    // completarlos después.
+    color: kvMlColor(p),
+    largoCm: kvMlLargoCm(p),
     foto: p.photo || ''
   };
 }

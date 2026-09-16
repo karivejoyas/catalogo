@@ -568,7 +568,10 @@ function kvMlItem(p, settings) {
     // obligatorio en joyas: se usa el código del producto, que es único.
     marca: String((settings && settings.mlMarca) || 'Karivé Joyas'),
     material: String((settings && settings.mlMaterial) || 'Acero quirúrgico'),
-    modelo: String(p.code || p.name || '').trim(),
+    // "Modelo" lo VE quien compra, en las características del aviso: va el
+    // nombre del producto, no el código. El código es interno y viaja aparte,
+    // en SELLER_SKU.
+    modelo: String(p.name || p.code || '').replace(/^aros\s+/i, '').trim(),
     // vacío = no se manda nada y Mercado Libre aplica la configuración de la
     // cuenta, igual que hace su propio publicador masivo
     envio: String((settings && settings.mlEnvio) || ''),

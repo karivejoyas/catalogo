@@ -1384,6 +1384,8 @@
       mlSkuPlan.push({
         itemId: pub.id, titulo: pub.titulo, skuActual: pub.sku || '',
         codigo: prod ? (prod.code || '') : '', producto: prod ? prod.name : '',
+        // "Modelo" lo ve quien compra: va el nombre del producto, no el código
+        modelo: prod ? kvMlItem(prod, settings).modelo : '',
         marcado: !!(prod && prod.code)                    // los sin producto van desmarcados
       });
     });
@@ -1404,16 +1406,16 @@
       '<p class="adm-seccion-sub"><b>' + mlSkuPlan.length + '</b> aviso(s) sin código. Revisa que cada uno apunte al producto correcto y ' +
       '<b>desmarca los que estén mal</b> antes de aplicar.' +
       (sinProd ? ' ' + sinProd + ' no calzan con ningún producto (van desmarcados).' : '') + '</p>' +
-      '<table class="ml-precio-tabla ml-sku-tabla"><tr><th></th><th>Aviso en Mercado Libre</th><th>Se le pondría</th></tr>' +
+      '<table class="ml-precio-tabla ml-sku-tabla"><tr><th></th><th>Aviso en Mercado Libre</th><th>Código (interno)</th><th>Modelo (lo ve quien compra)</th></tr>' +
       mlSkuPlan.map((x, i) => {
         const dup = x.codigo && cuenta[x.codigo] > 1;
         return '<tr class="' + (dup ? 'ml-sku-dudoso' : '') + '">' +
           '<td><input type="checkbox" data-role="ml-sku-chk" data-i="' + i + '"' + (x.marcado ? ' checked' : '') + (x.codigo ? '' : ' disabled') + ' /></td>' +
           '<td>' + escapeHtml(String(x.titulo || '').slice(0, 52)) + (x.skuActual ? ' <span>(hoy: ' + escapeHtml(x.skuActual) + ')</span>' : '') + '</td>' +
           '<td>' + (x.codigo
-            ? '<b>' + escapeHtml(x.codigo) + '</b> · ' + escapeHtml(String(x.producto || '').slice(0, 34)) +
-              (dup ? ' <span class="ml-precio-malo">⚠ repetido, revísalo</span>' : '')
+            ? '<b>' + escapeHtml(x.codigo) + '</b>' + (dup ? ' <span class="ml-precio-malo">⚠ repetido</span>' : '')
             : '<span class="ml-precio-malo">sin producto que calce</span>') + '</td>' +
+          '<td>' + escapeHtml(String(x.modelo || '—').slice(0, 34)) + '</td>' +
         '</tr>';
       }).join('') + '</table>';
     $('adm-ml-sku-aplicar').hidden = false;
@@ -1441,7 +1443,7 @@
       const lote = elegidos.slice(d, d + LOTE);
       $('adm-ml-sku-estado').textContent = 'Grabando ' + Math.min(d + lote.length, elegidos.length) + ' de ' + elegidos.length + '…';
       try {
-        const r = await mlPublicador({ accion: 'ml-sku', pares: lote.map(x => ({ itemId: x.itemId, codigo: x.codigo })) });
+        const r = await mlPublicador({ accion: 'ml-sku', pares: lote.map(x => ({ itemId: x.itemId, codigo: x.codigo, modelo: x.modelo })) });
         if (!r || !r.ok) { malos.push((r && r.error) || 'error desconocido'); continue; }
         (r.resultados || []).forEach(x => {
           if (x.ok) { ok++; const p = mlPubsCache.find(pp => pp.id === x.itemId); if (p) p.sku = x.codigo; }

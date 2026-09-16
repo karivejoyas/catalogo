@@ -1633,6 +1633,64 @@
     btnAplicarPrecios.disabled = false;
   });
 
+  // ---------- completar las características de todos, de una ----------
+  // Un solo botón: recorre todos los avisos activos, les completa color,
+  // largo y material sacados del catálogo, y avisa al final. No hay que
+  // quedarse mirando ni ir producto por producto.
+  const btnCompletar = $('adm-ml-completar');
+  if (btnCompletar) btnCompletar.addEventListener('click', async () => {
+    if (!mlPubsCache.length) { $('adm-ml-calidad').innerHTML = '<p class="adm-seccion-sub">Espera a que carguen tus publicaciones y vuelve a apretar.</p>'; return; }
+    const cat = String(settings.mlCategoria || '').trim();
+    if (!cat) { $('adm-ml-calidad').innerHTML = '<p class="adm-seccion-sub">Falta la categoría de Mercado Libre, en Configuración.</p>'; return; }
+
+    // se arma el trabajo: aviso → características sacadas de su producto
+    const trabajo = [];
+    let sinProducto = 0;
+    mlPubsCache.forEach(pub => {
+      if (pub.estado === 'closed') return;
+      const prod = mlProductoDeAviso(pub);
+      if (!prod) { sinProducto++; return; }
+      const c = kvMlCaracteristicas(prod, settings);
+      if (!c.color && !c.largoCm) return;          // nada que completar con seguridad
+      trabajo.push(Object.assign({ itemId: pub.id }, c));
+    });
+
+    if (!trabajo.length) { $('adm-ml-calidad').innerHTML = '<p class="adm-seccion-sub">No hay nada que completar con seguridad.</p>'; return; }
+    if (!window.confirm('Se van a completar las características de ' + trabajo.length + ' aviso(s):\n\n' +
+      '· Color, sacado del nombre del producto\n· Largo, sacado de la medida\n· Material\n\n' +
+      'Si algún valor no calza con lo que acepta Mercado Libre, ese se deja vacío en vez de poner algo equivocado.\n\n¿Seguimos?')) return;
+
+    btnCompletar.disabled = true;
+    const cont = $('adm-ml-calidad');
+    let ok = 0, notas = []; const malos = [];
+    const LOTE = 20;
+    for (let d = 0; d < trabajo.length; d += LOTE) {
+      const lote = trabajo.slice(d, d + LOTE);
+      cont.innerHTML = '<p class="adm-seccion-sub">Completando ' + Math.min(d + lote.length, trabajo.length) + ' de ' + trabajo.length + '… puedes cerrar y volver después ⏳</p>';
+      try {
+        const r = await mlPublicador({ accion: 'ml-completar', categoria: cat, items: lote });
+        if (!r || !r.ok) { malos.push((r && r.error) || 'error desconocido'); continue; }
+        (r.resultados || []).forEach(x => {
+          if (x.ok) { ok++; if (x.nota != null) notas.push(x.nota); }
+          else malos.push(x.itemId + ': ' + x.error);
+        });
+      } catch (e) { malos.push(e.message); }
+    }
+
+    let h = '<p class="adm-seccion-sub">✓ Completadas <b>' + ok + '</b> de ' + trabajo.length + ' publicaciones.' +
+      (notas.length ? ' Nota promedio ahora: <b>' + Math.round(notas.reduce((a, n) => a + n, 0) / notas.length) + '%</b>.' : '') +
+      (sinProducto ? ' (' + sinProducto + ' avisos no calzan con ningún producto del catálogo.)' : '') + '</p>';
+    if (malos.length) {
+      const porMotivo = {};
+      malos.forEach(m => { const k = m.replace(/^MLC\d+: /, '').slice(0, 110); (porMotivo[k] = porMotivo[k] || []).push(1); });
+      h += '<p class="adm-seccion-sub">No se pudo con ' + malos.length + ':</p><ul class="adm-ayuda">' +
+        Object.keys(porMotivo).map(k => '<li>' + porMotivo[k].length + ': ' + escapeHtml(k) + '</li>').join('') + '</ul>';
+    }
+    h += '<p class="adm-seccion-sub">Aprieta <b>Revisar la calidad</b> para ver cómo quedaron las notas.</p>';
+    cont.innerHTML = h;
+    btnCompletar.disabled = false;
+  });
+
   // ---------- revisar la calidad de los avisos ----------
   // Mercado Libre le pone nota a cada aviso y muestra "objetivos" sin explicar
   // bien cuáles. Esto los lee y los junta para ver qué conviene arreglar primero.

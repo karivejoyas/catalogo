@@ -606,6 +606,74 @@ function kvMlPublicados(ml) {
   return (ml && ml.items) || {};
 }
 
+/* ===== CARACTERÍSTICAS PARA MERCADO LIBRE =====
+   Mercado Libre le sube la nota al aviso cuando están completas, y las
+   compradoras filtran por ellas. Se sacan de lo que ya tienes escrito:
+   el color del nombre del producto y la medida del detalle.
+   Si no se reconocen con seguridad, se dejan vacías: es mejor no poner nada
+   que poner algo equivocado. */
+
+/* colores que aparecen en los nombres de Karivé. La clave es lo que se busca
+   en el nombre; el valor es cómo se llama el color en Mercado Libre. */
+var KV_COLORES = {
+  'rojo': 'Rojo', 'roja': 'Rojo', 'rojas': 'Rojo', 'rojos': 'Rojo',
+  'azul': 'Azul', 'azules': 'Azul',
+  'blanco': 'Blanco', 'blanca': 'Blanco', 'blancas': 'Blanco', 'blancos': 'Blanco',
+  'negro': 'Negro', 'negra': 'Negro', 'negras': 'Negro', 'negros': 'Negro',
+  'dorado': 'Dorado', 'dorada': 'Dorado', 'doradas': 'Dorado', 'dorados': 'Dorado',
+  'plateado': 'Plateado', 'plateada': 'Plateado', 'plateadas': 'Plateado', 'plateados': 'Plateado',
+  'morado': 'Morado', 'morada': 'Morado', 'moradas': 'Morado',
+  'celeste': 'Celeste', 'celestes': 'Celeste',
+  'verde': 'Verde', 'verdes': 'Verde',
+  'amarillo': 'Amarillo', 'amarilla': 'Amarillo',
+  'naranjo': 'Naranjo', 'naranja': 'Naranjo',
+  'rosa': 'Rosa', 'rosado': 'Rosa', 'rosada': 'Rosa', 'rosas': 'Rosa',
+  'turquesa': 'Turquesa', 'mostaza': 'Mostaza', 'cobre': 'Cobre', 'beige': 'Beige',
+  'marino': 'Azul', 'petroleo': 'Azul', 'lila': 'Lila', 'violeta': 'Violeta',
+  'fucsia': 'Fucsia', 'gris': 'Gris', 'cafe': 'Café', 'burdeo': 'Burdeo',
+  'coral': 'Coral', 'arena': 'Beige', 'perla': 'Blanco',
+  'transparente': 'Transparente', 'multicolor': 'Multicolor',
+  'tricolor': 'Multicolor', 'glitter': 'Multicolor'
+};
+
+function kvSinTildes(t) {
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+/* color del producto, sacado de su nombre. '' si no se reconoce ninguno. */
+function kvMlColor(p) {
+  const n = kvSinTildes(p && p.name);
+  if (!n) return '';
+  // gana la palabra que aparece más tarde: en "Flor Blanca Dorado" el color
+  // del aro es el último, el primero suele describir la flor
+  let mejor = '', pos = -1;
+  Object.keys(KV_COLORES).forEach(k => {
+    const m = n.match(new RegExp('\\b' + k + '\\b'));
+    if (m && m.index > pos) { pos = m.index; mejor = KV_COLORES[k]; }
+  });
+  return mejor;
+}
+
+/* medida en centímetros, sacada del detalle ("Aprox. 3.5cm" -> 3.5) */
+function kvMlLargoCm(p) {
+  const m = String((p && p.detail) || '').match(/([\d]+[.,]?[\d]*)\s*cm/i);
+  if (!m) return 0;
+  const v = parseFloat(String(m[1]).replace(',', '.'));
+  return (isNaN(v) || v <= 0 || v > 30) ? 0 : v;
+}
+
+/* todo lo que se puede completar solo de un producto */
+function kvMlCaracteristicas(p, settings) {
+  const out = {};
+  const c = kvMlColor(p);
+  if (c) out.color = c;
+  const l = kvMlLargoCm(p);
+  if (l) out.largoCm = l;
+  const mat = String((settings && settings.mlMaterial) || 'Acero quirúrgico').trim();
+  if (mat) out.material = mat;
+  return out;
+}
+
 /* color de fondo de una foto: promedio de sus bordes (para rellenar sin cortar el producto) */
 function kvColorFondo(img) {
   try {

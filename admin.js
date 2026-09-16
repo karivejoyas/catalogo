@@ -1190,7 +1190,7 @@
     set('adm-ml-cantidad', settings.mlCantidad || 1);
     set('adm-ml-extras', settings.mlExtras != null ? settings.mlExtras : KV_ML_EXTRAS_DEFAULT);
     set('adm-ml-desc', settings.mlDescripcion != null ? settings.mlDescripcion : KV_ML_DESC_DEFAULT);
-    set('adm-ml-envio', settings.mlEnvio || 'me2');
+    set('adm-ml-envio', settings.mlEnvio || '');
     set('adm-ml-marca', settings.mlMarca != null ? settings.mlMarca : 'Karivé Joyas');
     set('adm-ml-material', settings.mlMaterial != null ? settings.mlMaterial : 'Acero quirúrgico');
     const of = $('adm-ml-oferta'); if (of && act !== of) of.checked = !!settings.mlUsarOferta;
@@ -1455,6 +1455,33 @@
       mlCuenta((d && d.ok) ? (d.texto || 'Sin datos.') : ('❌ ' + ((d && d.error) || 'No se pudo.')));
     } catch (e) { mlCuenta('❌ ' + e.message); }
     btn.disabled = false;
+  });
+
+  // leer la configuración de envío de un aviso que YA está publicado y sirve
+  let mlReceta = null;
+  $('adm-ml-envio-ok').addEventListener('click', async () => {
+    const btn = $('adm-ml-envio-ok');
+    btn.disabled = true;
+    mlCuenta('Mirando cómo quedaron tus avisos que ya funcionan…');
+    $('adm-ml-receta-fila').hidden = true;
+    try {
+      const d = await mlPublicador({ accion: 'ml-envio-ok' });
+      if (!d || !d.ok) { mlCuenta('❌ ' + ((d && d.error) || 'No se pudo.')); btn.disabled = false; return; }
+      mlCuenta(d.texto || '');
+      mlReceta = d.receta || null;
+      $('adm-ml-receta-fila').hidden = !mlReceta;
+    } catch (e) { mlCuenta('❌ ' + e.message); }
+    btn.disabled = false;
+  });
+
+  $('adm-ml-usar-receta').addEventListener('click', () => {
+    if (!mlReceta) return;
+    const cambios = { mlEnvio: mlReceta.envio || '', mlEnvioGratis: !!mlReceta.envioGratis };
+    if (mlReceta.categoria) cambios.mlCategoria = mlReceta.categoria;
+    if (mlReceta.tipo) cambios.mlTipo = mlReceta.tipo;
+    settingsRef.set(cambios, { merge: true })
+      .then(() => { guardado('adm-ml-receta-ok'); mlCuenta('✓ Guardado. Ahora prueba de nuevo con «Probar sin publicar».'); })
+      .catch(err => mlCuenta('❌ ' + err.message));
   });
 
   $('adm-ml-buscarcat').addEventListener('click', async () => {

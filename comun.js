@@ -529,8 +529,11 @@ function kvMlItem(p, settings) {
     marca: String((settings && settings.mlMarca) || 'Karivé Joyas'),
     material: String((settings && settings.mlMaterial) || 'Acero quirúrgico'),
     modelo: String(p.code || p.name || '').trim(),
-    envio: String((settings && settings.mlEnvio) || 'me2'),
+    // vacío = no se manda nada y Mercado Libre aplica la configuración de la
+    // cuenta, igual que hace su propio publicador masivo
+    envio: String((settings && settings.mlEnvio) || ''),
     envioGratis: !!(settings && settings.mlEnvioGratis),
+    retiro: !!(settings && settings.mlRetiro),
     foto: p.photo || ''
   };
 }

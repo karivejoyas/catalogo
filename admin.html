@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260919" />
+<link rel="stylesheet" href="catalogo.css?v=20260920" />
 </head>
 <body>
 
@@ -415,7 +415,8 @@
 
         <label class="adm-etiqueta">Forma de envío</label>
         <select id="adm-ml-envio" class="adm-input">
-          <option value="me2">Mercado Envíos (lo normal)</option>
+          <option value="">Que lo decida Mercado Libre (recomendado)</option>
+          <option value="me2">Mercado Envíos</option>
           <option value="not_specified">Lo acuerdo yo con la compradora</option>
           <option value="custom">Envío propio con costo fijo</option>
         </select>
@@ -469,8 +470,13 @@
           <button id="adm-ml-conectar" class="adm-btn-borde">🔗 Conectar mi cuenta de Mercado Libre</button>
           <button id="adm-ml-estado-cuenta" class="adm-btn-borde">Ver estado</button>
           <button id="adm-ml-diagnostico" class="adm-btn-borde">🩺 Revisar mi cuenta</button>
+          <button id="adm-ml-envio-ok" class="adm-btn-borde">📋 Copiar el envío de mis avisos que funcionan</button>
         </div>
         <div id="adm-ml-cuenta" class="ml-estado"></div>
+        <div class="adm-guardar-fila" id="adm-ml-receta-fila" hidden>
+          <button id="adm-ml-usar-receta" class="adm-btn-solido">✓ Usar esta configuración</button>
+          <span id="adm-ml-receta-ok" class="adm-guardado" hidden>✓ Guardado</span>
+        </div>
       </div>
     </section>
     <div style="height:60px;"></div>
@@ -742,8 +748,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260919"></script>
-<script src="comun.js?v=20260919"></script>
-<script src="admin.js?v=20260919"></script>
+<script src="firebase-config.js?v=20260920"></script>
+<script src="comun.js?v=20260920"></script>
+<script src="admin.js?v=20260920"></script>
 </body>
 </html>

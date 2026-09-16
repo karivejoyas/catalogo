@@ -1003,7 +1003,7 @@
     }).join('');
     $('ml-sec-revision').hidden = false;
     mlEstado(mlRevData.length > ML_MAX_LOTE
-      ? '⚠ Elegiste ' + mlRevData.length + '. Se publican de a ' + ML_MAX_LOTE + ' para que no se corte el publicador: los que sobren quedan marcados para la próxima tanda.'
+      ? 'Elegiste ' + mlRevData.length + '. Se van a publicar en tandas de ' + ML_MAX_LOTE + ', una tras otra, hasta terminar con todos.'
       : '');
     $('ml-sec-revision').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
@@ -1130,56 +1130,80 @@
     if (!clave) { mlEstado('⚠ Falta la clave secreta en este navegador. Se escribe en la pestaña «Instagram y Facebook».'); return; }
     if (!mlRevData.length) { mlEstado('⚠ Primero elige productos y aprieta «Revisar».'); return; }
 
-    const lote = mlRevData.slice(0, ML_MAX_LOTE);
-    const malos = lote.filter(r => r.item.titulo.length > KV_ML_TITULO_MAX);
-    if (malos.length) { mlEstado('⚠ ' + malos.length + ' título(s) pasan los ' + KV_ML_TITULO_MAX + ' caracteres. Acórtalos antes de publicar.'); return; }
+    const largos = mlRevData.filter(r => r.item.titulo.length > KV_ML_TITULO_MAX);
+    if (largos.length) { mlEstado('⚠ ' + largos.length + ' título(s) pasan los ' + KV_ML_TITULO_MAX + ' caracteres. Acórtalos antes de publicar.'); return; }
 
     const btnP = $('adm-ml-publicar'), btnT = $('adm-ml-probar');
-    btnP.disabled = true; btnT.disabled = true;
-    mlEstado(soloProbar ? 'Consultando a Mercado Libre… ⏳' : 'Publicando ' + lote.length + ' producto(s)… no cierres esta ventana ⏳');
+    btnP.disabled = true; if (btnT) btnT.disabled = true;
 
-    try {
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // simple request: evita bloqueos CORS
-        body: JSON.stringify({
-          clave: clave,
-          accion: soloProbar ? 'ml-validar' : 'ml-publicar',
-          items: lote.map(r => Object.assign({}, r.item, { foto: undefined, imagen: mlFoto(r.prod) }))
-        })
-      });
-      const d = await r.json();
-      if (!d || !d.ok) { mlEstado('❌ ' + ((d && d.error) || 'Error desconocido.')); btnP.disabled = false; btnT.disabled = false; return; }
+    // Se manda de a ML_MAX_LOTE porque el publicador de Google se corta a los
+    // 6 minutos, pero se siguen mandando tandas hasta terminar con TODOS los
+    // elegidos. Antes se publicaban solo los primeros 20 y el resto quedaba
+    // esperando sin que se notara.
+    const total = mlRevData.length;
+    const bienTodos = [], malTodos = [];
+    let hechos = 0;
+
+    while (mlRevData.length && hechos < total) {
+      const lote = mlRevData.slice(0, ML_MAX_LOTE);
+      mlEstado((soloProbar ? 'Comprobando' : 'Publicando') + ' ' + (hechos + 1) + '–' + (hechos + lote.length) + ' de ' + total + '… no cierres esta ventana ⏳');
+
+      let d = null;
+      try {
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // simple request: evita bloqueos CORS
+          body: JSON.stringify({
+            clave: clave,
+            accion: soloProbar ? 'ml-validar' : 'ml-publicar',
+            items: lote.map(r => Object.assign({}, r.item, { foto: undefined, imagen: mlFoto(r.prod) }))
+          })
+        });
+        d = await r.json();
+      } catch (err) {
+        malTodos.push({ codigo: '(tanda)', error: 'no se pudo contactar al publicador: ' + err.message });
+        break;
+      }
+      if (!d || !d.ok) { malTodos.push({ codigo: '(tanda)', error: (d && d.error) || 'error desconocido' }); break; }
 
       const res = d.resultados || [];
       const bien = res.filter(x => x.ok), mal = res.filter(x => !x.ok);
-      let msg = soloProbar
-        ? '🧪 Prueba: ' + bien.length + ' de ' + res.length + ' están correctos (no se publicó nada).'
-        : '✅ Publicados ' + bien.length + ' de ' + res.length + '.';
-      if (mal.length) msg += '\n\nCon problemas:\n' + mal.map(x => '• ' + x.codigo + ': ' + x.error).join('\n');
-      mlEstado(msg);
+      bien.forEach(x => bienTodos.push(x));
+      mal.forEach(x => malTodos.push(x));
+      hechos += lote.length;
 
       if (!soloProbar && bien.length) {
         // se anota lo publicado en su propio documento, nunca en los productos
         const mapa = Object.assign({}, mlPublicados());
         bien.forEach(x => { mapa[x.codigo] = { itemId: x.itemId || '', permalink: x.permalink || '', fecha: new Date().toISOString() }; });
         await mlRef.set({ items: mapa }, { merge: true });
-        bien.forEach(x => {
-          const p = products.find(pp => pp.code === x.codigo);
-          if (p) mlSel.delete(p.id);
-        });
-        mlRevData = mlRevData.filter(r => !bien.some(x => x.codigo === r.item.codigo));
-        renderML();
-        if (!mlRevData.length) $('ml-sec-revision').hidden = true;
+        bien.forEach(x => { const p = products.find(pp => pp.code === x.codigo); if (p) mlSel.delete(p.id); });
       }
-    } catch (err) {
-      mlEstado('❌ No se pudo contactar al publicador: ' + err.message);
+
+      // fuera los que ya se resolvieron (bien o mal) para pasar a la tanda siguiente
+      const resueltos = res.map(x => String(x.codigo));
+      mlRevData = mlRevData.filter(r => resueltos.indexOf(String(r.item.codigo)) < 0);
+      if (!res.length) break;                       // nada se resolvió: no insistir en vano
     }
-    btnP.disabled = false; btnT.disabled = false;
+
+    let msg = soloProbar
+      ? '🧪 Prueba: ' + bienTodos.length + ' de ' + total + ' están correctos (no se publicó nada).'
+      : '✅ Publicados ' + bienTodos.length + ' de ' + total + '.';
+    if (malTodos.length) {
+      msg += '\n\nCon problemas (' + malTodos.length + '):\n' +
+        malTodos.slice(0, 15).map(x => '• ' + x.codigo + ': ' + x.error).join('\n') +
+        (malTodos.length > 15 ? '\n…y ' + (malTodos.length - 15) + ' más' : '');
+    }
+    if (mlRevData.length) msg += '\n\nQuedaron ' + mlRevData.length + ' sin intentar. Aprieta «Publicar» de nuevo para seguir.';
+    mlEstado(msg);
+
+    if (!soloProbar) { renderML(); if (!mlRevData.length) $('ml-sec-revision').hidden = true; }
+    btnP.disabled = false; if (btnT) btnT.disabled = false;
   }
+
   $('adm-ml-probar').addEventListener('click', () => mlEnviar(true));
   $('adm-ml-publicar').addEventListener('click', () => {
-    const n = Math.min(mlRevData.length, ML_MAX_LOTE);
+    const n = mlRevData.length;
     if (!window.confirm('Se van a crear ' + n + ' aviso(s) REALES en Mercado Libre, a la venta.\n\n¿Seguimos?')) return;
     mlEnviar(false);
   });

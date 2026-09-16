@@ -1185,22 +1185,31 @@
   });
 
   // ---------- configuración ----------
+  // Guardar principal: precio, tipo de publicación y stock
   $('adm-ml-guardar-cfg').addEventListener('click', () => {
     settingsRef.set({
-      mlCategoria: $('adm-ml-categoria').value.trim(),
       mlTipo: $('adm-ml-tipo').value,
       mlCantidad: Math.max(1, parseInt($('adm-ml-cantidad').value, 10) || 1),
-      mlUsarOferta: $('adm-ml-oferta').checked,
-      mlEnvio: $('adm-ml-envio').value,
-      mlEnvioGratis: $('adm-ml-enviogratis').checked,
-      mlMarca: $('adm-ml-marca').value.trim(),
-      mlMaterial: $('adm-ml-material').value.trim(),
       mlRecargoFijo: Math.max(0, parseInt($('adm-ml-recargo-fijo').value, 10) || 0),
       mlRecargoPct: Math.max(0, parseInt($('adm-ml-recargo-pct').value, 10) || 0),
       mlPrecioMin: Math.max(0, parseInt($('adm-ml-precio-min').value, 10) || 0),
       mlRedondeo: $('adm-ml-redondeo').value
     }, { merge: true }).then(() => guardado('adm-ml-cfg-ok')).catch(err => console.error(err));
   });
+
+  // Guardar avanzados: categoría, marca, material y envío
+  const btnAvz = $('adm-ml-guardar-avz');
+  if (btnAvz) btnAvz.addEventListener('click', () => {
+    settingsRef.set({
+      mlCategoria: $('adm-ml-categoria').value.trim(),
+      mlMarca: $('adm-ml-marca').value.trim(),
+      mlMaterial: $('adm-ml-material').value.trim(),
+      mlEnvio: $('adm-ml-envio').value,
+      mlEnvioGratis: $('adm-ml-enviogratis').checked,
+      mlUsarOferta: $('adm-ml-oferta').checked
+    }, { merge: true }).then(() => guardado('adm-ml-avz-ok')).catch(err => console.error(err));
+  });
+
   $('adm-ml-guardar-txt').addEventListener('click', () => {
     settingsRef.set({ mlExtras: $('adm-ml-extras').value.trim(), mlDescripcion: $('adm-ml-desc').value }, { merge: true })
       .then(() => guardado('adm-ml-txt-ok')).catch(err => console.error(err));
@@ -1470,7 +1479,14 @@
       if (g.length < 2) return;
       const conVentas = g.slice().sort((a, b) => (b.vendidos || 0) - (a.vendidos || 0));
       const quedarse = conVentas[0];
-      g.forEach(p => { dup[p.id] = { total: g.length, sobra: p.id !== quedarse.id }; });
+      g.forEach(p => {
+        dup[p.id] = {
+          total: g.length,
+          sobra: p.id !== quedarse.id,
+          // con cuál se repite: sin esto no hay forma de comprobar si acerté
+          pareja: g.filter(o => o.id !== p.id).map(o => ({ id: o.id, titulo: o.titulo, url: o.url, vendidos: o.vendidos || 0 }))
+        };
+      });
     });
     return dup;
   }
@@ -1523,6 +1539,12 @@
         (p.estado === 'active' ? 'activa' : p.estado === 'paused' ? 'pausada' : p.estado === 'closed' ? 'cerrada' : escapeHtml(p.estado || '')) + '</span>';
       if (dd) etq += '<span class="ml-badge ' + (sobra ? 'ml-badge-mal' : 'ml-badge-pub') + '">' +
         (sobra ? 'repetida — sobra' : 'repetida — esta se queda') + '</span>';
+      const pareja = dd && dd.pareja && dd.pareja.length
+        ? '<div class="ml-pub-pareja">Se repite con: ' + dd.pareja.map(o =>
+            (o.url ? '<a href="' + escapeHtml(o.url) + '" target="_blank" rel="noopener">' + escapeHtml(o.titulo || o.id) + '</a>' : escapeHtml(o.titulo || o.id)) +
+            ' <span>(' + o.vendidos + ' vendidos)</span>').join(' · ') +
+          '</div>'
+        : '';
       return '<div class="ml-pub' + (sobra ? ' ml-pub-dup' : '') + '" data-item="' + escapeHtml(p.id) + '">' +
         '<div class="ml-pub-tit">' +
           (p.url ? '<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener">' + escapeHtml(p.titulo || p.id) + '</a>' : escapeHtml(p.titulo || p.id)) +
@@ -1537,6 +1559,7 @@
             (p.estado === 'active' ? 'Pausar' : 'Activar') + '</button>' +
           (sobra ? '<button class="adm-btn-borde ml-btn-cerrar" data-role="ml-cerrar">Cerrar esta</button>' : '') +
         '</div>' +
+        pareja +
         '<div class="ml-pub-msg"></div>' +
       '</div>';
     }).join('');

@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260924" />
+<link rel="stylesheet" href="catalogo.css?v=20260925" />
 </head>
 <body>
 
@@ -403,72 +403,82 @@
     </section>
 
     <section class="adm-seccion" id="ml-sec-config">
-      <h2 class="adm-seccion-titulo">Cómo se publica</h2>
-      <div class="adm-contacto">
-        <label class="adm-etiqueta">Categoría de Mercado Libre (empieza con MLC…)</label>
-        <input id="adm-ml-categoria" class="adm-input" placeholder="MLC…" autocomplete="off" />
-        <p class="adm-seccion-sub" style="margin:4px 0 0;">Es la categoría donde quedan tus aros. Si no la sabes, aprieta <b>Buscar categoría</b>: Mercado Libre la adivina a partir del nombre de un producto.</p>
-        <div class="adm-guardar-fila">
-          <button id="adm-ml-buscarcat" class="adm-btn-borde">🔎 Buscar categoría</button>
-          <span id="adm-ml-catnombre" class="cat-contador"></span>
-        </div>
+      <h2 class="adm-seccion-titulo">Configuración</h2>
 
-        <label class="adm-etiqueta">Tipo de publicación</label>
-        <select id="adm-ml-tipo" class="adm-input">
-          <option value="gold_special">Clásica — comisión más baja</option>
-          <option value="gold_pro">Premium — comisión más alta, con cuotas sin interés</option>
-        </select>
-        <p class="adm-seccion-sub" style="margin:4px 0 0;">⚠ Premium <b>no te da más visibilidad</b> que Clásica: lo que agrega son cuotas sin interés para quien compra. Con productos bajo $10.000, la diferencia de comisión se nota. Revisa «Costos de venta» en tu cuenta de Mercado Libre antes de elegir.</p>
-
-        <label class="adm-etiqueta">Stock por defecto (para los productos que no tienen cantidad puesta)</label>
-        <input id="adm-ml-cantidad" class="adm-input" type="number" min="1" step="1" style="max-width:140px;" />
-
-        <label class="adm-etiqueta">Forma de envío</label>
-        <select id="adm-ml-envio" class="adm-input">
-          <option value="">Que lo decida Mercado Libre (recomendado)</option>
-          <option value="me2">Mercado Envíos</option>
-          <option value="not_specified">Lo acuerdo yo con la compradora</option>
-          <option value="custom">Envío propio con costo fijo</option>
-        </select>
-        <label class="adm-check-linea"><input type="checkbox" id="adm-ml-enviogratis" /> <span>Ofrecer envío gratis (lo pagas tú)</span></label>
-        <p class="adm-seccion-sub" style="margin:4px 0 0;">⚠ Con productos bajo $10.000 el envío suele costar más que la venta, y Mercado Libre rechaza la publicación diciendo «Free shipping costs exceeds sale». Déjalo desmarcado.</p>
-
-        <label class="adm-etiqueta">Marca</label>
-        <input id="adm-ml-marca" class="adm-input" placeholder="Karivé Joyas" />
-        <label class="adm-etiqueta">Material</label>
-        <input id="adm-ml-material" class="adm-input" placeholder="Acero quirúrgico" />
-        <p class="adm-seccion-sub" style="margin:4px 0 0;">Mercado Libre pide marca, material y modelo. Como <b>modelo</b> se manda el código del producto (FL-001, MA-004…), que es único.</p>
-
-        <h3 class="adm-seccion-titulo" style="font-size:20px;margin-top:22px;">Precio en Mercado Libre</h3>
-        <p class="adm-seccion-sub" style="margin:0 0 10px;">Mercado Libre te descuenta el despacho aunque diga que lo paga quien compra, y ese cobro es casi el mismo para un aro de $3.000 que para uno de $15.000. Por eso acá puedes publicar más caro que en tu catálogo. <b>El precio de tu catálogo no cambia.</b></p>
-        <div class="ml-precio-campos">
-          <label>Sumar a cada precio <input id="adm-ml-recargo-fijo" class="adm-input" type="number" min="0" step="100" value="0" /></label>
-          <label>…y además un <input id="adm-ml-recargo-pct" class="adm-input" type="number" min="0" max="200" step="1" value="0" /> %</label>
-          <label>Precio mínimo <input id="adm-ml-precio-min" class="adm-input" type="number" min="0" step="100" value="0" /></label>
-          <label>Terminación
-            <select id="adm-ml-redondeo" class="adm-input">
-              <option value="">Dejarlo tal cual</option>
-              <option value="990">Terminar en 990</option>
-              <option value="500">Múltiplos de 500</option>
-              <option value="100">Múltiplos de 100</option>
-            </select>
-          </label>
-        </div>
-        <div id="adm-ml-precio-muestra" class="ml-precio-muestra"></div>
-        <label class="adm-check-linea"><input type="checkbox" id="adm-ml-oferta" /> <span>Publicar con el precio de oferta en vez del precio normal</span></label>
-        <p class="adm-seccion-sub" style="margin:4px 0 0;">Por defecto va el <b>precio normal</b>. Un descuento del catálogo es una promoción de tu tienda y, si lo publicas, queda como precio fijo en Mercado Libre.</p>
-
-        <div class="adm-guardar-fila">
-          <button id="adm-ml-guardar-cfg" class="adm-btn-solido">Guardar</button>
-          <span id="adm-ml-cfg-ok" class="adm-guardado" hidden>✓ Guardado</span>
-        </div>
+      <h3 class="ml-cfg-tit">Precio</h3>
+      <p class="adm-seccion-sub" style="margin:0 0 10px;">Mercado Libre te descuenta el despacho aunque diga que lo paga quien compra, y ese cobro es casi el mismo para un aro barato que para uno caro. Por eso acá publicas más caro que en tu catálogo. <b>El precio de tu catálogo no cambia.</b></p>
+      <div class="ml-precio-campos">
+        <label>Sumar a cada precio <input id="adm-ml-recargo-fijo" class="adm-input" type="number" min="0" step="100" value="0" /></label>
+        <label>…y además un <input id="adm-ml-recargo-pct" class="adm-input" type="number" min="0" max="200" step="1" value="0" /> %</label>
+        <label>Precio mínimo <input id="adm-ml-precio-min" class="adm-input" type="number" min="0" step="100" value="0" /></label>
+        <label>Terminación
+          <select id="adm-ml-redondeo" class="adm-input">
+            <option value="">Dejarlo tal cual</option>
+            <option value="990">Terminar en 990</option>
+            <option value="500">Múltiplos de 500</option>
+            <option value="100">Múltiplos de 100</option>
+          </select>
+        </label>
       </div>
+      <div id="adm-ml-precio-muestra" class="ml-precio-muestra"></div>
+
+      <h3 class="ml-cfg-tit">Publicación</h3>
+      <div class="ml-precio-campos">
+        <label>Tipo
+          <select id="adm-ml-tipo" class="adm-input">
+            <option value="gold_special">Clásica — comisión más baja</option>
+            <option value="gold_pro">Premium — con cuotas sin interés</option>
+          </select>
+        </label>
+        <label>Stock por defecto <input id="adm-ml-cantidad" class="adm-input" type="number" min="1" step="1" /></label>
+      </div>
+      <p class="adm-seccion-sub" style="margin:8px 0 0;">Premium <b>no da más visibilidad</b> que Clásica: cobra cerca del doble de comisión y lo que agrega son cuotas sin interés para quien compra.</p>
+
+      <div class="adm-guardar-fila" style="margin-top:20px;">
+        <button id="adm-ml-guardar-cfg" class="adm-btn-solido">Guardar</button>
+        <span id="adm-ml-cfg-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      </div>
+
+      <details class="ml-avanzado">
+        <summary>Ajustes avanzados — normalmente no hay que tocarlos</summary>
+        <div class="ml-avanzado-body">
+          <label class="adm-etiqueta">Categoría de Mercado Libre</label>
+          <div class="adm-guardar-fila" style="margin:0 0 6px;">
+            <input id="adm-ml-categoria" class="adm-input" placeholder="MLC…" autocomplete="off" style="max-width:200px;" />
+            <button id="adm-ml-buscarcat" class="adm-btn-borde">Buscar</button>
+            <span id="adm-ml-catnombre" class="cat-contador"></span>
+          </div>
+
+          <label class="adm-etiqueta">Marca</label>
+          <input id="adm-ml-marca" class="adm-input" placeholder="Karivé Joyas" />
+          <label class="adm-etiqueta">Material</label>
+          <input id="adm-ml-material" class="adm-input" placeholder="Acero quirúrgico" />
+
+          <label class="adm-etiqueta">Forma de envío</label>
+          <select id="adm-ml-envio" class="adm-input">
+            <option value="">Que lo decida Mercado Libre (recomendado)</option>
+            <option value="me2">Mercado Envíos</option>
+            <option value="not_specified">Lo acuerdo yo con la compradora</option>
+            <option value="custom">Envío propio con costo fijo</option>
+          </select>
+
+          <label class="adm-check-linea"><input type="checkbox" id="adm-ml-enviogratis" /> <span>Ofrecer envío gratis (lo pagas tú)</span></label>
+          <p class="adm-seccion-sub" style="margin:4px 0 0;">⚠ Con productos bajo $10.000 el envío cuesta más que la venta y Mercado Libre rechaza la publicación.</p>
+
+          <label class="adm-check-linea"><input type="checkbox" id="adm-ml-oferta" /> <span>Usar el precio de oferta como base, en vez del normal</span></label>
+
+          <div class="adm-guardar-fila" style="margin-top:16px;">
+            <button id="adm-ml-guardar-avz" class="adm-btn-solido">Guardar avanzados</button>
+            <span id="adm-ml-avz-ok" class="adm-guardado" hidden>✓ Guardado</span>
+          </div>
+        </div>
+      </details>
     </section>
 
     <section class="adm-seccion">
       <h2 class="adm-seccion-titulo">Título y descripción</h2>
-      <p class="adm-seccion-sub">Mercado Libre corta los títulos en <b>60 caracteres</b>. El título parte con el nombre del producto y se le van agregando estas palabras mientras quepan — las que no caben se omiten.</p>
-      <label class="adm-etiqueta">Palabras que se agregan al título (separadas por coma, en orden de importancia)</label>
+      <p class="adm-seccion-sub">Mercado Libre corta los títulos en <b>60 caracteres</b>. El título parte con el nombre del producto y se le agregan estas palabras mientras quepan.</p>
+      <label class="adm-etiqueta">Palabras que se agregan al título (separadas por coma)</label>
       <input id="adm-ml-extras" class="adm-input" placeholder="Acero Quirúrgico, Mujer, Hechos A Mano" />
       <label class="adm-etiqueta" style="margin-top:14px;">Descripción estándar</label>
       <p class="adm-seccion-sub">Marcadores: <b>{nombre}</b> · <b>{medida}</b> · <b>{codigo}</b> · <b>{coleccion}</b> · <b>{precio}</b></p>
@@ -481,30 +491,35 @@
     </section>
 
     <section class="adm-seccion">
-      <h2 class="adm-seccion-titulo">Conexión con Mercado Libre</h2>
-      <p class="adm-seccion-sub">Se usa el <b>mismo publicador de Google</b> que Instagram y Facebook (se configura en esa pestaña). Lo que falta acá son los datos de tu aplicación de Mercado Libre. 🔒 Se guardan <b>dentro del publicador</b>, nunca en la base pública del catálogo.</p>
-      <div class="adm-contacto">
-        <label class="adm-etiqueta">Client ID de tu aplicación</label>
-        <input id="adm-ml-clientid" class="adm-input" placeholder="1234567890123456" autocomplete="off" />
-        <label class="adm-etiqueta">Client Secret</label>
-        <input id="adm-ml-secret" class="adm-input" placeholder="••••••••" autocomplete="off" />
-        <div class="adm-guardar-fila">
-          <button id="adm-ml-guardar-cred" class="adm-btn-solido">Guardar en el publicador</button>
-          <span id="adm-ml-cred-ok" class="adm-guardado" hidden>✓ Guardado</span>
+      <h2 class="adm-seccion-titulo">Conexión</h2>
+      <div id="adm-ml-cuenta-resumen" class="ml-estado"></div>
+      <details class="ml-avanzado">
+        <summary>Datos de la cuenta y herramientas de revisión</summary>
+        <div class="ml-avanzado-body">
+          <p class="adm-seccion-sub">Se usa el mismo publicador de Google que Instagram y Facebook. 🔒 Las claves se guardan <b>dentro del publicador</b>, nunca en la base pública del catálogo.</p>
+          <label class="adm-etiqueta">Client ID</label>
+          <input id="adm-ml-clientid" class="adm-input" placeholder="1234567890123456" autocomplete="off" />
+          <label class="adm-etiqueta">Client Secret</label>
+          <input id="adm-ml-secret" class="adm-input" placeholder="••••••••" autocomplete="off" />
+          <div class="adm-guardar-fila">
+            <button id="adm-ml-guardar-cred" class="adm-btn-solido">Guardar en el publicador</button>
+            <span id="adm-ml-cred-ok" class="adm-guardado" hidden>✓ Guardado</span>
+          </div>
+          <div class="adm-guardar-fila" style="margin-top:14px;">
+            <button id="adm-ml-conectar" class="adm-btn-borde">Conectar mi cuenta</button>
+            <button id="adm-ml-estado-cuenta" class="adm-btn-borde">Ver estado</button>
+            <button id="adm-ml-diagnostico" class="adm-btn-borde">Revisar mi cuenta</button>
+            <button id="adm-ml-envio-ok" class="adm-btn-borde">Copiar el envío que funciona</button>
+            <button id="adm-ml-plantilla" class="adm-btn-borde">Ver el molde</button>
+            <button id="adm-ml-probar" class="adm-btn-borde">Probar sin publicar</button>
+          </div>
+          <div id="adm-ml-cuenta" class="ml-estado"></div>
+          <div class="adm-guardar-fila" id="adm-ml-receta-fila" hidden>
+            <button id="adm-ml-usar-receta" class="adm-btn-solido">✓ Usar esta configuración</button>
+            <span id="adm-ml-receta-ok" class="adm-guardado" hidden>✓ Guardado</span>
+          </div>
         </div>
-        <div class="adm-guardar-fila" style="margin-top:14px;">
-          <button id="adm-ml-conectar" class="adm-btn-borde">🔗 Conectar mi cuenta de Mercado Libre</button>
-          <button id="adm-ml-estado-cuenta" class="adm-btn-borde">Ver estado</button>
-          <button id="adm-ml-diagnostico" class="adm-btn-borde">🩺 Revisar mi cuenta</button>
-          <button id="adm-ml-envio-ok" class="adm-btn-borde">📋 Copiar el envío de mis avisos que funcionan</button>
-          <button id="adm-ml-plantilla" class="adm-btn-borde">🧬 Ver el molde que se usa</button>
-        </div>
-        <div id="adm-ml-cuenta" class="ml-estado"></div>
-        <div class="adm-guardar-fila" id="adm-ml-receta-fila" hidden>
-          <button id="adm-ml-usar-receta" class="adm-btn-solido">✓ Usar esta configuración</button>
-          <span id="adm-ml-receta-ok" class="adm-guardado" hidden>✓ Guardado</span>
-        </div>
-      </div>
+      </details>
     </section>
     <div style="height:60px;"></div>
   </div>
@@ -775,8 +790,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260924"></script>
-<script src="comun.js?v=20260924"></script>
-<script src="admin.js?v=20260924"></script>
+<script src="firebase-config.js?v=20260925"></script>
+<script src="comun.js?v=20260925"></script>
+<script src="admin.js?v=20260925"></script>
 </body>
 </html>

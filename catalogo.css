@@ -1186,3 +1186,16 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 .ml-precio-malo{color:#ffc9c9;}
 .ml-rev-catalogo{opacity:0.65;font-size:12px;}
 @media (max-width:560px){ .ml-precio-campos label{flex:1;min-width:130px;} .ml-precio-campos input,.ml-precio-campos select{width:100%;} }
+
+/* configuración ordenada de Mercado Libre */
+.ml-cfg-tit{font-family:'Cormorant Garamond',serif;font-size:21px;font-style:italic;color:var(--kv-dorado-cl);margin:24px 0 4px;}
+.ml-cfg-tit:first-of-type{margin-top:0;}
+.ml-avanzado{margin-top:22px;border:1px solid rgba(203,183,216,0.22);border-radius:12px;background:rgba(255,255,255,0.03);max-width:880px;}
+.ml-avanzado>summary{padding:13px 16px;cursor:pointer;font-family:'Jost',sans-serif;font-size:13.5px;color:var(--kv-lavanda);opacity:0.85;}
+.ml-avanzado>summary:hover{color:var(--kv-dorado-cl);}
+.ml-avanzado[open]>summary{border-bottom:1px solid rgba(203,183,216,0.18);}
+.ml-avanzado-body{padding:16px;}
+.ml-pub-pareja{margin-top:9px;font-family:'Jost',sans-serif;font-size:12.5px;line-height:1.5;color:var(--kv-lavanda);opacity:0.85;}
+.ml-pub-pareja a{color:var(--kv-lavanda);text-decoration:underline;}
+.ml-pub-pareja a:hover{color:var(--kv-dorado-cl);}
+.ml-pub-pareja span{opacity:0.7;}

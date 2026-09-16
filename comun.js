@@ -495,13 +495,53 @@ function kvMlDescripcion(p, settings) {
     .trim();
 }
 
-/* precio con que se publica. Por defecto va el precio NORMAL: un descuento
-   global del catálogo es una promoción de la tienda y no tiene por qué quedar
-   congelado como precio de Mercado Libre. Se puede cambiar en el panel. */
+/* precio con que se publica en Mercado Libre.
+
+   Mercado Libre te descuenta el despacho aunque diga que lo paga quien compra,
+   y ese cobro es casi el mismo para un aro de $3.000 que para uno de $15.000.
+   Por eso el precio de allá puede ser distinto al de tu catálogo: se le suma un
+   recargo y, si queda muy bajo, se sube a un mínimo.
+
+   NADA de esto toca el producto: el precio de tu catálogo queda igual. */
 function kvMlPrecio(p, settings) {
+  settings = settings || {};
   const normal = Number((p && p.price) || 0);
-  if (settings && settings.mlUsarOferta) return kvPrecioOferta(p) || normal;
-  return normal;
+  const base = settings.mlUsarOferta ? (kvPrecioOferta(p) || normal) : normal;
+  if (!base) return 0;
+
+  const fijo = Number(settings.mlRecargoFijo || 0);
+  const pct = Number(settings.mlRecargoPct || 0);
+  let v = base + fijo + Math.round(base * pct / 100);
+
+  const min = Number(settings.mlPrecioMin || 0);
+  if (min && v < min) v = min;
+
+  return kvMlRedondear(v, settings.mlRedondeo);
+}
+
+/* deja el precio con una terminación bonita, siempre hacia arriba */
+function kvMlRedondear(v, modo) {
+  v = Math.max(0, Math.round(Number(v) || 0));
+  if (!v) return 0;
+  if (modo === '990') {
+    let r = Math.floor(v / 1000) * 1000 + 990;
+    if (r < v) r += 1000;
+    return r;
+  }
+  if (modo === '500') return Math.ceil(v / 500) * 500;
+  if (modo === '100') return Math.ceil(v / 100) * 100;
+  return v;
+}
+
+/* cuánto te queda después de la comisión y el despacho, con los números que
+   Mercado Libre le mostró a Karivé: comisión 20% en Premium y 9,46% en
+   Clásica, más ~$869 de envío que te descuentan igual. */
+var KV_ML_ENVIO_APROX = 869;
+function kvMlRecibes(precio, tipo) {
+  precio = Number(precio) || 0;
+  if (!precio) return 0;
+  const com = tipo === 'gold_pro' ? 0.20 : 0.0946;
+  return Math.round(precio - precio * com - KV_ML_ENVIO_APROX);
 }
 
 /* cantidad a publicar: la del producto si la tiene, si no la de por defecto */

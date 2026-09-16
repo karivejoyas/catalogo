@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260923" />
+<link rel="stylesheet" href="catalogo.css?v=20260924" />
 </head>
 <body>
 
@@ -393,6 +393,12 @@
         <button id="adm-ml-ver-pubs" class="adm-btn-solido">↻ Ver mis publicaciones</button>
       </div>
       <div id="adm-ml-dup-barra" class="ml-dup-barra" hidden></div>
+      <div class="adm-guardar-fila" style="margin:14px 0;">
+        <button id="adm-ml-precios-ver" class="adm-btn-borde">💲 Ver qué precios cambiarían</button>
+        <button id="adm-ml-precios-aplicar" class="adm-btn-solido" hidden>Aplicar los precios nuevos</button>
+        <span id="adm-ml-precios-estado" class="cat-contador"></span>
+      </div>
+      <div id="adm-ml-precios-plan"></div>
       <div id="adm-ml-pubs"></div>
     </section>
 
@@ -433,6 +439,22 @@
         <input id="adm-ml-material" class="adm-input" placeholder="Acero quirúrgico" />
         <p class="adm-seccion-sub" style="margin:4px 0 0;">Mercado Libre pide marca, material y modelo. Como <b>modelo</b> se manda el código del producto (FL-001, MA-004…), que es único.</p>
 
+        <h3 class="adm-seccion-titulo" style="font-size:20px;margin-top:22px;">Precio en Mercado Libre</h3>
+        <p class="adm-seccion-sub" style="margin:0 0 10px;">Mercado Libre te descuenta el despacho aunque diga que lo paga quien compra, y ese cobro es casi el mismo para un aro de $3.000 que para uno de $15.000. Por eso acá puedes publicar más caro que en tu catálogo. <b>El precio de tu catálogo no cambia.</b></p>
+        <div class="ml-precio-campos">
+          <label>Sumar a cada precio <input id="adm-ml-recargo-fijo" class="adm-input" type="number" min="0" step="100" value="0" /></label>
+          <label>…y además un <input id="adm-ml-recargo-pct" class="adm-input" type="number" min="0" max="200" step="1" value="0" /> %</label>
+          <label>Precio mínimo <input id="adm-ml-precio-min" class="adm-input" type="number" min="0" step="100" value="0" /></label>
+          <label>Terminación
+            <select id="adm-ml-redondeo" class="adm-input">
+              <option value="">Dejarlo tal cual</option>
+              <option value="990">Terminar en 990</option>
+              <option value="500">Múltiplos de 500</option>
+              <option value="100">Múltiplos de 100</option>
+            </select>
+          </label>
+        </div>
+        <div id="adm-ml-precio-muestra" class="ml-precio-muestra"></div>
         <label class="adm-check-linea"><input type="checkbox" id="adm-ml-oferta" /> <span>Publicar con el precio de oferta en vez del precio normal</span></label>
         <p class="adm-seccion-sub" style="margin:4px 0 0;">Por defecto va el <b>precio normal</b>. Un descuento del catálogo es una promoción de tu tienda y, si lo publicas, queda como precio fijo en Mercado Libre.</p>
 
@@ -753,8 +775,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260923"></script>
-<script src="comun.js?v=20260923"></script>
-<script src="admin.js?v=20260923"></script>
+<script src="firebase-config.js?v=20260924"></script>
+<script src="comun.js?v=20260924"></script>
+<script src="admin.js?v=20260924"></script>
 </body>
 </html>

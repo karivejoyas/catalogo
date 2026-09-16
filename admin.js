@@ -964,6 +964,7 @@
       }
       let msg = '✓ Reconocidos ' + d.emparejados + ' de ' + d.total + ' avisos que ya tenías en Mercado Libre. '
               + 'Esos quedan marcados y no se pueden volver a publicar.';
+      if (d.porSku != null) msg += '\n\n' + d.porSku + ' se reconocieron por su código (exacto) y ' + d.porNombre + ' comparando el nombre (puede fallar).';
       if ((d.sinDueno || []).length) {
         msg += '\n\nNo pude emparejar ' + d.sinDueno.length + ' (revísalos por si están duplicados o ya no están en tu catálogo):\n'
              + d.sinDueno.map(t => '• ' + t).join('\n');
@@ -991,7 +992,9 @@
           '</div>' +
         '</div>' +
         '<div class="ml-rev-datos">' +
-          '<span>Precio <b>' + formatCLP(it.precio) + '</b></span>' +
+          '<span>Precio <b>' + formatCLP(it.precio) + '</b>' +
+            (r.prod.price && r.prod.price !== it.precio ? ' <span class="ml-rev-catalogo">(catálogo ' + formatCLP(r.prod.price) + ')</span>' : '') +
+          '</span>' +
           '<label class="ml-rev-stock">Stock <input class="adm-input" type="number" min="1" step="1" data-role="ml-stock-rev" data-i="' + i + '" value="' + it.cantidad + '" /></label>' +
           '<span>Código <b>' + escapeHtml(it.codigo || '—') + '</b></span>' +
         '</div>' +
@@ -1191,7 +1194,11 @@
       mlEnvio: $('adm-ml-envio').value,
       mlEnvioGratis: $('adm-ml-enviogratis').checked,
       mlMarca: $('adm-ml-marca').value.trim(),
-      mlMaterial: $('adm-ml-material').value.trim()
+      mlMaterial: $('adm-ml-material').value.trim(),
+      mlRecargoFijo: Math.max(0, parseInt($('adm-ml-recargo-fijo').value, 10) || 0),
+      mlRecargoPct: Math.max(0, parseInt($('adm-ml-recargo-pct').value, 10) || 0),
+      mlPrecioMin: Math.max(0, parseInt($('adm-ml-precio-min').value, 10) || 0),
+      mlRedondeo: $('adm-ml-redondeo').value
     }, { merge: true }).then(() => guardado('adm-ml-cfg-ok')).catch(err => console.error(err));
   });
   $('adm-ml-guardar-txt').addEventListener('click', () => {
@@ -1202,6 +1209,34 @@
     $('adm-ml-extras').value = KV_ML_EXTRAS_DEFAULT;
     $('adm-ml-desc').value = KV_ML_DESC_DEFAULT;
   });
+
+  // vista previa en vivo de cómo quedan los precios de Mercado Libre
+  function mlPrecioMuestra() {
+    const cont = $('adm-ml-precio-muestra'); if (!cont) return;
+    const s = {
+      mlRecargoFijo: parseInt($('adm-ml-recargo-fijo').value, 10) || 0,
+      mlRecargoPct: parseInt($('adm-ml-recargo-pct').value, 10) || 0,
+      mlPrecioMin: parseInt($('adm-ml-precio-min').value, 10) || 0,
+      mlRedondeo: $('adm-ml-redondeo').value,
+      mlUsarOferta: $('adm-ml-oferta').checked
+    };
+    const tipo = $('adm-ml-tipo').value;
+    const muestra = [3000, 4990, 6990, 8990, 10990, 12990]
+      .map(v => ({ p: { price: v }, cat: v }))
+      .map(x => ({ cat: x.cat, ml: kvMlPrecio(x.p, s) }));
+    cont.innerHTML =
+      '<div class="ml-precio-tit">Así quedarían (y lo que te llega después de comisión y despacho):</div>' +
+      '<table class="ml-precio-tabla"><tr><th>En tu catálogo</th><th>En Mercado Libre</th><th>Recibes</th></tr>' +
+      muestra.map(x => {
+        const rec = kvMlRecibes(x.ml, tipo);
+        const pct = x.ml ? Math.round(rec / x.ml * 100) : 0;
+        return '<tr><td>' + formatCLP(x.cat) + '</td><td><b>' + formatCLP(x.ml) + '</b></td>' +
+          '<td class="' + (pct < 70 ? 'ml-precio-malo' : pct < 78 ? 'ml-precio-medio' : 'ml-precio-bueno') + '">' +
+          formatCLP(rec) + ' <span>(' + pct + '%)</span></td></tr>';
+      }).join('') + '</table>';
+  }
+  ['adm-ml-recargo-fijo', 'adm-ml-recargo-pct', 'adm-ml-precio-min', 'adm-ml-redondeo', 'adm-ml-tipo', 'adm-ml-oferta']
+    .forEach(id => { const n = $(id); if (n) n.addEventListener('input', mlPrecioMuestra); });
 
   function poblarML() {
     const act = document.activeElement;
@@ -1215,7 +1250,12 @@
     set('adm-ml-marca', settings.mlMarca != null ? settings.mlMarca : 'Karivé Joyas');
     set('adm-ml-material', settings.mlMaterial != null ? settings.mlMaterial : 'Acero quirúrgico');
     const of = $('adm-ml-oferta'); if (of && act !== of) of.checked = !!settings.mlUsarOferta;
+    set('adm-ml-recargo-fijo', settings.mlRecargoFijo || 0);
+    set('adm-ml-recargo-pct', settings.mlRecargoPct || 0);
+    set('adm-ml-precio-min', settings.mlPrecioMin || 0);
+    set('adm-ml-redondeo', settings.mlRedondeo || '');
     const eg = $('adm-ml-enviogratis'); if (eg && act !== eg) eg.checked = !!settings.mlEnvioGratis;
+    mlPrecioMuestra();
   }
 
   // ---------- conexión con Mercado Libre ----------
@@ -1293,6 +1333,88 @@
 
   // ---------- publicaciones ya hechas (precio, stock, pausar) ----------
   $('adm-ml-ver-pubs').addEventListener('click', () => mlCargarPubs());
+
+  // ---------- subir los precios de lo que ya está publicado ----------
+  // Compara lo que cobra hoy cada aviso con lo que debería cobrar según el
+  // recargo configurado, y deja aplicar los cambios después de revisarlos.
+  let mlPreciosPlan = [];
+
+  function mlArmarPlanPrecios() {
+    const pubs = mlPublicados();                       // { CODIGO: {itemId, …} }
+    const porItem = {};
+    Object.keys(pubs).forEach(cod => { if (pubs[cod].itemId) porItem[pubs[cod].itemId] = cod; });
+
+    mlPreciosPlan = [];
+    mlPubsCache.forEach(pub => {
+      if (pub.estado === 'closed') return;
+      const cod = porItem[pub.id];
+      if (!cod) return;                                // aviso que no reconocemos: no se toca
+      const prod = products.find(p => p.code === cod);
+      if (!prod) return;
+      const nuevo = kvMlPrecio(prod, settings);
+      if (!nuevo || nuevo === pub.precio) return;
+      mlPreciosPlan.push({ itemId: pub.id, codigo: cod, titulo: pub.titulo, antes: pub.precio, despues: nuevo, catalogo: prod.price });
+    });
+    return mlPreciosPlan;
+  }
+
+  function mlPintarPlanPrecios() {
+    const cont = $('adm-ml-precios-plan'); if (!cont) return;
+    if (!mlPreciosPlan.length) {
+      cont.innerHTML = '<p class="adm-seccion-sub">No hay precios que cambiar: o ya están al día, o todavía no has apretado «Ver mis publicaciones».</p>';
+      $('adm-ml-precios-aplicar').hidden = true;
+      return;
+    }
+    const tipo = String(settings.mlTipo || 'gold_special');
+    const suben = mlPreciosPlan.filter(x => x.despues > x.antes).length;
+    cont.innerHTML =
+      '<p class="adm-seccion-sub"><b>' + mlPreciosPlan.length + '</b> aviso(s) cambiarían de precio (' + suben + ' suben). ' +
+      'Tu catálogo no se toca.</p>' +
+      '<table class="ml-precio-tabla"><tr><th>Producto</th><th>Ahora</th><th>Quedaría</th><th>Recibes</th></tr>' +
+      mlPreciosPlan.map(x => {
+        const rec = kvMlRecibes(x.despues, tipo);
+        const pct = Math.round(rec / x.despues * 100);
+        return '<tr><td>' + escapeHtml(x.codigo) + ' · ' + escapeHtml(String(x.titulo || '').slice(0, 34)) + '</td>' +
+          '<td>' + formatCLP(x.antes) + '</td>' +
+          '<td><b>' + formatCLP(x.despues) + '</b></td>' +
+          '<td class="' + (pct < 70 ? 'ml-precio-malo' : pct < 78 ? 'ml-precio-medio' : 'ml-precio-bueno') + '">' +
+            formatCLP(rec) + ' <span>(' + pct + '%)</span></td></tr>';
+      }).join('') + '</table>';
+    $('adm-ml-precios-aplicar').hidden = false;
+  }
+
+  const btnVerPrecios = $('adm-ml-precios-ver');
+  if (btnVerPrecios) btnVerPrecios.addEventListener('click', () => {
+    if (!mlPubsCache.length) { $('adm-ml-precios-plan').innerHTML = '<p class="adm-seccion-sub">Primero aprieta «Ver mis publicaciones» para traerlas.</p>'; return; }
+    mlArmarPlanPrecios();
+    mlPintarPlanPrecios();
+  });
+
+  const btnAplicarPrecios = $('adm-ml-precios-aplicar');
+  if (btnAplicarPrecios) btnAplicarPrecios.addEventListener('click', async () => {
+    if (!mlPreciosPlan.length) return;
+    if (!window.confirm('Se van a cambiar los precios de ' + mlPreciosPlan.length + ' aviso(s) en Mercado Libre.\n\n' +
+      'Los precios de tu catálogo NO cambian.\n\n¿Seguimos?')) return;
+    btnAplicarPrecios.disabled = true;
+    const cont = $('adm-ml-precios-plan');
+    let ok = 0; const malos = [];
+    for (let i = 0; i < mlPreciosPlan.length; i++) {
+      const x = mlPreciosPlan[i];
+      cont.insertAdjacentHTML('afterbegin', '');
+      $('adm-ml-precios-estado').textContent = 'Cambiando ' + (i + 1) + ' de ' + mlPreciosPlan.length + '… (' + x.codigo + ')';
+      try {
+        const d = await mlPublicador({ accion: 'ml-actualizar', itemId: x.itemId, precio: x.despues });
+        if (d && d.ok) { ok++; const p = mlPubsCache.find(pp => pp.id === x.itemId); if (p) p.precio = x.despues; }
+        else malos.push(x.codigo + ': ' + ((d && d.error) || 'no se pudo'));
+      } catch (e) { malos.push(x.codigo + ': ' + e.message); }
+    }
+    $('adm-ml-precios-estado').textContent = '✓ Cambiados ' + ok + ' de ' + mlPreciosPlan.length +
+      (malos.length ? ' · no se pudo con ' + malos.length + ' (' + malos[0] + ')' : '');
+    mlArmarPlanPrecios();
+    mlPintarPlanPrecios();
+    mlPintarPubs();
+    btnAplicarPrecios.disabled = false;
+  });
 
   // ---------- pasar publicaciones de Premium a Clásica (o al revés) ----------
   const ML_TIPO_NOMBRE = { gold_pro: 'Premium', gold_special: 'Clásica' };

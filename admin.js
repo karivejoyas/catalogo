@@ -1242,7 +1242,9 @@
       mlMaterial: $('adm-ml-material').value.trim(),
       mlEnvio: $('adm-ml-envio').value,
       mlEnvioGratis: $('adm-ml-enviogratis').checked,
-      mlUsarOferta: $('adm-ml-oferta').checked
+      mlUsarOferta: $('adm-ml-oferta').checked,
+      mlConCierre: $('adm-ml-cierre').value,
+      mlHipoalergenico: $('adm-ml-hipo').checked
     }, { merge: true }).then(() => guardado('adm-ml-avz-ok')).catch(err => console.error(err));
   });
 
@@ -1324,7 +1326,9 @@
     set('adm-ml-recargo-pct', settings.mlRecargoPct || 0);
     set('adm-ml-precio-min', settings.mlPrecioMin || 0);
     set('adm-ml-redondeo', settings.mlRedondeo || '');
+    set('adm-ml-cierre', settings.mlConCierre || '');
     const eg = $('adm-ml-enviogratis'); if (eg && act !== eg) eg.checked = !!settings.mlEnvioGratis;
+    const hp = $('adm-ml-hipo'); if (hp && act !== hp) hp.checked = !!settings.mlHipoalergenico;
     mlPrecioMuestra();
   }
 

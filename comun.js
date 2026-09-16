@@ -660,22 +660,50 @@ function kvMlColor(p) {
 }
 
 /* medida en centímetros, sacada del detalle ("Aprox. 3.5cm" -> 3.5) */
-function kvMlLargoCm(p) {
+function kvMlMedidaCm(p) {
   const m = String((p && p.detail) || '').match(/([\d]+[.,]?[\d]*)\s*cm/i);
   if (!m) return 0;
   const v = parseFloat(String(m[1]).replace(',', '.'));
   return (isNaN(v) || v <= 0 || v > 30) ? 0 : v;
 }
 
+/* Si el detalle dice "de diámetro", esa medida es el DIÁMETRO y no el largo:
+   son dos características distintas en Mercado Libre y ponerlas al revés
+   confunde a quien compra. */
+function kvMlEsDiametro(p) { return /di[áa]metro/i.test(String((p && p.detail) || '')); }
+function kvMlLargoCm(p)    { return kvMlEsDiametro(p) ? 0 : kvMlMedidaCm(p); }
+function kvMlDiametroCm(p) { return kvMlEsDiametro(p) ? kvMlMedidaCm(p) : 0; }
+
+/* Qué tipo de aro es, según la colección. Lo que no se sabe se deja vacío. */
+var KV_TIPO_ARO = {
+  argollas: 'Argolla',
+  topos: 'Topo',
+  charms: 'Colgante',
+  flores: 'Colgante',
+  marina: 'Colgante'
+};
+function kvMlTipoAro(p) { return KV_TIPO_ARO[String((p && p.category) || '').toLowerCase()] || ''; }
+
 /* todo lo que se puede completar solo de un producto */
 function kvMlCaracteristicas(p, settings) {
+  settings = settings || {};
   const out = {};
   const c = kvMlColor(p);
   if (c) out.color = c;
   const l = kvMlLargoCm(p);
   if (l) out.largoCm = l;
-  const mat = String((settings && settings.mlMaterial) || 'Acero quirúrgico').trim();
+  const d = kvMlDiametroCm(p);
+  if (d) out.diametroCm = d;
+  const t = kvMlTipoAro(p);
+  if (t) out.tipoAro = t;
+  const mat = String(settings.mlMaterial || 'Acero quirúrgico').trim();
   if (mat) out.material = mat;
+  // se venden por par: son dos aros en cada publicación
+  out.formatoVenta = 'Par';
+  out.cantidadAros = 2;
+  // esto lo decide la dueña una vez y vale para todo el catálogo
+  if (settings.mlHipoalergenico) out.hipoalergenico = 'Sí';
+  if (settings.mlConCierre) out.tipoCierre = String(settings.mlConCierre);
   return out;
 }
 

@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="catalogo.css?v=20260937" />
+<link rel="stylesheet" href="catalogo.css?v=20260938" />
 </head>
 <body>
 
@@ -485,6 +485,18 @@
 
           <label class="adm-check-linea"><input type="checkbox" id="adm-ml-oferta" /> <span>Usar el precio de oferta como base, en vez del normal</span></label>
 
+          <label class="adm-etiqueta" style="margin-top:18px;">Tipo de cierre de tus aros</label>
+          <select id="adm-ml-cierre" class="adm-input">
+            <option value="">No lo declaro</option>
+            <option value="Presión">Presión</option>
+            <option value="Gancho">Gancho</option>
+            <option value="Argolla">Argolla</option>
+            <option value="Broquel">Broquel</option>
+            <option value="Rosca">Rosca</option>
+          </select>
+          <label class="adm-check-linea"><input type="checkbox" id="adm-ml-hipo" /> <span>Declarar mis aros como hipoalergénicos</span></label>
+          <p class="adm-seccion-sub" style="margin:4px 0 0;">Estas dos respuestas se aplican a <b>todo tu catálogo</b>. Declara hipoalergénico solo si el acero quirúrgico va en la parte que toca la oreja: es una afirmación sobre la salud de quien compra.</p>
+
           <div class="adm-guardar-fila" style="margin-top:16px;">
             <button id="adm-ml-guardar-avz" class="adm-btn-solido">Guardar avanzados</button>
             <span id="adm-ml-avz-ok" class="adm-guardado" hidden>✓ Guardado</span>
@@ -808,8 +820,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="firebase-config.js?v=20260937"></script>
-<script src="comun.js?v=20260937"></script>
-<script src="admin.js?v=20260937"></script>
+<script src="firebase-config.js?v=20260938"></script>
+<script src="comun.js?v=20260938"></script>
+<script src="admin.js?v=20260938"></script>
 </body>
 </html>

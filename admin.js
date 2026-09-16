@@ -1373,21 +1373,44 @@
   // recargo configurado, y deja aplicar los cambios después de revisarlos.
   let mlPreciosPlan = [];
 
-  function mlArmarPlanPrecios() {
-    const pubs = mlPublicados();                       // { CODIGO: {itemId, …} }
-    const porItem = {};
-    Object.keys(pubs).forEach(cod => { if (pubs[cod].itemId) porItem[pubs[cod].itemId] = cod; });
+  /* A qué producto del catálogo corresponde un aviso de Mercado Libre.
+     Primero por el código guardado en el aviso (exacto). Si no lo trae —los
+     avisos viejos no lo tienen— se compara el nombre, igual que al sincronizar. */
+  function mlProductoDeAviso(pub) {
+    if (pub.sku) {
+      const porSku = products.find(p => String(p.code || '').toUpperCase() === String(pub.sku).toUpperCase());
+      if (porSku) return porSku;
+    }
+    const t = mlTituloClave(pub.titulo);
+    if (!t) return null;
+    // el nombre más largo que calce gana, para no confundir "Flor Roja" con "Flor Roja Grande"
+    let mejor = null;
+    products.forEach(p => {
+      const n = mlTituloClave(p.name);
+      if (!n || n.length < 4) return;
+      if (t === n || t.indexOf(n) === 0) { if (!mejor || n.length > mlTituloClave(mejor.name).length) mejor = p; }
+    });
+    return mejor;
+  }
 
+  /* Arma la lista de precios a cambiar mirando TODOS los avisos que Mercado
+     Libre devuelve, no solo los que tengo anotados. Antes filtraba por mi
+     propio registro y los avisos que no estaban ahí se saltaban en silencio:
+     por eso aparecía uno solo. */
+  let mlPreciosSinDuenoN = 0;
+  function mlArmarPlanPrecios() {
     mlPreciosPlan = [];
+    mlPreciosSinDuenoN = 0;
     mlPubsCache.forEach(pub => {
       if (pub.estado === 'closed') return;
-      const cod = porItem[pub.id];
-      if (!cod) return;                                // aviso que no reconocemos: no se toca
-      const prod = products.find(p => p.code === cod);
-      if (!prod) return;
+      const prod = mlProductoDeAviso(pub);
+      if (!prod) { mlPreciosSinDuenoN++; return; }
       const nuevo = kvMlPrecio(prod, settings);
       if (!nuevo || nuevo === pub.precio) return;
-      mlPreciosPlan.push({ itemId: pub.id, codigo: cod, titulo: pub.titulo, antes: pub.precio, despues: nuevo, catalogo: prod.price });
+      mlPreciosPlan.push({
+        itemId: pub.id, codigo: prod.code || '', titulo: pub.titulo,
+        antes: pub.precio, despues: nuevo, catalogo: prod.price
+      });
     });
     return mlPreciosPlan;
   }
@@ -1401,9 +1424,12 @@
     }
     const tipo = String(settings.mlTipo || 'gold_special');
     const suben = mlPreciosPlan.filter(x => x.despues > x.antes).length;
+    const activos = mlPubsCache.filter(p => p.estado !== 'closed').length;
     cont.innerHTML =
-      '<p class="adm-seccion-sub"><b>' + mlPreciosPlan.length + '</b> aviso(s) cambiarían de precio (' + suben + ' suben). ' +
-      'Tu catálogo no se toca.</p>' +
+      '<p class="adm-seccion-sub">De <b>' + activos + '</b> aviso(s) activos: <b>' + mlPreciosPlan.length + '</b> cambiarían de precio (' + suben + ' suben), ' +
+      (activos - mlPreciosPlan.length - mlPreciosSinDuenoN) + ' ya están al día' +
+      (mlPreciosSinDuenoN ? ' y <b>' + mlPreciosSinDuenoN + '</b> no los pude emparejar con ningún producto del catálogo' : '') +
+      '. Tu catálogo no se toca.</p>' +
       '<table class="ml-precio-tabla"><tr><th>Producto</th><th>Ahora</th><th>Quedaría</th><th>Recibes</th></tr>' +
       mlPreciosPlan.map(x => {
         const r = mlRecibe(x.despues, tipo);

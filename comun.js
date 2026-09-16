@@ -550,6 +550,9 @@ function kvMlProblemas(p, settings) {
   if (!it.foto) m.push('no tiene foto');
   if (it.cantidad < 1) m.push('no hay stock');
   if (!it.categoria) m.push('falta elegir la categoría de Mercado Libre');
+  // Mercado Libre rechaza el envío gratis cuando el despacho cuesta más que
+  // el producto: responde "Free shipping costs exceeds sale".
+  if (it.envioGratis && it.precio > 0 && it.precio < 10000) m.push('con envío gratis y precio bajo Mercado Libre lo rechaza');
   return m;
 }
 

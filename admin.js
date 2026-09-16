@@ -1294,6 +1294,40 @@
   // ---------- publicaciones ya hechas (precio, stock, pausar) ----------
   $('adm-ml-ver-pubs').addEventListener('click', () => mlCargarPubs());
 
+  // ---------- pasar publicaciones de Premium a Clásica (o al revés) ----------
+  const ML_TIPO_NOMBRE = { gold_pro: 'Premium', gold_special: 'Clásica' };
+  const ML_TIPO_LOTE = 25;   // el publicador de Google se corta a los 6 minutos
+
+  async function mlCambiarTipoLote(destino) {
+    const ps = mlPubsCache.filter(p => p.estado !== 'closed');
+    if (!ps.length) { $('adm-ml-pubs-contador').textContent = 'Primero trae tus publicaciones.'; return; }
+    const nombre = ML_TIPO_NOMBRE[destino] || destino;
+    if (!window.confirm('Se van a pasar ' + ps.length + ' publicación(es) a ' + nombre + '.\n\n' +
+      (destino === 'gold_special'
+        ? 'Clásica cobra cerca de la mitad de comisión que Premium, y la visibilidad es la misma. Lo que se pierde son las cuotas sin interés para quien compra.'
+        : 'Premium cobra cerca del doble de comisión. A cambio, quien compra puede pagar en cuotas sin interés.') +
+      '\n\n¿Seguimos?')) return;
+
+    const info = $('adm-ml-pubs-contador');
+    let ok = 0; const malos = [];
+    for (let d = 0; d < ps.length; d += ML_TIPO_LOTE) {
+      const lote = ps.slice(d, d + ML_TIPO_LOTE);
+      info.textContent = 'Cambiando ' + Math.min(d + lote.length, ps.length) + ' de ' + ps.length + '…';
+      try {
+        const r = await mlPublicador({ accion: 'ml-tipo', tipo: destino, itemIds: lote.map(p => p.id) });
+        if (!r || !r.ok) { malos.push((r && r.error) || 'error desconocido'); continue; }
+        (r.resultados || []).forEach(x => { if (x.ok) ok++; else malos.push(x.itemId + ': ' + x.error); });
+      } catch (e) { malos.push(e.message); }
+    }
+    const resumen = '✓ Pasadas a ' + nombre + ': ' + ok + ' de ' + ps.length +
+      (malos.length ? ' · no se pudo con ' + malos.length + ' (' + malos[0] + ')' : '');
+    if (ok) await mlCargarPubs();          // se recarga primero, si no el resumen se pierde
+    info.textContent = resumen;
+  }
+
+  const btnClasica = $('adm-ml-a-clasica');
+  if (btnClasica) btnClasica.addEventListener('click', () => mlCambiarTipoLote('gold_special'));
+
   /* deja un título comparable: sin tildes, sin signos y sin las palabras de
      relleno que Mercado Libre agrega, para reconocer dos avisos del mismo aro */
   function mlTituloClave(t) {

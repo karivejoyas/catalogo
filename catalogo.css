@@ -1199,3 +1199,4 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 .ml-pub-pareja a{color:var(--kv-lavanda);text-decoration:underline;}
 .ml-pub-pareja a:hover{color:var(--kv-dorado-cl);}
 .ml-pub-pareja span{opacity:0.7;}
+#adm-ml-precios-estado{display:block;white-space:pre-wrap;line-height:1.55;margin-top:8px;}

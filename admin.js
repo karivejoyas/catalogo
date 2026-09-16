@@ -1406,19 +1406,33 @@
       'Los precios de tu catálogo NO cambian.\n\n¿Seguimos?')) return;
     btnAplicarPrecios.disabled = true;
     const cont = $('adm-ml-precios-plan');
-    let ok = 0; const malos = [];
+    let ok = 0, viaVariantes = 0; const malos = [];
     for (let i = 0; i < mlPreciosPlan.length; i++) {
       const x = mlPreciosPlan[i];
       cont.insertAdjacentHTML('afterbegin', '');
       $('adm-ml-precios-estado').textContent = 'Cambiando ' + (i + 1) + ' de ' + mlPreciosPlan.length + '… (' + x.codigo + ')';
       try {
         const d = await mlPublicador({ accion: 'ml-actualizar', itemId: x.itemId, precio: x.despues });
-        if (d && d.ok) { ok++; const p = mlPubsCache.find(pp => pp.id === x.itemId); if (p) p.precio = x.despues; }
+        if (d && d.ok) { ok++; if (d.via === 'variantes') viaVariantes++; const p = mlPubsCache.find(pp => pp.id === x.itemId); if (p) p.precio = x.despues; }
         else malos.push(x.codigo + ': ' + ((d && d.error) || 'no se pudo'));
       } catch (e) { malos.push(x.codigo + ': ' + e.message); }
     }
-    $('adm-ml-precios-estado').textContent = '✓ Cambiados ' + ok + ' de ' + mlPreciosPlan.length +
-      (malos.length ? ' · no se pudo con ' + malos.length + ' (' + malos[0] + ')' : '');
+    // con 85 fallas iguales, mostrar solo la primera no sirve: se agrupan por motivo
+    let resumen = '✓ Cambiados ' + ok + ' de ' + mlPreciosPlan.length;
+    if (viaVariantes) resumen += ' (' + viaVariantes + ' por sus variantes)';
+    if (malos.length) {
+      const porMotivo = {};
+      malos.forEach(m => {
+        const motivo = m.replace(/^[A-Z]{2}-\d+: /, '').replace(/MLC\d+/g, 'ese aviso').slice(0, 120);
+        (porMotivo[motivo] = porMotivo[motivo] || []).push(m.split(':')[0]);
+      });
+      resumen += '\n\nNo se pudo con ' + malos.length + ':\n' +
+        Object.keys(porMotivo).map(m =>
+          '• ' + porMotivo[m].length + ' aviso(s): ' + m +
+          '\n   (' + porMotivo[m].slice(0, 6).join(', ') + (porMotivo[m].length > 6 ? '…' : '') + ')'
+        ).join('\n');
+    }
+    $('adm-ml-precios-estado').textContent = resumen;
     mlArmarPlanPrecios();
     mlPintarPlanPrecios();
     mlPintarPubs();

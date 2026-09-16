@@ -916,6 +916,7 @@
     if (huer.length) nav += '<button type="button" class="adm-secnav-btn" data-goto="ml-grupo-otros">Otros <span>' + huer.length + '</span></button>';
     nav += '<button type="button" class="adm-secnav-btn" data-goto="ml-sec-ventas">💰 Mis ventas</button>';
     nav += '<button type="button" class="adm-secnav-btn" data-goto="ml-sec-publicadas">📦 Mis publicaciones</button>';
+    nav += '<button type="button" class="adm-secnav-btn" data-goto="ml-sec-calidad">⭐ Calidad</button>';
     nav += '<button type="button" class="adm-secnav-btn adm-secnav-cfg" data-goto="ml-sec-config">⚙ Configuración</button>';
     nav += '</div>';
 
@@ -1631,6 +1632,68 @@
     mlPintarPubs();
     btnAplicarPrecios.disabled = false;
   });
+
+  // ---------- revisar la calidad de los avisos ----------
+  // Mercado Libre le pone nota a cada aviso y muestra "objetivos" sin explicar
+  // bien cuáles. Esto los lee y los junta para ver qué conviene arreglar primero.
+  let mlCalidadDatos = null;
+
+  const btnCalidad = $('adm-ml-calidad-ver');
+  if (btnCalidad) btnCalidad.addEventListener('click', async () => {
+    btnCalidad.disabled = true;
+    const cont = $('adm-ml-calidad');
+    cont.innerHTML = '<p class="adm-seccion-sub">Revisando tus avisos uno por uno en Mercado Libre… esto demora un poco ⏳</p>';
+    try {
+      const d = await mlPublicador({ accion: 'ml-calidad', categoria: String(settings.mlCategoria || '').trim(), limite: 30 });
+      if (!d || !d.ok) { cont.innerHTML = '<p class="adm-seccion-sub">❌ ' + escapeHtml((d && d.error) || 'No se pudo.') + '</p>'; btnCalidad.disabled = false; return; }
+      mlCalidadDatos = d;
+      mlPintarCalidad();
+    } catch (e) { cont.innerHTML = '<p class="adm-seccion-sub">❌ ' + escapeHtml(e.message) + '</p>'; }
+    btnCalidad.disabled = false;
+  });
+
+  function mlPintarCalidad() {
+    const d = mlCalidadDatos, cont = $('adm-ml-calidad');
+    if (!d) return;
+    const faltan = Object.keys(d.faltan || {}).map(k => ({ k: k, n: d.faltan[k] })).sort((a, b) => b.n - a.n);
+    const peores = (d.avisos || []).filter(a => a.nota != null).sort((a, b) => a.nota - b.nota).slice(0, 10);
+
+    let h = '<p class="adm-seccion-sub">Revisé <b>' + d.revisados + '</b> de tus ' + d.total + ' avisos activos' +
+      (d.notaPromedio != null ? ' · nota promedio <b>' + d.notaPromedio + '%</b>' : '') +
+      ' · <b>' + d.fotosPromedio + '</b> fotos por aviso.</p>';
+
+    // lo que más se repite, que es por donde conviene partir
+    h += '<h3 class="ml-cfg-tit">Por dónde partir</h3>';
+    const pasos = [];
+    if (d.unaFoto) pasos.push({ t: '<b>' + d.unaFoto + ' aviso(s) tienen una sola foto.</b> Mercado Libre pide varias y es lo que más pesa en la nota. Con 3 o 4 fotos por aro (puesto, de cerca, con la mano para el tamaño) la nota sube parejo.', peso: 'alto' });
+    if (faltan.length) pasos.push({ t: '<b>Faltan características.</b> La categoría pide ' + d.pideCategoria + ' y a tus avisos les faltan varias — abajo está el detalle.', peso: 'alto' });
+    const sinDesc = (d.avisos || []).filter(a => !a.descripcion).length;
+    if (sinDesc) pasos.push({ t: '<b>' + sinDesc + ' aviso(s) sin descripción.</b> Se arregla republicando desde el panel.', peso: 'medio' });
+    h += pasos.length
+      ? '<ul class="adm-ayuda">' + pasos.map(p => '<li>' + p.t + '</li>').join('') + '</ul>'
+      : '<p class="adm-seccion-sub">No encontré nada grande que arreglar.</p>';
+
+    if (faltan.length) {
+      h += '<h3 class="ml-cfg-tit">Características que faltan</h3>' +
+        '<table class="ml-precio-tabla"><tr><th>Característica</th><th>A cuántos avisos les falta</th></tr>' +
+        faltan.slice(0, 20).map(x =>
+          '<tr><td>' + escapeHtml(x.k) + '</td><td><b>' + x.n + '</b> de ' + d.revisados + '</td></tr>').join('') +
+        '</table>' +
+        '<p class="adm-seccion-sub">Las <b>obligatorias</b> son las que más suben la nota. Si alguna no aplica a tus aros (tipo de piedra, por ejemplo), márcala como <b>«No aplica»</b> en Mercado Libre: eso también cuenta como completada.</p>';
+    }
+
+    if (peores.length) {
+      h += '<h3 class="ml-cfg-tit">Los avisos con peor nota</h3>' +
+        '<table class="ml-precio-tabla"><tr><th>Aviso</th><th>Nota</th><th>Fotos</th><th>Le falta</th></tr>' +
+        peores.map(a =>
+          '<tr><td>' + escapeHtml(String(a.titulo || '').slice(0, 38)) + '</td>' +
+          '<td class="' + (a.nota < 50 ? 'ml-precio-malo' : a.nota < 75 ? 'ml-precio-medio' : 'ml-precio-bueno') + '"><b>' + a.nota + '%</b></td>' +
+          '<td class="' + (a.fotos <= 1 ? 'ml-precio-malo' : '') + '">' + a.fotos + '</td>' +
+          '<td>' + escapeHtml((a.falta || []).slice(0, 4).join(', ') || '—') + '</td></tr>').join('') +
+        '</table>';
+    }
+    cont.innerHTML = h;
+  }
 
   // ---------- borrar definitivamente los avisos cerrados ----------
   // Un aviso cerrado deja de venderse pero sigue ocupando lugar en la lista.

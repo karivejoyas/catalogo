@@ -846,7 +846,18 @@
   function mlEstado(msg) { const n = $('adm-ml-estado'); if (n) n.textContent = msg || ''; }
   function mlEstadoLista(msg) { const n = $('adm-ml-estado-lista'); if (n) n.textContent = msg || ''; }
   function mlPublicados() { return kvMlPublicados(mlDatos); }
-  function mlYaPublicado(p) { return !!(p.code && mlPublicados()[p.code]); }
+  /* ¿este producto ya está arriba? Se mira lo que Mercado Libre tiene AHORA,
+     no solo mi registro. Confiar solo en el registro fue lo que dejó publicar
+     duplicados: productos que ya estaban arriba salían como "faltantes". */
+  function mlYaPublicado(p) {
+    if (p.code && mlPublicados()[p.code]) return true;
+    if (!mlPubsCache.length) return false;
+    return mlPubsCache.some(pub => {
+      if (pub.estado === 'closed') return false;
+      const prod = mlProductoDeAviso(pub);
+      return prod && prod.id === p.id;
+    });
+  }
 
   /* la foto tal como la necesita el publicador: las guardadas como archivo van
      por URL absoluta, las pegadas a mano van como base64 para que él las suba. */
@@ -1392,6 +1403,19 @@
   // ---------- publicaciones ya hechas (precio, stock, pausar) ----------
   $('adm-ml-ver-pubs').addEventListener('click', () => mlCargarPubs());
 
+  // Al entrar a la pestaña se traen las publicaciones una sola vez. Sin esto el
+  // panel no sabe qué hay realmente en Mercado Libre y puede ofrecer publicar
+  // productos que ya están arriba, que es como se crearon los duplicados.
+  let mlPubsPedidas = false;
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('.adm-tab[data-tab="mercadolibre"]');
+    if (!t || mlPubsPedidas) return;
+    if (!String(settings.igPubUrl || '').trim() || !pubClave()) return;
+    mlPubsPedidas = true;
+    mlEstadoLista('Revisando qué tienes publicado en Mercado Libre…');
+    mlCargarPubs().then(() => { mlEstadoLista(''); renderML(); }).catch(() => { mlEstadoLista(''); });
+  });
+
   // ---------- ponerle su código a cada aviso ----------
   // Mientras los avisos no traigan el código del producto hay que adivinar
   // comparando nombres, y eso confunde productos parecidos. Con el código
@@ -1667,8 +1691,12 @@
     Object.keys(grupos).forEach(k => {
       const g = grupos[k];
       if (g.length < 2) return;
-      const conVentas = g.slice().sort((a, b) => (b.vendidos || 0) - (a.vendidos || 0));
-      const quedarse = conVentas[0];
+      const orden = g.slice().sort((a, b) => {
+        const v = (b.vendidos || 0) - (a.vendidos || 0);
+        if (v) return v;                                   // primero el que vendió
+        return String(a.desde || '').localeCompare(String(b.desde || ''));   // luego el más antiguo
+      });
+      const quedarse = orden[0];
       g.forEach(p => {
         dup[p.id] = {
           total: g.length,

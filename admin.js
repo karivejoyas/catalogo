@@ -1219,6 +1219,31 @@
     $('adm-ml-desc').value = KV_ML_DESC_DEFAULT;
   });
 
+  // ---------- comisiones reales de Mercado Libre ----------
+  // Mi estimación se equivocaba feo con los productos baratos: en un aro de
+  // $2.990 cobra 16%, no el 9,46% de los de $10.990. Mejor preguntárselo.
+  const mlTarifas = {};                       // { "gold_special|6990": 1039.5 }
+  function mlTarifaClave(p, tipo) { return tipo + '|' + p; }
+
+  async function mlPedirTarifas(precios, tipo) {
+    const faltan = [...new Set(precios)].filter(p => p && mlTarifas[mlTarifaClave(p, tipo)] === undefined);
+    if (!faltan.length) return;
+    try {
+      const d = await mlPublicador({ accion: 'ml-tarifas', precios: faltan.slice(0, 40), tipo: tipo });
+      if (d && d.ok && d.tarifas) {
+        Object.keys(d.tarifas).forEach(p => { mlTarifas[mlTarifaClave(Number(p), tipo)] = Number(d.tarifas[p]); });
+      }
+      faltan.forEach(p => { if (mlTarifas[mlTarifaClave(p, tipo)] === undefined) mlTarifas[mlTarifaClave(p, tipo)] = null; });
+    } catch (e) { /* si no se puede, se sigue con la estimación */ }
+  }
+
+  /* lo que te queda: con la comisión real si la tenemos, si no con la estimación */
+  function mlRecibe(precio, tipo) {
+    const real = mlTarifas[mlTarifaClave(precio, tipo)];
+    if (real == null) return { valor: kvMlRecibes(precio, tipo), real: false };
+    return { valor: Math.round(precio - real - KV_ML_ENVIO_APROX), real: true };
+  }
+
   // vista previa en vivo de cómo quedan los precios de Mercado Libre
   function mlPrecioMuestra() {
     const cont = $('adm-ml-precio-muestra'); if (!cont) return;
@@ -1381,22 +1406,27 @@
       'Tu catálogo no se toca.</p>' +
       '<table class="ml-precio-tabla"><tr><th>Producto</th><th>Ahora</th><th>Quedaría</th><th>Recibes</th></tr>' +
       mlPreciosPlan.map(x => {
-        const rec = kvMlRecibes(x.despues, tipo);
-        const pct = Math.round(rec / x.despues * 100);
+        const r = mlRecibe(x.despues, tipo);
+        const rec = r.valor, pct = Math.round(rec / x.despues * 100);
         return '<tr><td>' + escapeHtml(x.codigo) + ' · ' + escapeHtml(String(x.titulo || '').slice(0, 34)) + '</td>' +
           '<td>' + formatCLP(x.antes) + '</td>' +
           '<td><b>' + formatCLP(x.despues) + '</b></td>' +
           '<td class="' + (pct < 70 ? 'ml-precio-malo' : pct < 78 ? 'ml-precio-medio' : 'ml-precio-bueno') + '">' +
-            formatCLP(rec) + ' <span>(' + pct + '%)</span></td></tr>';
+            formatCLP(rec) + ' <span>(' + pct + '%' + (r.real ? '' : ' aprox') + ')</span></td></tr>';
       }).join('') + '</table>';
     $('adm-ml-precios-aplicar').hidden = false;
   }
 
   const btnVerPrecios = $('adm-ml-precios-ver');
-  if (btnVerPrecios) btnVerPrecios.addEventListener('click', () => {
+  if (btnVerPrecios) btnVerPrecios.addEventListener('click', async () => {
     if (!mlPubsCache.length) { $('adm-ml-precios-plan').innerHTML = '<p class="adm-seccion-sub">Primero aprieta «Ver mis publicaciones» para traerlas.</p>'; return; }
+    btnVerPrecios.disabled = true;
     mlArmarPlanPrecios();
+    $('adm-ml-precios-estado').textContent = 'Preguntándole a Mercado Libre cuánto cobra por cada precio…';
+    await mlPedirTarifas(mlPreciosPlan.map(x => x.despues), String(settings.mlTipo || 'gold_special'));
+    $('adm-ml-precios-estado').textContent = '';
     mlPintarPlanPrecios();
+    btnVerPrecios.disabled = false;
   });
 
   const btnAplicarPrecios = $('adm-ml-precios-aplicar');

@@ -1637,6 +1637,38 @@
     btnAplicarPrecios.disabled = false;
   });
 
+  // ---------- ver un aviso tal como está en Mercado Libre ----------
+  // Para comprobar con los ojos que los cambios del panel llegaron de verdad.
+  const btnVerAviso = $('adm-ml-ver-aviso');
+  if (btnVerAviso) btnVerAviso.addEventListener('click', async () => {
+    const cont = $('adm-ml-aviso');
+    btnVerAviso.disabled = true;
+    cont.innerHTML = '<p class="adm-seccion-sub">Consultando a Mercado Libre…</p>';
+    try {
+      const itemId = String($('adm-ml-aviso-id').value || '').trim();
+      const d = await mlPublicador({ accion: 'ml-ver', itemId: itemId });
+      if (!d || !d.ok) { cont.innerHTML = '<p class="adm-seccion-sub">❌ ' + escapeHtml((d && d.error) || 'No se pudo.') + '</p>'; btnVerAviso.disabled = false; return; }
+      const f = new Date(d.actualizado || 0);
+      cont.innerHTML =
+        '<div class="ml-rev">' +
+          '<div class="ml-pub-tit">' + (d.url ? '<a href="' + escapeHtml(d.url) + '" target="_blank" rel="noopener">' + escapeHtml(d.titulo || d.id) + '</a>' : escapeHtml(d.titulo || d.id)) + '</div>' +
+          '<div class="ml-rev-datos">' +
+            '<span>Precio <b>' + formatCLP(d.precio || 0) + '</b></span>' +
+            '<span>Stock <b>' + (d.stock || 0) + '</b></span>' +
+            '<span>Fotos <b class="' + (d.fotos <= 1 ? 'ml-precio-malo' : '') + '">' + (d.fotos || 0) + '</b></span>' +
+            (d.nota != null ? '<span>Nota <b>' + d.nota + '%</b></span>' : '') +
+            (d.actualizado ? '<span>Último cambio <b>' + f.toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</b></span>' : '') +
+          '</div>' +
+          '<table class="ml-precio-tabla" style="margin-top:12px;"><tr><th>Característica</th><th>Valor</th></tr>' +
+          (d.caracteristicas || []).map(c =>
+            '<tr><td>' + escapeHtml(c.nombre) + '</td><td><b>' + escapeHtml(String(c.valor)) + '</b></td></tr>').join('') +
+          '</table>' +
+          (d.descripcion ? '<details class="ml-rev-desc"><summary>Ver la descripción que tiene ahora</summary><pre>' + escapeHtml(d.descripcion) + '</pre></details>' : '') +
+        '</div>';
+    } catch (e) { cont.innerHTML = '<p class="adm-seccion-sub">❌ ' + escapeHtml(e.message) + '</p>'; }
+    btnVerAviso.disabled = false;
+  });
+
   // ---------- completar las características de todos, de una ----------
   // Un solo botón: recorre todos los avisos activos, les completa color,
   // largo y material sacados del catálogo, y avisa al final. No hay que

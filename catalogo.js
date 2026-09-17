@@ -977,7 +977,7 @@
           method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ accion: 'mp-preferencia', pedido: pedidoTarjeta, referencia: ref, volverA: location.origin + location.pathname })
         });
-        const dp = await rp.json();
+        const dp = await kvPubJson(rp, 'Vuelve a intentar en un rato o escríbenos por WhatsApp');
         if (!dp || !dp.ok || !dp.url) throw new Error((dp && dp.error) || 'No se pudo iniciar el pago');
 
         // 2) se guarda el pedido ANTES de mandarla a pagar, pero SIN número y SIN
@@ -1007,7 +1007,7 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ accion: 'pedido', pedido: pedido, comprobante: (carroComprobante.split(',')[1] || '') })
       });
-      const d = await r.json();
+      const d = await kvPubJson(r, 'Vuelve a intentar en un rato o escríbenos por WhatsApp');
       if (!d || !d.ok || !d.num) throw new Error((d && d.error) || 'No se pudo registrar el pedido');
       // registrar en la base para el panel de admin (si las reglas lo permiten)
       try {

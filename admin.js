@@ -804,7 +804,7 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // simple request: evita bloqueos CORS
         body: JSON.stringify({ clave: clave, destino: destino, caption: $('ig-m-caption').value, images: igPreviewImgs.map(u => u.split(',')[1]) })
       });
-      const d = await r.json();
+      const d = await kvPubJson(r, 'Revisa la URL del publicador y tu clave secreta en esta misma pesta\u00f1a');
       if (d && d.ok) {
         igProgresoFin(true);
         const igOk = d.ig ? d.ig === 'ok' : destino !== 'fb';   // scripts antiguos no informan "ig"
@@ -1171,7 +1171,7 @@
             items: lote.map(r => Object.assign({}, r.item, { foto: undefined, imagen: mlFoto(r.prod) }))
           })
         });
-        d = await r.json();
+        d = await kvPubJson(r, 'Suele pasar cuando la autorización de Mercado Libre se vence: aprieta «Conectar mi cuenta» aquí abajo y vuelve a intentar');
       } catch (err) {
         malTodos.push({ codigo: '(tanda)', error: 'no se pudo contactar al publicador: ' + err.message });
         break;
@@ -1342,7 +1342,7 @@
       method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(Object.assign({ clave: clave }, cuerpo))
     });
-    return r.json();
+    return kvPubJson(r, 'Suele pasar cuando la autorización de Mercado Libre se vence: aprieta «Conectar mi cuenta» aquí abajo y vuelve a intentar');
   }
   function mlCuenta(msg) { const n = $('adm-ml-cuenta'); if (n) n.textContent = msg || ''; }
 
@@ -3174,7 +3174,7 @@
         method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ accion: 'mp-verificar', clave: clave, pagoId: p.pagoId || '', referencia: p.pagoRef || '' })
       });
-      const d = await r.json();
+      const d = await kvPubJson(r, 'Revisa la URL del publicador y tu clave secreta en \u00abInstagram y Facebook\u00bb');
       if (!d || !d.ok) throw new Error((d && d.error) || 'No se pudo consultar');
       const aprobado = d.estado === 'approved';
       const montoOk = Math.abs(Number(d.monto || 0) - Number(p.total || 0)) < 1;
@@ -3355,7 +3355,7 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ accion: 'pedido-envio', clave: clave, num: p.num, correo: correoCli, nombre: (p.cliente || {}).nombre || '', courier: datos.courier, tracking: datos.tracking, trackingUrl: datos.trackingUrl })
         });
-        const d = await r.json();
+        const d = await kvPubJson(r, 'Revisa la URL del publicador y tu clave secreta en \u00abInstagram y Facebook\u00bb');
         correoOk = !!(d && d.ok);
         if (!correoOk) motivo = (d && d.error) ? String(d.error) : 'El publicador respondió que no pudo enviarlo.';
       } catch (e) {

@@ -440,6 +440,34 @@ function kvCaptionMulti(prods, settings, tags) {
     .trim();
 }
 
+/* ===================== RESPUESTA DEL PUBLICADOR =====================
+   El publicador de Google contesta en JSON, pero cuando la autorizacion se
+   vence -o Google decide mostrar su propia pantalla- lo que llega es una
+   pagina HTML. Pasarle eso a r.json() hace que el navegador lance
+   "Unexpected token '<', "<!DOCTYPE "... is not valid JSON", un texto que no
+   le dice nada a quien esta usando el panel y que ademas parece un error del
+   catalogo cuando no lo es.
+
+   Esto lee la respuesta como texto, la intenta convertir, y si no se puede
+   lanza un error explicado en castellano. El que llama puede sumar una pista
+   con lo que hay que hacer en ESE boton, porque no es lo mismo lo que debe
+   hacer la duena del panel que una clienta comprando. */
+async function kvPubJson(r, pista) {
+  const txt = await r.text();
+  try {
+    return JSON.parse(txt);
+  } catch (e) {
+    const esPagina = /^\s*(<|﻿\s*<)/.test(txt);
+    const base = esPagina
+      ? 'el publicador de Google respondió con una página web en vez de datos'
+      : 'el publicador respondió algo que no se entiende';
+    const err = new Error(base + (pista ? '. ' + pista : '.'));
+    err.kvNoEsJson = true;
+    err.kvCruda = txt.slice(0, 500);   // queda a mano para la consola, no se muestra
+    throw err;
+  }
+}
+
 /* ===================== MERCADO LIBRE =====================
    Con qué título, precio, cantidad y descripción se publica un producto en
    Mercado Libre. Todo se arma al vuelo a partir de plantillas editables desde

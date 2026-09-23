@@ -357,6 +357,37 @@
     actualizarBannerPend();
   }
 
+  /* Copia al portapapeles el enlace de la ficha del producto, lista para pegar en
+     WhatsApp o en una historia. El navegador solo permite escribir en el
+     portapapeles a raíz de un clic, por eso se hace aquí y no en otro momento. */
+  async function copiarEnlace(btn) {
+    const enlace = kvEnlaceProducto(btn.dataset.code);
+    if (!enlace) return;
+    let listo = false;
+    try {
+      await navigator.clipboard.writeText(enlace);
+      listo = true;
+    } catch (err) {
+      // navegadores viejos o sin permiso: se copia con un campo temporal
+      try {
+        const campo = document.createElement('textarea');
+        campo.value = enlace;
+        campo.setAttribute('readonly', '');
+        campo.style.position = 'fixed';
+        campo.style.opacity = '0';
+        document.body.appendChild(campo);
+        campo.select();
+        listo = document.execCommand('copy');
+        document.body.removeChild(campo);
+      } catch (e2) { listo = false; }
+    }
+    const antes = btn.innerHTML;
+    btn.innerHTML = listo ? '✓ Copiado' : '✕ No se pudo';
+    btn.classList.toggle('copiado', listo);
+    if (!listo) window.prompt('Copia el enlace a mano:', enlace);
+    setTimeout(() => { btn.innerHTML = antes; btn.classList.remove('copiado'); }, 1600);
+  }
+
   function conectarProductos() {
     const r = $('adm-categorias');
     r.querySelectorAll('[data-role="add"]').forEach(n => n.addEventListener('click', e => agregar(e.currentTarget.dataset.cat)));
@@ -391,6 +422,7 @@
       const card = e.target.closest('.cat-card-edit');
       const ci = card && card.querySelector('[data-role="code"]'); if (ci) ci.value = nuevoCode;
     }));
+    r.querySelectorAll('[data-role="copiar-enlace"]').forEach(n => n.addEventListener('click', e => copiarEnlace(e.currentTarget)));
     r.querySelectorAll('[data-role="delete"]').forEach(n => n.addEventListener('click', e => eliminar(e.target.dataset.id)));
     r.querySelectorAll('[data-role="mover"]').forEach(n => n.addEventListener('click', e => moverProducto(e.currentTarget.dataset.id, e.currentTarget.dataset.dir)));
     r.querySelectorAll('[data-role="save"]').forEach(n => n.addEventListener('click', e => guardarProducto(e.currentTarget.dataset.id)));

@@ -1246,3 +1246,8 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
   .vis-paso{grid-template-columns:118px 1fr 74px;gap:7px;}
   .vis-paso-et{font-size:11px;}
 }
+
+/* ---- botón para copiar el enlace de un producto ---- */
+.ed-btn-enlace{background:rgba(201,162,75,0.12);border:1px solid rgba(201,162,75,0.45);color:var(--kv-dorado-cl);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;cursor:pointer;white-space:nowrap;height:34px;flex:0 0 auto;}
+.ed-btn-enlace:hover{background:rgba(201,162,75,0.22);}
+.ed-btn-enlace.copiado{background:rgba(120,190,120,0.18);border-color:rgba(120,190,120,0.55);color:#BFE6BF;}

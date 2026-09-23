@@ -837,6 +837,15 @@ function kvCardHtml(p) {
 }
 
 /* tarjeta de edición (panel admin) */
+/* Dirección pública de la ficha de un producto. Es la que conviene compartir por
+   WhatsApp o Instagram: muestra la foto y el precio en la vista previa, cosa que
+   el enlace del catálogo completo no hace. */
+var KV_SITIO = 'https://karivejoyas.github.io/catalogo/';
+function kvEnlaceProducto(code) {
+  const c = String(code || '').trim();
+  return c ? KV_SITIO + 'p/' + c + '.html' : '';
+}
+
 function kvCardEditHtml(p, cats, modo) {
   cats = cats || KV_CATEGORIAS;
   modo = modo === 'movil' ? 'movil' : 'pc';
@@ -883,6 +892,7 @@ function kvCardEditHtml(p, cats, modo) {
         '</details>' +
         '<div class="ed-fila">' +
           '<input class="ed-input ed-codigo" data-role="code" data-id="' + p.id + '" value="' + escapeHtml(p.code) + '" placeholder="Código" />' +
+          (p.code ? '<button type="button" class="ed-btn-enlace" data-role="copiar-enlace" data-code="' + escapeHtml(p.code) + '" title="Copiar el enlace de este producto para compartirlo">🔗 Enlace</button>' : '') +
           '<button type="button" class="ed-btn-eliminar" data-role="delete" data-id="' + p.id + '">Eliminar</button>' +
         '</div>' +
         '<input class="ed-input ed-nombre" data-role="name" data-id="' + p.id + '" value="' + escapeHtml(p.name) + '" placeholder="Nombre" />' +

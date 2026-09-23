@@ -1,0 +1,65 @@
+# Regenera todos los días las fichas de producto y los feeds, leyendo el
+# catálogo en vivo desde Firestore. Así, cuando Karina agrega un aro o cambia
+# un precio, la ficha y los feeds se actualizan solos sin que nadie intervenga.
+#
+# También se puede lanzar a mano desde la pestaña Actions del repositorio
+# ("Run workflow"), que es lo práctico después de cargar productos nuevos.
+
+name: Actualizar fichas y feeds
+
+on:
+  schedule:
+    # 09:00 UTC = 05:00 o 06:00 en Chile según horario de verano
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+# Evita que dos ejecuciones se pisen si una tarda más de la cuenta
+concurrency:
+  group: fichas
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Traer el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generar las fichas, el feed de Google y el sitemap
+        run: python3 herramientas/paginas-producto.py
+
+      - name: Generar el feed de Meta
+        run: python3 herramientas/feed-meta.py
+
+      - name: Revisar que el resultado tenga sentido
+        run: |
+          fichas=$(ls p/*.html 2>/dev/null | wc -l)
+          google=$(($(wc -l < catalogo-google.csv) - 1))
+          meta=$(($(wc -l < catalogo-meta.csv) - 1))
+          echo "fichas: $fichas | feed de Google: $google | feed de Meta: $meta"
+          if [ "$fichas" -lt 20 ] || [ "$google" -lt 20 ] || [ "$meta" -lt 20 ]; then
+            echo "Salió muy poco contenido. No se publica nada."
+            exit 1
+          fi
+
+      - name: Publicar si algo cambió
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "El catálogo no cambió desde ayer. No hay nada que publicar."
+            exit 0
+          fi
+          git commit -m "Actualizar fichas y feeds desde el catálogo
+
+          Generado automáticamente a partir del catálogo en vivo."
+          git push

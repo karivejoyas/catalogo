@@ -266,6 +266,11 @@ def main():
     campos = ["code", "name", "price", "priceOffer", "stock", "detail", "category", "order", "photo"]
     docs = documentos("catalog/products/items", campos)
 
+    # Red de seguridad: si Firestore responde a medias, mejor fallar que
+    # publicar un catálogo vacío y borrar lo que estaba bien.
+    if len(docs) < 20:
+        sys.exit("Solo llegaron %d productos. Se aborta sin escribir nada." % len(docs))
+
     filas, paginas, sin_foto = [], [], []
     for doc in docs:
         f = doc.get("fields", {})

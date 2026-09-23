@@ -32,10 +32,15 @@
     // "Lo más visto" va primero: lo que más miran las clientas (lo calcula el admin)
     const masVistos = kvMasVistos(settings, visibles);
     if (masVistos.length) {
+      // el nombre, la descripción y la portada se editan en el panel; si no se
+      // han tocado, se usan los de siempre y la foto del producto más visto
+      const mv = (settings && settings.masVistos) || {};
       pushCategoria({
-        id: '__masvistos__', nombre: 'Lo más visto',
-        sub: 'Lo que más están mirando nuestras clientas ✨',
-        imagen: masVistos[0].photo || ''
+        id: '__masvistos__',
+        nombre: mv.nombre || 'Lo más visto',
+        sub: mv.sub || 'Lo que más están mirando nuestras clientas ✨',
+        imagen: mv.imagen || masVistos[0].photo || '',
+        foco: mv.foco
       }, masVistos);
     }
     cats.forEach(cat => pushCategoria(cat, visibles.filter(p => p.category === cat.id)));

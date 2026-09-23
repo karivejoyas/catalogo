@@ -3475,7 +3475,61 @@
       .filter(r => r.p)
       .sort((a, b) => b.n - a.n);
   }
+  /* Portada de "Lo más visto": nombre, descripción, foto y encuadre. Se guarda
+     en settings.masVistos junto con la lista, con el mismo botón. */
+  let mvPortada = null;   // null = sin cambios pendientes
+
+  function mvCfg() {
+    const g = (settings && settings.masVistos) || {};
+    return mvPortada || {
+      nombre: g.nombre || '', sub: g.sub || '',
+      imagen: g.imagen || '', foco: g.foco || null
+    };
+  }
+  function mvTocar(cambio) {
+    const c = mvCfg();
+    mvPortada = { nombre: c.nombre, sub: c.sub, imagen: c.imagen, foco: c.foco };
+    cambio(mvPortada);
+    mvPintarPortada();
+  }
+  /* Foto que se ve hoy en el catálogo: la elegida, o la del producto más visto. */
+  function mvFotoActual() {
+    const c = mvCfg();
+    if (c.imagen) return c.imagen;
+    const publicado = kvMasVistos(settings, products.map(vista).filter(kvEnStock))[0];
+    if (publicado && publicado.photo) return publicado.photo;
+    // aún sin publicar: se muestra el primero del ranking para que se vea algo
+    const top = rankingVistos()[0];
+    const p = top && products.find(x => x.id === top.id);
+    return (p && vista(p).photo) || '';
+  }
+  function mvPintarPortada() {
+    const prev = $('adm-mv-prev'); if (!prev) return;
+    const c = mvCfg();
+    const nombre = $('adm-mv-nombre'), sub = $('adm-mv-sub');
+    if (nombre && document.activeElement !== nombre) nombre.value = c.nombre;
+    if (sub && document.activeElement !== sub) sub.value = c.sub;
+    const f = kvFocoCat({ foco: c.foco });
+    ['zoom', 'x', 'y'].forEach(k => {
+      const el = $('adm-mv-' + k);
+      if (el && document.activeElement !== el) el.value = f[k];
+    });
+    prev.style.backgroundImage = "url('" + mvFotoActual() + "')";
+    if (kvFocoCatCss({ foco: c.foco })) {
+      prev.style.backgroundPosition = f.x + '% ' + f.y + '%';
+      prev.style.backgroundSize = f.zoom === 100 ? 'contain' : (f.zoom + '%');
+    } else {                       // en el centro y sin zoom: manda la hoja de estilos
+      prev.style.backgroundPosition = '';
+      prev.style.backgroundSize = '';
+    }
+    const txt = $('adm-mv-prevtxt');
+    if (txt) txt.textContent = c.nombre || 'Lo más visto';
+    const quitar = $('adm-mv-foto-quitar');
+    if (quitar) quitar.disabled = !c.imagen;
+  }
+
   function renderMasVistos() {
+    mvPintarPortada();
     const cont = $('adm-mv-lista'); if (!cont) return;
     const act = $('adm-mv-activo'), cuantos = $('adm-mv-cuantos'), estado = $('adm-mv-estado');
     const cfg = (settings && settings.masVistos) || {};
@@ -3514,6 +3568,25 @@
     renderVisitas();
   });
 
+  // campos de la portada de "Lo más visto"
+  if ($('adm-mv-nombre')) $('adm-mv-nombre').addEventListener('input', e => mvTocar(c => { c.nombre = e.target.value; }));
+  if ($('adm-mv-sub')) $('adm-mv-sub').addEventListener('input', e => mvTocar(c => { c.sub = e.target.value; }));
+  ['zoom', 'x', 'y'].forEach(k => {
+    const el = $('adm-mv-' + k);
+    if (el) el.addEventListener('input', e => mvTocar(c => {
+      const f = kvFocoCat({ foco: c.foco });
+      f[k] = parseInt(e.target.value, 10);
+      c.foco = { zoom: f.zoom, x: f.x, y: f.y };
+    }));
+  });
+  if ($('adm-mv-foco-reset')) $('adm-mv-foco-reset').addEventListener('click', () => mvTocar(c => { c.foco = null; }));
+  if ($('adm-mv-foto')) $('adm-mv-foto').addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    if (file) kvCompressPhoto(file, (data) => mvTocar(c => { c.imagen = data; }), 1000);
+    e.target.value = '';
+  });
+  if ($('adm-mv-foto-quitar')) $('adm-mv-foto-quitar').addEventListener('click', () => mvTocar(c => { c.imagen = ''; }));
+
   if ($('adm-mv-guardar')) $('adm-mv-guardar').addEventListener('click', () => {
     const n = parseInt($('adm-mv-cuantos').value, 10) || 8;
     const ids = rankingVistos().slice(0, n).map(r => r.id);
@@ -3521,8 +3594,12 @@
       window.alert('Todavía no hay visitas suficientes para armar la lista. Actívalo más adelante.');
       return;
     }
-    settingsRef.set({ masVistos: { activo: $('adm-mv-activo').checked, cuantos: n, ids: ids, fecha: new Date().toISOString() } }, { merge: true })
-      .then(() => guardado('adm-mv-ok')).catch(err => console.error(err));
+    const c = mvCfg();
+    settingsRef.set({ masVistos: {
+      activo: $('adm-mv-activo').checked, cuantos: n, ids: ids, fecha: new Date().toISOString(),
+      nombre: c.nombre || '', sub: c.sub || '', imagen: c.imagen || '', foco: c.foco || null
+    } }, { merge: true })
+      .then(() => { mvPortada = null; guardado('adm-mv-ok'); }).catch(err => console.error(err));
   });
 
   /* Botones para recuperar un carrito abandonado: abren WhatsApp o el correo

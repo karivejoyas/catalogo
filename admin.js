@@ -3383,6 +3383,49 @@
   const VIS_ICONO_DISP = { 'Móvil': '📱', 'Tablet': '📲', 'Escritorio': '💻' };
   const VIS_ICONO_ORIGEN = { 'Instagram': '📷', 'Facebook': '👍', 'WhatsApp': '💬', 'Google': '🔎', 'Directo': '🔗', 'Otro': '🌐' };
   const visitasAbiertas = {};   // id -> true (detalle con miniaturas desplegado)
+  let visPeriodo = '7';         // 'hoy' | '7' | '30' | 'todo'
+
+  // Recorta las visitas al periodo elegido. Se usa para el resumen, el embudo y
+  // los desgloses; la lista de abajo sigue mostrando todo lo que haya cargado.
+  function visDelPeriodo() {
+    if (visPeriodo === 'todo') return visitas;
+    const fecha = v => new Date(v.ultima || v.creada || 0).getTime();
+    if (visPeriodo === 'hoy') {
+      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      return visitas.filter(v => fecha(v) >= hoy.getTime());
+    }
+    const dias = visPeriodo === '30' ? 30 : 7;
+    const desde = Date.now() - dias * 24 * 3600 * 1000;
+    return visitas.filter(v => fecha(v) >= desde);
+  }
+
+  const visPct = (parte, total) => total ? Math.round(parte * 1000 / total) / 10 : 0;
+
+  // Cuenta cuántas veces aparece cada valor y devuelve el top N ordenado.
+  function visTop(lista, sacar, n) {
+    const cuenta = {};
+    lista.forEach(v => {
+      const k = sacar(v);
+      if (!k) return;
+      cuenta[k] = (cuenta[k] || 0) + 1;
+    });
+    return Object.keys(cuenta)
+      .map(k => ({ clave: k, n: cuenta[k] }))
+      .sort((a, b) => b.n - a.n)
+      .slice(0, n || 5);
+  }
+
+  function visBarrasHtml(titulo, filas, total) {
+    if (!filas.length) return '<div class="vis-desglose"><h3>' + titulo + '</h3><p class="vis-vacio">Sin datos todavía.</p></div>';
+    return '<div class="vis-desglose"><h3>' + titulo + '</h3>' + filas.map(f => {
+      const pct = visPct(f.n, total);
+      return '<div class="vis-barra-fila">' +
+        '<span class="vis-barra-et">' + escapeHtml(f.clave) + '</span>' +
+        '<span class="vis-barra-pista"><span class="vis-barra-relleno" style="width:' + Math.max(pct, 2) + '%;"></span></span>' +
+        '<span class="vis-barra-n">' + f.n + '</span>' +
+      '</div>';
+    }).join('') + '</div>';
+  }
 
   /* ---------- LO MÁS VISTO ----------
      Se cuenta cuántas visitas distintas abrieron cada producto, y también
@@ -3430,6 +3473,15 @@
     }).join('') + '</div>' +
     '<p class="adm-focogen-estado">Los puntos suman: 1 por abrir el producto, 2 por ponerlo en el carrito y 3 por comprarlo. Los marcados en dorado son los que están publicados.</p>';
   }
+  // Botones de periodo del resumen de visitas (Hoy / 7 / 30 / Todo).
+  if ($('adm-vis-periodo')) $('adm-vis-periodo').addEventListener('click', (e) => {
+    const btn = e.target.closest('.vis-per-btn');
+    if (!btn) return;
+    visPeriodo = btn.dataset.per;
+    $('adm-vis-periodo').querySelectorAll('.vis-per-btn').forEach(b => b.classList.toggle('activo', b === btn));
+    renderVisitas();
+  });
+
   if ($('adm-mv-guardar')) $('adm-mv-guardar').addEventListener('click', () => {
     const n = parseInt($('adm-mv-cuantos').value, 10) || 8;
     const ids = rankingVistos().slice(0, n).map(r => r.id);
@@ -3477,26 +3529,86 @@
     '</div>';
   }
   function renderVisitas() {
+    const per = visDelPeriodo();
+    const nVisitas   = per.length;
+    const nVieron    = per.filter(v => Math.max((v.productos || []).length, (v.productosIds || []).length) > 0).length;
+    const nCarrito   = per.filter(v => v.agregoCarrito || (v.carritoActual || []).length > 0).length;
+    const nPedido    = per.filter(v => v.hizoPedido).length;
+    const abandonadas = per.filter(v => !v.hizoPedido && (v.carritoActual || []).length > 0);
+
     const statsEl = $('adm-vis-stats');
     if (statsEl) {
-      const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-      const semana = Date.now() - 7 * 24 * 3600 * 1000;
-      const esHoy = v => { const f = new Date(v.creada || v.ultima || 0); return f.getTime() >= hoy.getTime(); };
-      const esSemana = v => new Date(v.creada || v.ultima || 0).getTime() >= semana;
-      const total = visitas.length;
-      const nHoy = visitas.filter(esHoy).length;
-      const nSemana = visitas.filter(esSemana).length;
-      const nCarrito = visitas.filter(v => v.agregoCarrito).length;
-      const nPedido = visitas.filter(v => v.hizoPedido).length;
-      const nAbandonado = visitas.filter(v => !v.hizoPedido && (v.carritoActual || []).length > 0).length;
+      const conversion = visPct(nPedido, nVisitas);
       statsEl.innerHTML =
-        '<div class="vis-stat"><b>' + total + '</b><span>Visitas (últimas 300)</span></div>' +
-        '<div class="vis-stat"><b>' + nHoy + '</b><span>Hoy</span></div>' +
-        '<div class="vis-stat"><b>' + nSemana + '</b><span>Últimos 7 días</span></div>' +
+        '<div class="vis-stat"><b>' + nVisitas + '</b><span>Visitas</span></div>' +
         '<div class="vis-stat"><b>' + nCarrito + '</b><span>Agregaron al carrito</span></div>' +
-        '<div class="vis-stat"><b>' + nPedido + '</b><span>Hicieron un pedido</span></div>' +
-        '<div class="vis-stat"><b>' + nAbandonado + '</b><span>Carritos abandonados</span></div>';
+        '<div class="vis-stat"><b>' + nPedido + '</b><span>Pedidos</span></div>' +
+        '<div class="vis-stat vis-stat-destacado"><b>' + conversion + '%</b><span>Conversión</span></div>';
     }
+
+    // Embudo: cada paso muestra cuántas llegaron y qué porcentaje del total son.
+    const embudoEl = $('adm-vis-embudo');
+    if (embudoEl) {
+      const pasos = [
+        { et: 'Entraron al catálogo', n: nVisitas },
+        { et: 'Abrieron un producto', n: nVieron },
+        { et: 'Agregaron al carrito',  n: nCarrito },
+        { et: 'Hicieron el pedido',    n: nPedido }
+      ];
+      embudoEl.innerHTML = nVisitas
+        ? '<div class="vis-embudo">' + pasos.map(pa => {
+            const pct = visPct(pa.n, nVisitas);
+            return '<div class="vis-paso">' +
+              '<span class="vis-paso-et">' + pa.et + '</span>' +
+              '<span class="vis-paso-pista"><span class="vis-paso-relleno" style="width:' + Math.max(pct, 1.5) + '%;"></span></span>' +
+              '<span class="vis-paso-n">' + pa.n + ' <i>(' + pct + '%)</i></span>' +
+            '</div>';
+          }).join('') + '</div>'
+        : '<p class="vis-vacio">Sin visitas en este periodo.</p>';
+    }
+
+    // Carritos abandonados: primero las recuperables (dejaron correo).
+    const abEl = $('adm-vis-abandonados');
+    if (abEl) {
+      if (!abandonadas.length) {
+        abEl.innerHTML = '<p class="vis-vacio">Ningún carrito abandonado en este periodo. 🎉</p>';
+      } else {
+        const plata = abandonadas.reduce((t, v) => t + (v.carritoTotal || 0), 0);
+        const conCorreo = abandonadas.filter(v => (v.contacto || {}).correo);
+        const sinCorreo = abandonadas.length - conCorreo.length;
+        abEl.innerHTML =
+          '<div class="vis-stats">' +
+            '<div class="vis-stat"><b>' + abandonadas.length + '</b><span>Carritos abandonados</span></div>' +
+            '<div class="vis-stat"><b>' + formatCLP(plata) + '</b><span>Se quedó sin vender</span></div>' +
+            '<div class="vis-stat vis-stat-destacado"><b>' + conCorreo.length + '</b><span>Se pueden recuperar</span></div>' +
+          '</div>' +
+          (conCorreo.length ? '<div class="vis-ab-lista">' + conCorreo.map(v => {
+            const c = v.contacto || {};
+            const items = (v.carritoActual || []).map(it => it.qty + '× ' + escapeHtml(it.name)).join(', ');
+            return '<div class="vis-ab-card">' +
+              '<div class="vis-ab-top">' +
+                '<b>' + escapeHtml(c.nombre || 'Sin nombre') + '</b>' +
+                '<span class="vis-ab-monto">' + formatCLP(v.carritoTotal || 0) + '</span>' +
+              '</div>' +
+              '<div class="vis-ab-corr">✉️ ' + escapeHtml(c.correo) + (c.telefono ? ' · 📱 ' + escapeHtml(c.telefono) : '') + '</div>' +
+              '<div class="vis-ab-items">' + items + '</div>' +
+              '<div class="vis-ab-fecha">' + pedFecha(v.ultima || v.creada) + '</div>' +
+              '<div class="vis-recuperar">' + recuperarBotones(v) + '</div>' +
+            '</div>';
+          }).join('') + '</div>' : '') +
+          (sinCorreo ? '<p class="vis-vacio">Otras ' + sinCorreo + ' no alcanzaron a dejar sus datos, así que no hay cómo escribirles.</p>' : '');
+      }
+    }
+
+    // Desgloses: de dónde llegan, con qué dispositivo y desde qué ciudad.
+    const desgEl = $('adm-vis-desgloses');
+    if (desgEl) {
+      desgEl.innerHTML =
+        visBarrasHtml('Origen', visTop(per, v => v.origenTipo || 'Directo'), nVisitas) +
+        visBarrasHtml('Dispositivo', visTop(per, v => v.dispositivo), nVisitas) +
+        visBarrasHtml('Ciudad', visTop(per, v => v.ciudad), nVisitas);
+    }
+
     const cont = $('adm-visitas-lista'); if (!cont) return;
     if (!visitas.length) {
       cont.innerHTML = '<p class="adm-seccion-sub">Aún no hay visitas registradas. Aparecerán aquí a medida que la gente vea el catálogo. 👀</p>';

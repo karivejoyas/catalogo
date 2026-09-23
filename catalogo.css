@@ -1204,3 +1204,45 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 .ml-sku-tabla input[type="checkbox"]{width:17px;height:17px;accent-color:var(--kv-dorado-cl);cursor:pointer;}
 .ml-sku-tabla tr.ml-sku-dudoso td{background:rgba(200,60,60,0.10);}
 #adm-ml-sku-estado{display:block;white-space:pre-wrap;line-height:1.55;margin-top:8px;}
+
+/* ---- Visitas: resumen compacto tipo panel de tienda ---- */
+.vis-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.vis-periodo{display:flex;gap:4px;background:rgba(255,255,255,0.04);border:1px solid rgba(201,162,75,0.25);border-radius:10px;padding:3px;}
+.vis-per-btn{background:none;border:none;color:var(--kv-lavanda);font-size:12px;padding:5px 11px;border-radius:7px;cursor:pointer;font-family:inherit;}
+.vis-per-btn:hover{color:var(--kv-dorado-cl);}
+.vis-per-btn.activo{background:rgba(201,162,75,0.18);color:var(--kv-dorado-cl);}
+.vis-stat-destacado{border-color:rgba(201,162,75,0.55);background:rgba(201,162,75,0.08);}
+
+.vis-embudo{display:flex;flex-direction:column;gap:7px;margin-top:4px;}
+.vis-paso{display:grid;grid-template-columns:160px 1fr 92px;align-items:center;gap:10px;}
+.vis-paso-et{font-size:12px;color:var(--kv-lavanda);}
+.vis-paso-pista{height:9px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:hidden;}
+.vis-paso-relleno{display:block;height:100%;background:linear-gradient(90deg,var(--kv-dorado),var(--kv-dorado-cl));border-radius:5px;}
+.vis-paso-n{font-size:12px;color:var(--kv-dorado-cl);text-align:right;}
+.vis-paso-n i{font-style:normal;color:var(--kv-lavanda);}
+
+.vis-desgloses{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;}
+.vis-desglose h3{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--kv-dorado-cl);margin:0 0 8px;font-weight:600;}
+.vis-barra-fila{display:grid;grid-template-columns:1fr 60px 28px;align-items:center;gap:8px;margin-bottom:5px;}
+.vis-barra-et{font-size:12px;color:var(--kv-lavanda);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vis-barra-pista{height:7px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;}
+.vis-barra-relleno{display:block;height:100%;background:var(--kv-dorado);border-radius:4px;}
+.vis-barra-n{font-size:12px;color:var(--kv-dorado-cl);text-align:right;}
+.vis-vacio{font-size:12px;color:var(--kv-lavanda);opacity:0.75;margin:6px 0 0;}
+
+.vis-ab-lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:6px;}
+.vis-ab-card{background:rgba(255,255,255,0.04);border:1px solid rgba(201,162,75,0.3);border-radius:12px;padding:12px 14px;}
+.vis-ab-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.vis-ab-monto{color:var(--kv-dorado-cl);font-size:13px;white-space:nowrap;}
+.vis-ab-corr{font-size:12px;color:var(--kv-lavanda);margin-top:3px;word-break:break-all;}
+.vis-ab-items{font-size:12px;color:var(--kv-lavanda);margin-top:6px;}
+.vis-ab-fecha{font-size:11px;color:var(--kv-lavanda);opacity:0.7;margin-top:4px;}
+
+.vis-detalles-sum{cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--kv-dorado-cl);padding:4px 0;}
+.vis-detalles-sum::marker{color:var(--kv-dorado);}
+.vis-detalles[open] .vis-detalles-sum{margin-bottom:12px;}
+
+@media (max-width:640px){
+  .vis-paso{grid-template-columns:118px 1fr 74px;gap:7px;}
+  .vis-paso-et{font-size:11px;}
+}

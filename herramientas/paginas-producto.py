@@ -51,6 +51,37 @@ COLORES = {
 }
 
 
+def medidas(ruta):
+    """Ancho y alto de un JPEG o PNG, sin librerías externas. WhatsApp y
+    Facebook suelen omitir la vista previa cuando el tamaño no viene declarado."""
+    import struct
+    try:
+        with open(ruta, "rb") as f:
+            cab = f.read(26)
+            if cab[:8] == b"\x89PNG\r\n\x1a\n":
+                return struct.unpack(">II", cab[16:24])
+            if cab[:2] != b"\xff\xd8":
+                return None
+            f.seek(2)
+            while True:
+                b = f.read(1)
+                while b and b != b"\xff":
+                    b = f.read(1)
+                m = f.read(1)
+                while m == b"\xff":
+                    m = f.read(1)
+                if not m:
+                    return None
+                if m[0] in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
+                    f.read(3)
+                    alto, ancho = struct.unpack(">HH", f.read(4))
+                    return ancho, alto
+                largo = struct.unpack(">H", f.read(2))[0]
+                f.read(largo - 2)
+    except Exception:
+        return None
+
+
 def limpio(t):
     """Quita espacios sobrantes. Los nombres vienen tal cual de la base de datos
     y alguno trae espacios de más; se corrige aquí, sin tocar el producto."""
@@ -152,10 +183,14 @@ PLANTILLA = """<!doctype html>
 <meta property="og:title" content="{titulo}">
 <meta property="og:description" content="{desc_corta}">
 <meta property="og:image" content="{imagen}">
+<meta property="og:image:secure_url" content="{imagen}">
+<meta property="og:image:alt" content="{titulo}">{medidas_og}
 <meta property="og:url" content="{url}">
+<meta property="og:locale" content="es_CL">
 <meta property="product:price:amount" content="{precio_num}">
 <meta property="product:price:currency" content="CLP">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{imagen}">
 <link rel="icon" href="../assets/logo-avatar.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -253,6 +288,9 @@ def main():
         vigente = oferta if 0 < oferta < precio else precio
         hay = bool(p.get("stock"))
         url = BASE + "p/" + cod + ".html"
+        dim = medidas(ruta) if not ruta.startswith("http") else None
+        medidas_og = ('\n<meta property="og:image:width" content="%d">'
+                      '\n<meta property="og:image:height" content="%d">' % dim) if dim else ""
 
         desc = ("%s de Karivé Joyas. Aros artesanales hechos a mano en Chile, en acero quirúrgico."
                 % nombre)
@@ -286,6 +324,7 @@ def main():
         pagina = PLANTILLA.format(
             titulo=e(nombre), marca=e(MARCA), desc_corta=e(corta), url=e(url),
             imagen=e(imagen), imagen_rel=e(imagen_rel), codigo=e(cod), coleccion=e(col),
+            medidas_og=medidas_og,
             precio_num=vigente, precio_txt=e(pesos(vigente)),
             clase_stock="" if hay else " no",
             texto_stock="Disponible" if hay else "Por ahora sin stock",

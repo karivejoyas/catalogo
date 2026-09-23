@@ -166,7 +166,7 @@ footer{{margin-top:48px;padding-top:18px;border-top:1px solid rgba(201,162,75,.1
 
   <p class="texto">{descripcion}</p>
 
-  <footer>{marca} · Joyería artesanal hecha a mano en Chile · <a href="../">Catálogo completo</a></footer>
+  <footer>{marca} · Joyería artesanal hecha a mano en Chile · <a href="../">Catálogo completo</a> · <a href="../devoluciones.html">Cambios y devoluciones</a> · <a href="../privacidad.html">Privacidad</a></footer>
 </div>
 </body>
 </html>
@@ -272,7 +272,7 @@ def main():
         w.writeheader()
         w.writerows(filas)
 
-    urls = [BASE] + [BASE + "p/" + c + ".html" for c in sorted(paginas)]
+    urls = [BASE, BASE + "devoluciones.html"] + [BASE + "p/" + c + ".html" for c in sorted(paginas)]
     with open("sitemap.xml", "w", encoding="utf-8") as fh:
         fh.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         fh.write('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')

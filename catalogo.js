@@ -1066,6 +1066,20 @@
     } catch (e) { console.warn('No se pudo pedir el número del pedido:', e); return 0; }
   }
 
+  // ---------- enlace directo a un producto (?p=CODIGO) ----------
+  // Permite compartir un aro puntual y, sobre todo, que el catálogo de Meta
+  // mande a la clienta al producto exacto en vez de a la portada.
+  let enlaceProdAbierto = false;
+  function abrirDesdeEnlace() {
+    if (enlaceProdAbierto || !products.length) return;
+    const cod = new URLSearchParams(location.search).get('p');
+    if (!cod) return;
+    enlaceProdAbierto = true;
+    const buscado = String(cod).trim().toLowerCase();
+    const p = products.find(x => String(x.code || '').trim().toLowerCase() === buscado);
+    if (p) abrirLightbox(p);
+  }
+
   async function retomarPagoMP() {
     if (pagoRetomado) return;
     const q = new URLSearchParams(location.search);
@@ -1155,6 +1169,7 @@
     if (!carritoEl.hidden) carroRender();   // refresca precios/stock si cambia el catálogo
     bienQuizasMostrar();
     retomarPagoMP();                        // por si viene de pagar con tarjeta
+    abrirDesdeEnlace();                     // por si el enlace apunta a un producto
   }
 
   // pinta la portada de inmediato (con valores por defecto) para no esperar

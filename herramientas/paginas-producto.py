@@ -27,6 +27,56 @@ CAT_GOOGLE = "Apparel & Accessories > Jewelry > Earrings"
 WHATSAPP = "56988829803"
 
 
+# Colores reconocidos en el nombre del producto. Es el mismo diccionario que
+# usa comun.js para Mercado Libre, portado aquí para no repetir criterios.
+COLORES = {
+    "rojo": "Rojo", "roja": "Rojo", "rojas": "Rojo", "rojos": "Rojo",
+    "azul": "Azul", "azules": "Azul",
+    "blanco": "Blanco", "blanca": "Blanco", "blancas": "Blanco", "blancos": "Blanco",
+    "negro": "Negro", "negra": "Negro", "negras": "Negro", "negros": "Negro",
+    "dorado": "Dorado", "dorada": "Dorado", "doradas": "Dorado", "dorados": "Dorado",
+    "plateado": "Plateado", "plateada": "Plateado", "plateadas": "Plateado", "plateados": "Plateado",
+    "morado": "Morado", "morada": "Morado", "moradas": "Morado",
+    "celeste": "Celeste", "celestes": "Celeste",
+    "verde": "Verde", "verdes": "Verde",
+    "amarillo": "Amarillo", "amarilla": "Amarillo",
+    "naranjo": "Naranjo", "naranja": "Naranjo",
+    "rosa": "Rosa", "rosado": "Rosa", "rosada": "Rosa", "rosas": "Rosa",
+    "turquesa": "Turquesa", "mostaza": "Mostaza", "cobre": "Cobre", "beige": "Beige",
+    "marino": "Azul", "petroleo": "Azul", "lila": "Lila", "violeta": "Violeta",
+    "fucsia": "Fucsia", "gris": "Gris", "cafe": "Café", "burdeo": "Burdeo",
+    "coral": "Coral", "arena": "Beige", "perla": "Blanco",
+    "transparente": "Transparente", "multicolor": "Multicolor",
+    "tricolor": "Multicolor", "glitter": "Multicolor",
+}
+
+
+def limpio(t):
+    """Quita espacios sobrantes. Los nombres vienen tal cual de la base de datos
+    y alguno trae espacios de más; se corrige aquí, sin tocar el producto."""
+    return re.sub(r"\s+", " ", str(t or "")).strip()
+
+
+def sin_tildes(t):
+    import unicodedata
+    t = unicodedata.normalize("NFD", str(t or "").lower())
+    return "".join(c for c in t if unicodedata.category(c) != "Mn")
+
+
+def color_de(nombre):
+    """Gana la palabra que aparece MÁS TARDE: en 'Flor Blanca Dorado' el color
+    del aro es el último; el primero suele describir la flor."""
+    n = sin_tildes(nombre)
+    if not n:
+        return ""
+    mejor, pos = "", -1
+    for clave, valor_color in COLORES.items():
+        m = re.search(r"\b" + clave + r"\b", n)
+        if m and m.start() > pos:
+            pos, mejor = m.start(), valor_color
+    return mejor
+
+
 def valor(c):
     if c is None:
         return None
@@ -195,8 +245,9 @@ def main():
         imagen = ruta if ruta.startswith("http") else BASE + ruta
         imagen_rel = ruta if ruta.startswith("http") else "../" + ruta
         col = nombres.get(p.get("category"), (p.get("category") or "").capitalize())
-        nombre = p.get("name") or ""
-        medida = (p.get("detail") or "").strip()
+        nombre = limpio(p.get("name"))
+        medida = limpio(p.get("detail"))
+        color = color_de(nombre)
         precio = int(p.get("price") or 0)
         oferta = int(p.get("priceOffer") or 0)
         vigente = oferta if 0 < oferta < precio else precio
@@ -260,13 +311,14 @@ def main():
             "identifier_exists": "no",
             "google_product_category": CAT_GOOGLE,
             "product_type": col,
+            "color": color,
             "_orden": (p.get("category") or "", p.get("order") or 0),
         })
 
     filas.sort(key=lambda r: r.pop("_orden"))
     cols = ["id", "title", "description", "link", "image_link", "availability", "price",
             "sale_price", "condition", "brand", "mpn", "identifier_exists",
-            "google_product_category", "product_type"]
+            "google_product_category", "product_type", "color"]
     with open("catalogo-google.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=cols)
         w.writeheader()

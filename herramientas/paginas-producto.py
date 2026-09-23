@@ -171,7 +171,7 @@ def pesos(n):
 
 
 PLANTILLA = """<!doctype html>
-<html lang="es">
+<html lang="es" prefix="og: https://ogp.me/ns# product: https://ogp.me/ns/product#">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

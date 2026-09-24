@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Publicar en Mercado Libre · Karivé</title>
+<!-- Se abre DENTRO de Telegram, desde el botón del bot de Karivé.
+     Arma título, precio, cantidad y descripción con las MISMAS reglas del
+     panel (comun.js → kvMlItem) y los publica con el publicador.
+     El publicador solo acepta si Telegram firma que eres tú. -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --morado: #5B2A82; --amarillo: #FFE600; --azul-ml: #2D3277;
+    --fondo: #F7F3FB; --texto: #2A1838; --suave: #6E5C80; --borde: #E2D8EC; --blanco: #fff;
+    --ok: #1F8A4C; --error: #B3261E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --fondo: #1E1427; --texto: #F3ECF9; --suave: #BCA9CF; --borde: #3A2B49; --blanco: #2A1D36; }
+  }
+  :root[data-theme="dark"] { --fondo: #1E1427; --texto: #F3ECF9; --suave: #BCA9CF; --borde: #3A2B49; --blanco: #2A1D36; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fondo); color: var(--texto); }
+  body { font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px 16px 120px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--suave); font-size: 14px; margin: 0 0 16px; }
+  .cargando { padding: 40px 0; text-align: center; color: var(--suave); }
+  .item { background: var(--blanco); border: 1px solid var(--borde); border-radius: 14px; padding: 12px; margin-bottom: 12px; display: grid; grid-template-columns: 84px 1fr; gap: 12px; }
+  .item img { width: 84px; height: 84px; border-radius: 10px; object-fit: cover; background: var(--borde); }
+  .item .cod { font-size: 12px; color: var(--suave); }
+  .item .tit { font-weight: 600; font-size: 15px; margin: 2px 0 6px; overflow-wrap: anywhere; }
+  .item .precio { font-size: 20px; font-weight: 700; }
+  .item .recibes { font-size: 13px; color: var(--suave); }
+  .item .fila { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 14px; flex-wrap: wrap; }
+  .item input { width: 72px; min-height: 40px; border: 1px solid var(--borde); border-radius: 10px; padding: 6px 8px; font: inherit; background: var(--fondo); color: var(--texto); text-align: center; }
+  .item .problema { grid-column: 1 / -1; background: #FBE9E7; color: var(--error); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+  .item .ya { grid-column: 1 / -1; background: #FFF6DB; color: #6B5100; border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+  .item.fuera { opacity: .6; }
+  details { grid-column: 1 / -1; font-size: 14px; }
+  details pre { white-space: pre-wrap; font: inherit; color: var(--suave); margin: 6px 0 0; }
+  .estado { margin-top: 16px; padding: 12px 14px; border-radius: 12px; font-size: 15px; display: none; white-space: pre-line; }
+  .estado.ver { display: block; }
+  .estado.ok { background: #E6F4EC; color: var(--ok); }
+  .estado.error { background: #FBE9E7; color: var(--error); }
+  .estado.info { background: var(--blanco); border: 1px solid var(--borde); }
+  .publicar { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); min-height: 56px; border: 0; border-radius: 16px; background: var(--amarillo); color: var(--azul-ml); font: inherit; font-size: 18px; font-weight: 700; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+  .publicar:disabled { opacity: .55; }
+</style>
+</head>
+<body>
+  <h1>🟡 Publicar en Mercado Libre</h1>
+  <p class="sub" id="sub">Revisa título, precio y unidades. Se usan las mismas reglas que en el panel.</p>
+  <div id="lista"><div class="cargando">Preparando… ⏳</div></div>
+  <div class="estado" id="estado"></div>
+  <button type="button" class="publicar" id="publicar" disabled>Publicar en Mercado Libre</button>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js?v=20260945"></script>
+<script src="comun.js?v=20260945"></script>
+<script>
+(function () {
+  'use strict';
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) { tg.ready(); tg.expand(); if (tg.colorScheme) document.documentElement.dataset.theme = tg.colorScheme; }
+  const $ = id => document.getElementById(id);
+  const q = new URLSearchParams(location.search);
+  const codigos = String(q.get('c') || '').toUpperCase().split(',').map(s => s.trim()).filter(Boolean).slice(0, 10);
+  let settings = {}, filas = [];   // filas: { prod, item, problemas, ya }
+
+  function estado(msg, tipo) { const e = $('estado'); e.textContent = msg; e.className = 'estado ver ' + (tipo || 'info'); }
+  function fotoParaML(p) {
+    const f = String(p.photo || '');
+    if (!f) return null;
+    if (/^data:/i.test(f)) return { base64: f.split(',')[1] || '', tipo: (f.match(/^data:([^;]+)/) || [])[1] || 'image/jpeg' };
+    try { return { url: new URL(f, location.href).href }; } catch (e) { return { url: f }; }
+  }
+  const validas = () => filas.filter(r => !r.problemas.length && !r.ya);
+
+  if (!tg || !tg.initData) { $('lista').innerHTML = '<div class="cargando">Esta página se abre desde el bot de Karivé en Telegram.</div>'; return; }
+  if (!codigos.length) { $('lista').innerHTML = '<div class="cargando">No llegó ningún producto. Vuelve al chat y pídeselo al bot de nuevo.</div>'; return; }
+
+  function pintar() {
+    $('lista').innerHTML = filas.map((r, i) => {
+      const it = r.item, p = r.prod;
+      return '<div class="item' + (r.problemas.length || r.ya ? ' fuera' : '') + '">' +
+        '<img src="' + (p.photo || '') + '" alt="" />' +
+        '<div><div class="cod">' + escapeHtml(p.code) + '</div>' +
+        '<div class="tit">' + escapeHtml(it.titulo) + '</div>' +
+        '<div class="precio">' + formatCLP(it.precio) + '</div>' +
+        '<div class="recibes">Te quedan aprox. ' + formatCLP(kvMlRecibes(it.precio, it.tipo)) + ' después de comisión y envío</div>' +
+        (r.problemas.length || r.ya ? '' : '<div class="fila">Unidades <input type="number" min="1" step="1" inputmode="numeric" data-i="' + i + '" value="' + it.cantidad + '" /></div>') +
+        '</div>' +
+        (r.ya ? '<div class="ya">Ya está publicado en Mercado Libre. No se vuelve a publicar.</div>' : '') +
+        (r.problemas.length ? '<div class="problema">No se puede: ' + escapeHtml(r.problemas.join(', ')) + '</div>' : '') +
+        '<details><summary>Ver descripción</summary><pre>' + escapeHtml(it.descripcion) + '</pre></details>' +
+      '</div>';
+    }).join('');
+    $('lista').querySelectorAll('input[data-i]').forEach(inp => inp.addEventListener('input', e => {
+      const n = parseInt(e.target.value, 10);
+      filas[+e.target.dataset.i].item.cantidad = (isNaN(n) || n < 1) ? 1 : n;
+    }));
+    const n = validas().length;
+    $('publicar').disabled = !n;
+    $('publicar').textContent = n ? 'Publicar ' + (n === 1 ? '1 producto' : n + ' productos') + ' en Mercado Libre' : 'Nada para publicar';
+  }
+
+  async function cargar() {
+    const col = kvDb.collection('catalog');
+    const [sdoc, mdoc, ...pdocs] = await Promise.all([col.doc('settings').get(), col.doc('mercadolibre').get()].concat(
+      codigos.map(c => col.doc('products').collection('items').where('code', '==', c).limit(1).get())));
+    settings = sdoc.data() || {};
+    kvSetDescuento(settings);
+    const publicados = kvMlPublicados(mdoc.data() || {});
+    const prods = pdocs.map(s => s.docs[0]).filter(Boolean).map(d => Object.assign({ id: d.id }, d.data()));
+    const faltan = codigos.filter(c => !prods.some(p => p.code === c));
+    filas = prods.map(p => ({ prod: p, item: kvMlItem(p, settings), problemas: kvMlProblemas(p, settings), ya: !!publicados[p.code] }));
+    if (faltan.length) estado('No encontré: ' + faltan.join(', '), 'error');
+    if (!filas.length) { $('lista').innerHTML = '<div class="cargando">No hay productos para publicar.</div>'; return; }
+    pintar();
+  }
+
+  $('publicar').addEventListener('click', async () => {
+    const url = String(settings.igPubUrl || '').trim();
+    if (!url) { estado('Falta la dirección del publicador en el panel.', 'error'); return; }
+    const lote = validas();
+    if (!lote.length) return;
+    $('publicar').disabled = true;
+    estado('Publicando en Mercado Libre… no cierres esta pantalla. Tarda más o menos ' + (10 + lote.length * 8) + ' segundos ⏳', 'info');
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ accion: 'tg-ml-publicar', initData: tg.initData,
+                               items: lote.map(x => Object.assign({}, x.item, { foto: undefined, imagen: fotoParaML(x.prod) })) })
+      });
+      const d = await r.json();
+      if (!d || !d.ok) { estado('❌ ' + ((d && d.error) || 'No se pudo publicar.'), 'error'); $('publicar').disabled = false; return; }
+      const bien = (d.resultados || []).filter(x => x.ok), mal = (d.resultados || []).filter(x => !x.ok);
+      bien.forEach(x => { const f = filas.find(y => y.prod.code === x.codigo); if (f) f.ya = true; });
+      pintar();
+      let msg = bien.length ? '✅ Publicados ' + bien.length + ' en Mercado Libre.' : '';
+      if (mal.length) msg += (msg ? '\n\n' : '') + '❌ Con problemas:\n' + mal.map(x => '• ' + x.codigo + ': ' + x.error).join('\n');
+      estado(msg, mal.length ? 'error' : 'ok');
+      if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred(mal.length ? 'warning' : 'success');
+      if (!mal.length) setTimeout(() => tg.close(), 3000);
+    } catch (err) {
+      estado('❌ No me pude conectar con el publicador: ' + err.message, 'error');
+      $('publicar').disabled = false;
+    }
+  });
+
+  cargar().catch(err => { console.error(err); $('lista').innerHTML = '<div class="cargando">⚠ No pude cargar los productos: ' + escapeHtml(err.message) + '</div>'; });
+})();
+</script>
+</body>
+</html>

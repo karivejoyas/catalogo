@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Publicar en redes · Karivé</title>
+<!-- Se abre DENTRO de Telegram, desde el botón del bot de Karivé.
+     Arma las mismas fotos que el panel (logo + foto con fondo difuminado)
+     y las publica en Instagram / Facebook con el publicador.
+     El publicador solo acepta si Telegram firma que eres tú. -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --morado: #5B2A82; --morado-prof: #3A1D4E; --dorado: #E3C572; --lila: #CFC4DF;
+    --fondo: #F7F3FB; --texto: #2A1838; --suave: #6E5C80; --borde: #E2D8EC; --blanco: #fff;
+    --ok: #1F8A4C; --error: #B3261E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --fondo: #1E1427; --texto: #F3ECF9; --suave: #BCA9CF; --borde: #3A2B49; --blanco: #2A1D36; }
+  }
+  :root[data-theme="dark"] { --fondo: #1E1427; --texto: #F3ECF9; --suave: #BCA9CF; --borde: #3A2B49; --blanco: #2A1D36; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fondo); color: var(--texto); }
+  body { font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px 16px 120px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--suave); font-size: 14px; margin: 0 0 16px; }
+  .fotos { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
+  .foto { flex: 0 0 82%; max-width: 420px; scroll-snap-align: start; }
+  .foto img { width: 100%; aspect-ratio: 1; border-radius: 14px; display: block; background: var(--borde); object-fit: cover; }
+  .foto .pie { font-size: 13px; color: var(--suave); margin-top: 4px; }
+  .foto.sola { flex-basis: 100%; }
+  .cargando { padding: 40px 0; text-align: center; color: var(--suave); }
+  label.tit { display: block; font-weight: 600; margin: 20px 0 8px; }
+  textarea { width: 100%; min-height: 190px; border: 1px solid var(--borde); border-radius: 12px; padding: 12px; font: inherit; font-size: 15px; background: var(--blanco); color: var(--texto); resize: vertical; }
+  .destinos { display: flex; flex-wrap: wrap; gap: 8px; }
+  .destinos button { flex: 1 1 30%; min-height: 48px; border-radius: 12px; border: 2px solid var(--borde); background: var(--blanco); color: var(--texto); font: inherit; font-size: 15px; }
+  .destinos button.on { border-color: var(--morado); background: var(--morado); color: #fff; font-weight: 600; }
+  .estado { margin-top: 16px; padding: 12px 14px; border-radius: 12px; font-size: 15px; display: none; }
+  .estado.ver { display: block; }
+  .estado.ok { background: #E6F4EC; color: var(--ok); }
+  .estado.error { background: #FBE9E7; color: var(--error); }
+  .estado.info { background: var(--blanco); border: 1px solid var(--borde); }
+  .publicar { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); min-height: 56px; border: 0; border-radius: 16px; background: var(--morado); color: #fff; font: inherit; font-size: 18px; font-weight: 700; box-shadow: 0 6px 20px rgba(58,29,78,.35); }
+  .publicar:disabled { opacity: .55; }
+  .aviso { background: #FFF6DB; color: #6B5100; border-radius: 12px; padding: 10px 12px; font-size: 14px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+  <h1>📣 Publicar en redes</h1>
+  <p class="sub" id="sub">Revisa cómo queda y aprieta el botón de abajo.</p>
+  <div id="avisos"></div>
+  <div class="fotos" id="fotos"><div class="cargando">Preparando las fotos… ⏳</div></div>
+
+  <label class="tit" for="texto">Texto de la publicación</label>
+  <textarea id="texto" placeholder="Cargando…"></textarea>
+
+  <label class="tit">¿Dónde lo publico?</label>
+  <div class="destinos" id="destinos">
+    <button type="button" data-d="ambas">Instagram y Facebook</button>
+    <button type="button" data-d="ig">Solo Instagram</button>
+    <button type="button" data-d="fb">Solo Facebook</button>
+  </div>
+
+  <div class="estado" id="estado"></div>
+  <button type="button" class="publicar" id="publicar" disabled>🚀 Publicar</button>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js?v=20260945"></script>
+<script src="comun.js?v=20260945"></script>
+<script>
+(function () {
+  'use strict';
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) { tg.ready(); tg.expand(); if (tg.colorScheme) document.documentElement.dataset.theme = tg.colorScheme; }
+  const $ = id => document.getElementById(id);
+  const q = new URLSearchParams(location.search);
+  const codigos = String(q.get('c') || '').toUpperCase().split(',').map(s => s.trim()).filter(Boolean).slice(0, 10);
+  let destino = ['ambas', 'ig', 'fb'].indexOf(q.get('d')) >= 0 ? q.get('d') : 'ambas';
+  let imagenes = [], prods = [], settings = {};
+
+  function estado(msg, tipo) { const e = $('estado'); e.textContent = msg; e.className = 'estado ver ' + (tipo || 'info'); }
+  function pintarDestino() {
+    document.querySelectorAll('#destinos button').forEach(b => b.classList.toggle('on', b.dataset.d === destino));
+    $('publicar').textContent = { ambas: '🚀 Publicar en Instagram y Facebook', ig: '🚀 Publicar en Instagram', fb: '🚀 Publicar en Facebook' }[destino];
+  }
+  document.querySelectorAll('#destinos button').forEach(b => b.addEventListener('click', () => { destino = b.dataset.d; pintarDestino(); }));
+  pintarDestino();
+
+  if (!tg || !tg.initData) {
+    $('fotos').innerHTML = '<div class="cargando">Esta página se abre desde el bot de Karivé en Telegram.</div>';
+    return;
+  }
+  if (!codigos.length) { $('fotos').innerHTML = '<div class="cargando">No llegó ningún producto. Vuelve al chat y pídeselo al bot de nuevo.</div>'; return; }
+
+  async function cargar() {
+    const [sdoc, ...pdocs] = await Promise.all([kvDb.collection('catalog').doc('settings').get()].concat(
+      codigos.map(c => kvDb.collection('catalog').doc('products').collection('items').where('code', '==', c).limit(1).get())));
+    settings = sdoc.data() || {};
+    kvSetDescuento(settings);
+    prods = pdocs.map(s => s.docs[0]).filter(Boolean).map(d => Object.assign({ id: d.id }, d.data()));
+    const faltan = codigos.filter(c => !prods.some(p => p.code === c));
+    const avisos = [];
+    if (faltan.length) avisos.push('No encontré: ' + faltan.join(', '));
+    const ocultos = prods.filter(p => p.stock === false).map(p => p.code);
+    if (ocultos.length) avisos.push('Ojo: ' + ocultos.join(', ') + (ocultos.length > 1 ? ' están ocultos' : ' está oculto') + ' en el catálogo. Si alguien lo busca no lo va a encontrar.');
+    const sinFoto = prods.filter(p => !p.photo).map(p => p.code);
+    if (sinFoto.length) avisos.push('Sin foto: ' + sinFoto.join(', ') + '. No se incluyen.');
+    prods = prods.filter(p => p.photo);
+    $('avisos').innerHTML = avisos.map(a => '<div class="aviso">' + escapeHtml(a) + '</div>').join('');
+    if (!prods.length) { $('fotos').innerHTML = '<div class="cargando">No hay fotos para publicar.</div>'; return; }
+
+    $('sub').textContent = prods.length > 1 ? 'Se publica como carrusel de ' + prods.length + ' fotos. Desliza para verlas.' : 'Revisa cómo queda y aprieta el botón de abajo.';
+    $('texto').value = kvCaptionMulti(prods, settings, kvTagsActivos(prods, settings));
+    for (let i = 0; i < prods.length; i++) imagenes[i] = await kvGenerarPostIG(prods[i], settings);
+    $('fotos').innerHTML = prods.map((p, i) =>
+      '<div class="foto' + (prods.length === 1 ? ' sola' : '') + '"><img src="' + imagenes[i] + '" alt="' + escapeHtml(p.name || '') + '" />' +
+      '<div class="pie">' + escapeHtml(p.code + ' · ' + (p.name || '')) + '</div></div>').join('');
+    $('publicar').disabled = false;
+  }
+
+  $('publicar').addEventListener('click', async () => {
+    const url = String(settings.igPubUrl || '').trim();
+    if (!url) { estado('Falta la dirección del publicador en el panel.', 'error'); return; }
+    if (!$('texto').value.trim()) { estado('Escribe un texto para la publicación.', 'error'); return; }
+    $('publicar').disabled = true;
+    estado('Publicando… no cierres esta pantalla. Tarda más o menos ' + (15 + prods.length * 7) + ' segundos ⏳', 'info');
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ accion: 'tg-publicar', initData: tg.initData, destino: destino, caption: $('texto').value,
+                               codigos: prods.map(p => p.code), images: imagenes.map(u => u.split(',')[1]) })
+      });
+      const d = await r.json();
+      if (d && d.ok) {
+        const donde = [d.ig === 'ok' ? 'Instagram' : null, d.fb === 'ok' ? 'Facebook' : null].filter(Boolean).join(' y ');
+        estado('✅ ¡Publicado en ' + (donde || 'tus redes') + '!' + (d.aviso ? ' ' + d.aviso : ''), 'ok');
+        $('publicar').textContent = '✅ Publicado';
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        setTimeout(() => tg.close(), 2500);
+      } else {
+        estado('❌ ' + ((d && d.error) || 'No se pudo publicar.'), 'error');
+        $('publicar').disabled = false;
+      }
+    } catch (err) {
+      estado('❌ No me pude conectar con el publicador: ' + err.message, 'error');
+      $('publicar').disabled = false;
+    }
+  });
+
+  cargar().catch(err => { console.error(err); $('fotos').innerHTML = '<div class="cargando">⚠ No pude cargar los productos: ' + escapeHtml(err.message) + '</div>'; });
+})();
+</script>
+</body>
+</html>

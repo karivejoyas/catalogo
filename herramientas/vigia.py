@@ -19,8 +19,10 @@ GitHub Actions):
   TELEGRAM_TOKEN      bot de Karivé (sin esto, el resumen solo se imprime)
   TELEGRAM_CHAT_ID    opcional: si falta, se usa el único chat del bot
   PUBLICADOR_CLAVE    la clave del publicador (Apps Script): Mercado Libre
-  FIREBASE_EMAIL      usuario del panel de administración: pedidos y
-  FIREBASE_PASSWORD   visitas (son privados, por eso piden iniciar sesión)
+  FIREBASE_PASSWORD   contraseña del panel de administración: pedidos y
+                      visitas (son privados, por eso piden iniciar sesión).
+                      El correo se toma de admin.js; FIREBASE_EMAIL solo
+                      hace falta si alguna vez cambia.
 
 La foto del catálogo del día anterior queda en herramientas/estado-catalogo.json.
 Solo lee: no escribe nada en Firestore, en Mercado Libre ni en ninguna parte.
@@ -170,8 +172,12 @@ def nombres_coleccion(cfg):
 def iniciar_sesion():
     """Pedidos y visitas son privados: se entra con el usuario del panel."""
     correo, clave = env("FIREBASE_EMAIL"), env("FIREBASE_PASSWORD")
+    if not correo:
+        # el panel entra siempre con el mismo correo, fijo en admin.js
+        m = re.search(r"ADMIN_EMAIL\s*=\s*'([^']+)'", open("admin.js", encoding="utf-8").read())
+        correo = m.group(1) if m else ""
     if not (correo and clave):
-        faltan.append("pedidos y visitas (faltan FIREBASE_EMAIL y FIREBASE_PASSWORD)")
+        faltan.append("pedidos y visitas (falta FIREBASE_PASSWORD, la contraseña del panel)")
         return None
     try:
         conf = open("firebase-config.js", encoding="utf-8").read()

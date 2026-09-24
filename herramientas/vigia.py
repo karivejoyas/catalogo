@@ -19,7 +19,7 @@ Uso, parado en la raíz del repositorio:
 
 Solo lee Firestore; no escribe nada en la base de datos.
 """
-import html, json, os, sys, urllib.parse, urllib.request
+import html, json, os, sys, urllib.error, urllib.parse, urllib.request
 
 PROYECTO = "karive-catalogo"
 RAIZ = "https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents" % PROYECTO
@@ -84,6 +84,14 @@ def colecciones():
         if nom:
             n[ident] = nom
     return n
+
+
+def aviso(nivel, texto):
+    """Deja el resultado como anotación de GitHub Actions (visible en la
+    corrida y consultable por la API), además de imprimirlo."""
+    print(texto)
+    if os.environ.get("GITHUB_ACTIONS"):
+        print("::%s title=Vigía::%s" % (nivel, texto.replace("\n", " ")))
 
 
 def pesos(n):
@@ -176,8 +184,25 @@ def telegram(metodo, datos=None):
     token = os.environ.get("TELEGRAM_TOKEN", "").strip()
     url = "https://api.telegram.org/bot%s/%s" % (token, metodo)
     cuerpo = urllib.parse.urlencode(datos).encode() if datos else None
-    with urllib.request.urlopen(url, data=cuerpo, timeout=30) as r:
-        return json.load(r)
+    try:
+        with urllib.request.urlopen(url, data=cuerpo, timeout=30) as r:
+            return json.load(r)
+    except urllib.error.HTTPError as err:
+        try:
+            motivo = json.load(err).get("description", "")
+        except Exception:
+            motivo = ""
+        pistas = {
+            401: "el token no es válido (¿quedó con espacios o incompleto?)",
+            404: "el token no es válido",
+            409: "otro servicio está usando este bot (por ejemplo Houston con un webhook); "
+                 "hay que definir TELEGRAM_CHAT_ID para no depender de getUpdates",
+            400: "el chat no existe o el bot no puede escribirle: mándale /start",
+            403: "el bot fue bloqueado o nunca recibió /start",
+        }
+        aviso("error", "Telegram respondió %d en %s: %s. %s" % (
+            err.code, metodo, motivo, pistas.get(err.code, "")))
+        sys.exit(1)
 
 
 def chat_destino():
@@ -195,9 +220,12 @@ def chat_destino():
     if len(chats) == 1:
         return next(iter(chats))
     if not chats:
-        sys.exit("El bot no tiene chats. Ábrelo en Telegram y mándale /start.")
-    sys.exit("Varias personas le escribieron al bot (%s). Define TELEGRAM_CHAT_ID "
-             "con el que corresponda." % ", ".join("%s=%s" % kv for kv in chats.items()))
+        aviso("error", "El bot no tiene chats pendientes. Mándale /start en Telegram "
+                       "o define TELEGRAM_CHAT_ID.")
+        sys.exit(1)
+    aviso("error", "Varios chats le escribieron al bot (%s). Define TELEGRAM_CHAT_ID "
+                   "con el que corresponda." % ", ".join(chats))
+    sys.exit(1)
 
 
 def main():
@@ -222,10 +250,13 @@ def main():
             "disable_web_page_preview": "true",
         })
         if not res.get("ok"):
-            sys.exit("Telegram rechazó el mensaje: %s" % res)
-        print("\n→ enviado por Telegram")
+            aviso("error", "Telegram rechazó el mensaje: %s" % res)
+            sys.exit(1)
+        aviso("notice", "Reporte enviado por Telegram.")
     else:
-        print("\n→ sin TELEGRAM_TOKEN: no se envió nada")
+        aviso("warning", "No llegó el secreto TELEGRAM_TOKEN: el reporte no se envió. "
+                         "Debe estar en Settings > Secrets and variables > Actions > "
+                         "pestaña Secrets (no Variables), con ese nombre exacto.")
 
     # la foto de hoy se guarda solo después de avisar, para no perder cambios
     with open(ESTADO, "w", encoding="utf-8") as f:

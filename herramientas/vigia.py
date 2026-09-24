@@ -200,7 +200,7 @@ def iniciar_sesion():
 # ============================================================ catálogo
 
 def leer_catalogo():
-    campos = ["code", "name", "price", "priceOffer", "stock", "category"]
+    campos = ["code", "name", "price", "priceOffer", "stock", "category", "cantidad"]
     cat = {}
     for ident, creado, p in documentos("catalog/products/items", campos):
         cat[ident] = {
@@ -210,6 +210,9 @@ def leer_catalogo():
             "offer": int(p.get("priceOffer") or 0),
             "stock": bool(p.get("stock")),
             "category": p.get("category") or "",
+            # cantidad real: None = sin control de cantidad. OJO: "stock" en el
+            # catálogo significa "visible", no que haya unidades.
+            "cantidad": p.get("cantidad") if isinstance(p.get("cantidad"), int) else None,
             "creado": creado,
         }
     return cat
@@ -409,7 +412,7 @@ def seccion_ml(cfg, catalogo):
         activas = [x for x in mias if x.get("estado") == "active"]
         if p["stock"] and not mias:
             falta_ml.append(etiqueta(p, True))
-        if not p["stock"] and activas:
+        if p.get("cantidad") == 0 and activas:
             hacer.append(etiqueta(p))
         if p["stock"] and mias and not activas:
             ml_sin_stock.append(etiqueta(p))
@@ -488,7 +491,7 @@ def armar(catalogo, antes, cfg):
     if vis and vis["recuperar"]:
         bloques.append(grupo("🛍 Carritos que puedes recuperar", vis["recuperar"]))
     if ml and ml["hacer"]:
-        bloques.append(grupo("⚠️ <b>Activos en Mercado Libre sin stock en el catálogo</b>", ml["hacer"], 8)
+        bloques.append(grupo("⚠️ <b>Activos en Mercado Libre con cantidad 0 en el catálogo</b>", ml["hacer"], 8)
                        + "\n<i>Páusalos antes de que alguien los compre.</i>")
 
     # --- movimiento
@@ -505,8 +508,8 @@ def armar(catalogo, antes, cfg):
     # --- pendientes de publicar
     pend = []
     if ml:
-        pend.append(grupo("Con stock y sin publicar en Mercado Libre", ml["falta_ml"], 8))
-        pend.append(grupo("Pausados en Mercado Libre pero con stock en el catálogo", ml["ml_pausadas"], 8))
+        pend.append(grupo("Visibles en el catálogo y sin publicar en Mercado Libre", ml["falta_ml"], 8))
+        pend.append(grupo("Pausados en Mercado Libre pero visibles en el catálogo", ml["ml_pausadas"], 8))
         if ml["sin_sku"]:
             pend.append("• %d publicaciones de Mercado Libre sin código: no las puedo comparar" % ml["sin_sku"])
     pend.append(grupo("Nuevos (últimos %d días) sin publicar en redes" % DIAS_NUEVO, falta_en_redes(catalogo, cfg), 8))

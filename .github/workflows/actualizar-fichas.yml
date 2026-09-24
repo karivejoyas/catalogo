@@ -51,12 +51,15 @@ jobs:
             exit 1
           fi
 
-      - name: Vigía — avisar por Telegram lo que cambió desde ayer
+      - name: Resumen diario por Telegram
         # Si Telegram falla, las fichas se publican igual
         continue-on-error: true
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN || vars.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}
+          PUBLICADOR_CLAVE: ${{ secrets.PUBLICADOR_CLAVE }}
+          FIREBASE_EMAIL: ${{ secrets.FIREBASE_EMAIL }}
+          FIREBASE_PASSWORD: ${{ secrets.FIREBASE_PASSWORD }}
         run: python3 herramientas/vigia.py
 
       - name: Publicar si algo cambió

@@ -589,6 +589,20 @@
   });
 
   // selección de productos para publicar (persiste entre re-renders)
+  /* Anota qué productos se publicaron en redes y cuándo, para que el resumen
+     diario pueda avisar de los productos nuevos que todavía no se muestran.
+     Solo se registra lo que se publica desde este panel. */
+  function registrarEnRedes(prods, igOk, fbOk) {
+    const ahora = new Date().toISOString();
+    const redes = {};
+    prods.forEach(p => {
+      if (!p.code) return;
+      redes[p.code] = { fecha: ahora, ig: !!igOk, fb: !!fbOk };
+    });
+    if (!Object.keys(redes).length) return;
+    settingsRef.set({ redes: redes }, { merge: true }).catch(err => console.error('No se pudo registrar la publicación en redes:', err));
+  }
+
   const igSel = new Set();
   function igActualizarBarra() {
     const n = igSel.size;
@@ -845,6 +859,7 @@
         let msg = '✅ ¡Publicado en ' + (donde || 'tus redes') + '! Revisa tu perfil.';
         if (d.fb && ['ok', 'no configurado', 'omitido'].indexOf(d.fb) < 0) msg += ' ⚠ Facebook: ' + d.fb;
         igEstado(msg);
+        registrarEnRedes(products.filter(p => igSel.has(p.id)), igOk, fbOk);
         igSel.clear(); renderIG();
       } else {
         igProgresoFin(false);

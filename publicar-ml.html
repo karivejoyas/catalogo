@@ -37,8 +37,16 @@
   .item .problema { grid-column: 1 / -1; background: #FBE9E7; color: var(--error); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
   .item .ya { grid-column: 1 / -1; background: #FFF6DB; color: #6B5100; border-radius: 10px; padding: 8px 10px; font-size: 14px; }
   .item.fuera { opacity: .6; }
-  details { grid-column: 1 / -1; font-size: 14px; }
-  details pre { white-space: pre-wrap; font: inherit; color: var(--suave); margin: 6px 0 0; }
+  .editar { grid-column: 1 / -1; display: grid; gap: 6px; font-size: 14px; }
+  .editar label { color: var(--suave); }
+  .editar input, .editar textarea { width: 100%; border: 1px solid var(--borde); border-radius: 10px; padding: 8px 10px; font: inherit; font-size: 15px; background: var(--fondo); color: var(--texto); }
+  .editar textarea { min-height: 150px; resize: vertical; }
+  .editar .cuenta { font-size: 12px; color: var(--suave); text-align: right; }
+  .editar .cuenta.mal { color: var(--error); font-weight: 600; }
+  .editar .fila2 { display: flex; gap: 8px; }
+  .editar .fila2 input { flex: 1; min-width: 0; }
+  .editar button { min-height: 42px; padding: 0 12px; border-radius: 10px; border: 0; background: var(--morado); color: #fff; font: inherit; font-size: 14px; font-weight: 600; }
+  .editar button:disabled { opacity: .55; }
   .estado { margin-top: 16px; padding: 12px 14px; border-radius: 12px; font-size: 15px; display: none; white-space: pre-line; }
   .estado.ver { display: block; }
   .estado.ok { background: #E6F4EC; color: var(--ok); }
@@ -50,7 +58,7 @@
 </head>
 <body>
   <h1>🟡 Publicar en Mercado Libre</h1>
-  <p class="sub" id="sub">Revisa título, precio y unidades. Se usan las mismas reglas que en el panel.</p>
+  <p class="sub" id="sub">Todo viene armado con las reglas del panel. Puedes cambiar el título, el precio, las unidades y la descripción antes de publicar.</p>
   <div id="lista"><div class="cargando">Preparando… ⏳</div></div>
   <div class="estado" id="estado"></div>
   <button type="button" class="publicar" id="publicar" disabled>Publicar en Mercado Libre</button>
@@ -88,18 +96,54 @@
         '<img src="' + (p.photo || '') + '" alt="" />' +
         '<div><div class="cod">' + escapeHtml(p.code) + '</div>' +
         '<div class="tit">' + escapeHtml(it.titulo) + '</div>' +
-        '<div class="precio">' + formatCLP(it.precio) + '</div>' +
-        '<div class="recibes">Te quedan aprox. ' + formatCLP(kvMlRecibes(it.precio, it.tipo)) + ' después de comisión y envío</div>' +
-        (r.problemas.length || r.ya ? '' : '<div class="fila">Unidades <input type="number" min="1" step="1" inputmode="numeric" data-i="' + i + '" value="' + it.cantidad + '" /></div>') +
+        '<div class="precio" data-precio="' + i + '">' + formatCLP(it.precio) + '</div>' +
+        '<div class="recibes" data-recibes="' + i + '">Te quedan aprox. ' + formatCLP(kvMlRecibes(it.precio, it.tipo)) + ' después de comisión y envío</div>' +
         '</div>' +
         (r.ya ? '<div class="ya">Ya está publicado en Mercado Libre. No se vuelve a publicar.</div>' : '') +
         (r.problemas.length ? '<div class="problema">No se puede: ' + escapeHtml(r.problemas.join(', ')) + '</div>' : '') +
-        '<details><summary>Ver descripción</summary><pre>' + escapeHtml(it.descripcion) + '</pre></details>' +
+        (r.problemas.length || r.ya ? '' :
+        '<div class="editar">' +
+          '<label>Título (lo que ve quien busca)</label><input maxlength="' + KV_ML_TITULO_MAX + '" data-t="' + i + '" value="' + escapeHtml(it.titulo) + '" />' +
+          '<div class="cuenta" data-cuenta="' + i + '">' + it.titulo.length + ' / ' + KV_ML_TITULO_MAX + '</div>' +
+          '<div class="fila2"><label style="flex:1">Precio en Mercado Libre<input type="number" min="1" step="10" inputmode="numeric" data-p="' + i + '" value="' + it.precio + '" /></label>' +
+          '<label style="flex:1">Unidades<input type="number" min="1" step="1" inputmode="numeric" data-i="' + i + '" value="' + it.cantidad + '" /></label></div>' +
+          '<label>Descripción</label><textarea data-d="' + i + '">' + escapeHtml(it.descripcion) + '</textarea>' +
+          '<div class="fila2"><input data-pedido="' + i + '" placeholder="Pídele algo a la IA (opcional): más corta, más romántica…" /><button type="button" data-ia="' + i + '">✨ Mejorar con IA</button></div>' +
+        '</div>') +
       '</div>';
     }).join('');
     $('lista').querySelectorAll('input[data-i]').forEach(inp => inp.addEventListener('input', e => {
       const n = parseInt(e.target.value, 10);
       filas[+e.target.dataset.i].item.cantidad = (isNaN(n) || n < 1) ? 1 : n;
+    }));
+    $('lista').querySelectorAll('input[data-t]').forEach(inp => inp.addEventListener('input', e => {
+      const i = +e.target.dataset.t, v = e.target.value.replace(/\s+/g, ' ');
+      filas[i].item.titulo = v.trim();
+      const c = $('lista').querySelector('[data-cuenta="' + i + '"]');
+      c.textContent = v.trim().length + ' / ' + KV_ML_TITULO_MAX; c.classList.toggle('mal', !v.trim());
+    }));
+    $('lista').querySelectorAll('input[data-p]').forEach(inp => inp.addEventListener('input', e => {
+      const i = +e.target.dataset.p, n = parseInt(e.target.value, 10), it = filas[i].item;
+      if (!(n > 0)) return;
+      it.precio = n;
+      $('lista').querySelector('[data-precio="' + i + '"]').textContent = formatCLP(n);
+      $('lista').querySelector('[data-recibes="' + i + '"]').textContent = 'Te quedan aprox. ' + formatCLP(kvMlRecibes(n, it.tipo)) + ' después de comisión y envío';
+    }));
+    $('lista').querySelectorAll('textarea[data-d]').forEach(t => t.addEventListener('input', e => { filas[+e.target.dataset.d].item.descripcion = e.target.value; }));
+    $('lista').querySelectorAll('button[data-ia]').forEach(b => b.addEventListener('click', async () => {
+      const i = +b.dataset.ia, r = filas[i], url = String(settings.igPubUrl || '').trim();
+      if (!url) { estado('Falta la dirección del publicador en el panel.', 'error'); return; }
+      const pedido = $('lista').querySelector('input[data-pedido="' + i + '"]').value.trim();
+      b.disabled = true; const txt = b.textContent; b.textContent = '✨ Pensando…';
+      try {
+        const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ accion: 'tg-ia', initData: tg.initData, tipo: 'ml-desc', actual: r.item.descripcion, pedido: pedido,
+            productos: [{ nombre: r.prod.name, coleccion: kvCat(r.prod.category, settings).nombre, medida: r.prod.detail || '', material: r.item.material }] }) });
+        const d = await resp.json();
+        if (d && d.ok) { r.item.descripcion = d.texto; $('lista').querySelector('textarea[data-d="' + i + '"]').value = d.texto; $('estado').className = 'estado'; }
+        else estado('❌ ' + ((d && d.error) || 'La IA no respondió.'), 'error');
+      } catch (err) { estado('❌ No me pude conectar: ' + err.message, 'error'); }
+      b.disabled = false; b.textContent = txt;
     }));
     const n = validas().length;
     $('publicar').disabled = !n;
@@ -126,6 +170,8 @@
     if (!url) { estado('Falta la dirección del publicador en el panel.', 'error'); return; }
     const lote = validas();
     if (!lote.length) return;
+    const sinTitulo = lote.filter(x => !x.item.titulo);
+    if (sinTitulo.length) { estado('Falta el título de ' + sinTitulo.map(x => x.prod.code).join(', ') + '.', 'error'); return; }
     $('publicar').disabled = true;
     estado('Publicando en Mercado Libre… no cierres esta pantalla. Tarda más o menos ' + (10 + lote.length * 8) + ' segundos ⏳', 'info');
     if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');

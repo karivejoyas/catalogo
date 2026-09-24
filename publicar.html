@@ -43,6 +43,16 @@
   .estado.info { background: var(--blanco); border: 1px solid var(--borde); }
   .publicar { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); min-height: 56px; border: 0; border-radius: 16px; background: var(--morado); color: #fff; font: inherit; font-size: 18px; font-weight: 700; box-shadow: 0 6px 20px rgba(58,29,78,.35); }
   .publicar:disabled { opacity: .55; }
+  .controles { margin-top: 8px; display: grid; gap: 6px; }
+  .controles label { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 8px; font-size: 14px; color: var(--suave); }
+  .controles input[type=range] { width: 100%; height: 32px; accent-color: var(--morado); }
+  .mini { display: flex; gap: 8px; margin-top: 4px; }
+  .mini button, .ia button { min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--borde); background: var(--blanco); color: var(--texto); font: inherit; font-size: 14px; }
+  .ia { display: grid; gap: 8px; margin-top: 10px; }
+  .ia .fila { display: flex; gap: 8px; }
+  .ia input { flex: 1; min-width: 0; min-height: 44px; border: 1px solid var(--borde); border-radius: 10px; padding: 0 12px; font: inherit; font-size: 15px; background: var(--blanco); color: var(--texto); }
+  .ia .grande { background: var(--morado); color: #fff; border: 0; font-weight: 600; min-height: 46px; }
+  .ia button:disabled { opacity: .55; }
   .aviso { background: #FFF6DB; color: #6B5100; border-radius: 12px; padding: 10px 12px; font-size: 14px; margin-bottom: 14px; }
 </style>
 </head>
@@ -54,6 +64,13 @@
 
   <label class="tit" for="texto">Texto de la publicación</label>
   <textarea id="texto" placeholder="Cargando…"></textarea>
+  <div class="ia">
+    <button type="button" class="grande" id="ia-escribir">✨ Escribir el texto con IA</button>
+    <div class="fila">
+      <input id="ia-pedido" placeholder="O pídele un cambio: más corto, para el Día de la Madre…" enterkeyhint="send" />
+      <button type="button" id="ia-aplicar">Aplicar</button>
+    </div>
+  </div>
 
   <label class="tit">¿Dónde lo publico?</label>
   <div class="destinos" id="destinos">
@@ -113,12 +130,91 @@
 
     $('sub').textContent = prods.length > 1 ? 'Se publica como carrusel de ' + prods.length + ' fotos. Desliza para verlas.' : 'Revisa cómo queda y aprieta el botón de abajo.';
     $('texto').value = kvCaptionMulti(prods, settings, kvTagsActivos(prods, settings));
-    for (let i = 0; i < prods.length; i++) imagenes[i] = await kvGenerarPostIG(prods[i], settings);
-    $('fotos').innerHTML = prods.map((p, i) =>
-      '<div class="foto' + (prods.length === 1 ? ' sola' : '') + '"><img src="' + imagenes[i] + '" alt="' + escapeHtml(p.name || '') + '" />' +
-      '<div class="pie">' + escapeHtml(p.code + ' · ' + (p.name || '')) + '</div></div>').join('');
+    focos = prods.map(p => kvFocoIG(p));
+    for (let i = 0; i < prods.length; i++) imagenes[i] = await kvGenerarPostIG(prods[i], settings, focos[i]);
+    pintarFotos();
     $('publicar').disabled = false;
   }
+
+  // ---- mover y hacer zoom a cada foto (como en el panel); se recuerda al publicar ----
+  let focos = [];
+  const timers = {};
+  function slider(txt, campo, i, min, max) {
+    return '<label>' + txt + '<input type="range" min="' + min + '" max="' + max + '" step="1" data-i="' + i + '" data-c="' + campo + '" value="' + focos[i][campo] + '" /></label>';
+  }
+  function pintarFotos() {
+    const n = prods.length;
+    $('sub').textContent = n > 1 ? 'Carrusel de ' + n + ' fotos. Desliza para verlas; con los controles mueves cada una.' : 'Con los controles de abajo puedes mover la foto y hacerle zoom.';
+    $('fotos').innerHTML = prods.map((p, i) =>
+      '<div class="foto' + (n === 1 ? ' sola' : '') + '"><img data-img="' + i + '" src="' + imagenes[i] + '" alt="' + escapeHtml(p.name || '') + '" />' +
+      '<div class="pie">' + escapeHtml(p.code + ' · ' + (p.name || '')) + '</div>' +
+      '<div class="controles">' + slider('🔍 Zoom', 'zoom', i, 100, 260) + slider('↔️ Lados', 'x', i, 0, 100) + slider('↕️ Altura', 'y', i, 0, 100) + '</div>' +
+      '<div class="mini"><button type="button" data-centrar="' + i + '">Centrar</button>' +
+      (n > 1 ? '<button type="button" data-quitar="' + i + '">Quitar esta foto</button>' : '') + '</div></div>').join('');
+    $('fotos').querySelectorAll('input[type=range]').forEach(r => r.addEventListener('input', e => {
+      const i = +e.target.dataset.i;
+      focos[i][e.target.dataset.c] = +e.target.value;
+      clearTimeout(timers[i]);
+      timers[i] = setTimeout(async () => {
+        imagenes[i] = await kvGenerarPostIG(prods[i], settings, focos[i]);
+        const img = $('fotos').querySelector('img[data-img="' + i + '"]'); if (img) img.src = imagenes[i];
+      }, 60);
+    }));
+    $('fotos').querySelectorAll('[data-centrar]').forEach(b => b.addEventListener('click', async () => {
+      const i = +b.dataset.centrar;
+      focos[i] = { x: 50, y: 50, zoom: 100 };
+      imagenes[i] = await kvGenerarPostIG(prods[i], settings, focos[i]);
+      pintarFotos();
+    }));
+    $('fotos').querySelectorAll('[data-quitar]').forEach(b => b.addEventListener('click', () => {
+      const i = +b.dataset.quitar;
+      prods.splice(i, 1); imagenes.splice(i, 1); focos.splice(i, 1);
+      pintarFotos();
+    }));
+  }
+
+  // ---- texto con IA (lo hace el publicador: Gemini mira las fotos, NVIDIA escribe) ----
+  function miniatura(src, max) {
+    return kvCargarImagen(src).then(img => {
+      if (!img) return null;
+      const c = document.createElement('canvas'), s = Math.min(1, max / Math.max(img.width, img.height));
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.8).split(',')[1];
+    });
+  }
+  async function pedirIA(cuerpo, boton) {
+    const url = String(settings.igPubUrl || '').trim();
+    if (!url) { estado('Falta la dirección del publicador en el panel.', 'error'); return null; }
+    const btns = [$('ia-escribir'), $('ia-aplicar')];
+    btns.forEach(b => b.disabled = true);
+    const txt = boton.textContent; boton.textContent = '✨ Pensando…';
+    try {
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(Object.assign({ accion: 'tg-ia', initData: tg.initData,
+          productos: prods.map(p => ({ nombre: p.name, coleccion: kvCat(p.category, settings).nombre, medida: p.detail || '' })) }, cuerpo)) });
+      const d = await r.json();
+      if (!d || !d.ok) { estado('❌ ' + ((d && d.error) || 'La IA no respondió.'), 'error'); return null; }
+      $('estado').className = 'estado';
+      return d.texto;
+    } catch (err) { estado('❌ No me pude conectar: ' + err.message, 'error'); return null; }
+    finally { btns.forEach(b => b.disabled = false); boton.textContent = txt; }
+  }
+  $('ia-escribir').addEventListener('click', async () => {
+    if (!prods.length) return;
+    const imgs = [];
+    for (const p of prods.slice(0, 4)) { const b = await miniatura(p.photo, 512); if (b) imgs.push(b); }
+    const t = await pedirIA({ tipo: 'ig-texto', imagenes: imgs, tags: kvTagsActivos(prods, settings).join(' ') }, $('ia-escribir'));
+    if (t) $('texto').value = t;
+  });
+  async function aplicarPedido() {
+    const pedido = $('ia-pedido').value.trim();
+    if (!pedido) { estado('Escribe qué quieres cambiar, por ejemplo: "hazlo más corto".', 'info'); return; }
+    const t = await pedirIA({ tipo: 'ig-pedido', actual: $('texto').value, pedido: pedido }, $('ia-aplicar'));
+    if (t) { $('texto').value = t; $('ia-pedido').value = ''; }
+  }
+  $('ia-aplicar').addEventListener('click', aplicarPedido);
+  $('ia-pedido').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); aplicarPedido(); } });
 
   $('publicar').addEventListener('click', async () => {
     const url = String(settings.igPubUrl || '').trim();
@@ -132,7 +228,8 @@
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ accion: 'tg-publicar', initData: tg.initData, destino: destino, caption: $('texto').value,
-                               codigos: prods.map(p => p.code), images: imagenes.map(u => u.split(',')[1]) })
+                               codigos: prods.map(p => p.code), images: imagenes.map(u => u.split(',')[1]),
+                               encuadres: prods.map((p, i) => ({ id: p.id, codigo: p.code, x: focos[i].x, y: focos[i].y, zoom: focos[i].zoom })) })
       });
       const d = await r.json();
       if (d && d.ok) {

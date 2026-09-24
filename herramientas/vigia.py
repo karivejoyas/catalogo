@@ -560,8 +560,8 @@ def telegram(metodo, datos=None):
         sys.exit(1)
 
 
-def chat_destino():
-    fijo = env("TELEGRAM_CHAT_ID")
+def chat_destino(guardado=""):
+    fijo = env("TELEGRAM_CHAT_ID") or guardado
     if fijo:
         return fijo
     chats = {}
@@ -582,10 +582,12 @@ def main():
     if len(catalogo) < 20:
         sys.exit("Solo llegaron %d productos. Se aborta sin avisar ni guardar nada." % len(catalogo))
 
-    antes = None
+    antes, chat = None, ""
     if os.path.exists(ESTADO):
         with open(ESTADO, encoding="utf-8") as f:
-            antes = json.load(f).get("productos")
+            previo = json.load(f)
+        antes = previo.get("productos")
+        chat = previo.get("chat", "")      # el chat se recuerda entre corridas
 
     mensajes = partir(armar(catalogo, antes, configuracion()))
     for m in mensajes:
@@ -593,7 +595,7 @@ def main():
         print("-" * 40)
 
     if env("TELEGRAM_TOKEN"):
-        chat = chat_destino()
+        chat = chat_destino(chat)
         for m in mensajes:
             r = telegram("sendMessage", {"chat_id": chat, "text": m, "parse_mode": "HTML",
                                          "disable_web_page_preview": "true"})
@@ -606,7 +608,7 @@ def main():
         aviso("warning", "No llegó el secreto TELEGRAM_TOKEN: el resumen no se envió.")
 
     with open(ESTADO, "w", encoding="utf-8") as f:
-        json.dump({"productos": catalogo}, f, ensure_ascii=False, indent=1, sort_keys=True)
+        json.dump({"productos": catalogo, "chat": chat}, f, ensure_ascii=False, indent=1, sort_keys=True)
 
 
 if __name__ == "__main__":

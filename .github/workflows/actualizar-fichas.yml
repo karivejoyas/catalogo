@@ -1,4 +1,5 @@
-# Regenera todos los días las fichas de producto y los feeds, leyendo el
+# Regenera todos los días las fichas de producto y los feeds, y avisa por
+# Telegram lo que cambió en el catálogo. Lee el
 # catálogo en vivo desde Firestore. Así, cuando Karina agrega un aro o cambia
 # un precio, la ficha y los feeds se actualizan solos sin que nadie intervenga.
 #
@@ -49,6 +50,14 @@ jobs:
             echo "Salió muy poco contenido. No se publica nada."
             exit 1
           fi
+
+      - name: Vigía — avisar por Telegram lo que cambió desde ayer
+        # Si Telegram falla, las fichas se publican igual
+        continue-on-error: true
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 herramientas/vigia.py
 
       - name: Publicar si algo cambió
         run: |

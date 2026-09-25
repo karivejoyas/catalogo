@@ -234,3 +234,20 @@ Si algo de Firebase Auth falla, los dominios que faltarían son `securetoken.goo
 y `oauth2.googleapis.com`.
 
 ---
+
+---
+
+## SEO y rendimiento (septiembre 2026)
+
+- `herramientas/paginas-producto.py` (se corre solo cada noche) genera: fichas `p/`,
+  páginas de colección `c/`, `sitemap.xml` con fotos, feed de Google, `llms.txt`,
+  fotos WebP livianas en `assets/productos/w/` y `productos-fotos.json`.
+- **El catálogo ya no baja las fotos en base64** (eran ~15 MB): lee los productos por
+  la API REST sin la foto y usa los archivos de `productos-fotos.json`. Los productos
+  cambiados después de la última corrida nocturna traen su foto de la base, de a uno.
+  Si la carga rápida falla, usa la lectura de siempre (onSnapshot).
+- Las tarjetas del catálogo usan la versión WebP (`photoMini`); la foto grande se baja
+  al abrir el producto.
+- La portada tiene un H1 oculto a la vista (clase `kv-sr`) con la marca y los enlaces a
+  las colecciones, que el generador actualiza entre `<!-- COLECCIONES -->`.
+- `?q=texto` en la portada abre el buscador (lo usa el SearchAction de schema.org).

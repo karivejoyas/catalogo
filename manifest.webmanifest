@@ -1,0 +1,14 @@
+{
+  "name": "Karivé Joyas · Aros artesanales hechos a mano",
+  "short_name": "Karivé Joyas",
+  "description": "Catálogo de aros artesanales hechos a mano en Santiago, Chile. Envíos a todo Chile.",
+  "lang": "es-CL",
+  "start_url": "/catalogo/",
+  "scope": "/catalogo/",
+  "display": "standalone",
+  "background_color": "#2A123E",
+  "theme_color": "#2A123E",
+  "icons": [
+    { "src": "assets/logo-avatar.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

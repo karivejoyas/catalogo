@@ -1,0 +1,14 @@
+# Karivé Joyas · karivejoyas.github.io/catalogo/
+#
+# OJO: Google solo lee robots.txt en la raíz del dominio
+# (https://karivejoyas.github.io/robots.txt). Este sitio vive en /catalogo/,
+# así que este archivo queda como referencia; el sitemap se envía directo en
+# Google Search Console: https://karivejoyas.github.io/catalogo/sitemap.xml
+
+User-agent: *
+Allow: /
+Disallow: /catalogo/admin.html
+Disallow: /catalogo/publicar.html
+Disallow: /catalogo/publicar-ml.html
+
+Sitemap: https://karivejoyas.github.io/catalogo/sitemap.xml

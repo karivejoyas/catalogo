@@ -491,7 +491,7 @@
       '<div class="kv-buscar-grid">' + encontrados.map(p => {
         const cat = kvCat(p.category, settings);
         return '<button type="button" class="kv-buscar-item" data-id="' + p.id + '">' +
-          '<span class="kv-buscar-foto"' + (p.photo ? ' style="background-image:url(\'' + p.photo + '\')"' : '') + '>' + (p.photo ? '' : '✦') + '</span>' +
+          '<span class="kv-buscar-foto"' + (p.photo ? ' style="background-image:url(\'' + (p.photoMini || p.photo) + '\')"' : '') + '>' + (p.photo ? '' : '✦') + '</span>' +
           '<span class="kv-buscar-txt">' +
             '<b>' + escapeHtml(p.name || '') + '</b>' +
             '<span class="kv-buscar-meta">' + escapeHtml(p.code || '') + (cat ? ' · ' + escapeHtml(cat.nombre) : '') + '</span>' +
@@ -680,7 +680,7 @@
   }
 
   function carroMiniFoto(p) {
-    return p.photo ? '<div class="kv-cart-mini" style="background-image:url(\'' + p.photo + '\')"></div>' : '<div class="kv-cart-mini sin">✦</div>';
+    return p.photo ? '<div class="kv-cart-mini" style="background-image:url(\'' + (p.photoMini || p.photo) + '\')"></div>' : '<div class="kv-cart-mini sin">✦</div>';
   }
 
   function carroRender() {
@@ -1077,6 +1077,8 @@
   let enlaceProdAbierto = false;
   function abrirDesdeEnlace() {
     if (enlaceProdAbierto || !products.length) return;
+    const q = new URLSearchParams(location.search).get('q');
+    if (q) { enlaceProdAbierto = true; buscarInput.value = q; buscarAbrir(); return; }
     const cod = new URLSearchParams(location.search).get('p');
     if (!cod) return;
     enlaceProdAbierto = true;
@@ -1152,12 +1154,23 @@
   // segundo plano para que aparezcan al instante al pasar las páginas.
   const yaPrecargadas = new Set();
   function precargar() {
+    const con = navigator.connection || {};
+    if (con.saveData || /2g/.test(con.effectiveType || '')) return;      // no gastar los datos de la clienta
+    clearTimeout(precargar._t);
+    precargar._t = setTimeout(precargarAhora, 2500);                     // primero lo visible, después el resto
+  }
+  function precargarAhora() {
     const urls = new Set();
-    products.forEach(p => { if (p.photo) urls.add(p.photo); });
+    products.forEach(p => { if (p.photo) urls.add(p.photoMini || p.photo); });   // las livianas; la grande al abrir
     kvCategorias(settings).forEach(cat => { if (cat.imagen) urls.add(cat.imagen); });
     const cover = Object.assign({}, KV_COVER_DEFAULT, settings.cover || {});
     if (cover.image) urls.add(cover.image);
-    urls.forEach(u => { if (!yaPrecargadas.has(u)) { yaPrecargadas.add(u); const im = new Image(); im.src = u; } });
+    const pendientes = [...urls].filter(u => !yaPrecargadas.has(u));
+    const tanda = () => {
+      pendientes.splice(0, 6).forEach(u => { yaPrecargadas.add(u); const im = new Image(); im.decoding = 'async'; im.src = u; });
+      if (pendientes.length) (window.requestIdleCallback || ((f) => setTimeout(f, 300)))(tanda);
+    };
+    tanda();
   }
 
   let waActualizar = null;
@@ -1472,11 +1485,77 @@
     location.reload();
   }, 5000);
 
-  kvDb.collection('catalog').doc('products').collection('items').orderBy('order').onSnapshot((snap) => {
+  // ---------- carga rápida de productos ----------
+  // Muchas fotos viven DENTRO de la base de datos (en base64): leer la colección
+  // completa bajaba ~15 MB antes de mostrar nada. Ahora los datos se leen por la
+  // API REST SIN la foto (~150 KB) y la foto se toma del archivo que el generador
+  // nocturno deja en assets/productos/ (índice en productos-fotos.json). Solo los
+  // productos que cambiaron después de esa noche traen su foto de la base, de a uno.
+  // Si algo de esto falla, se usa la lectura de siempre.
+  const FS_REST = 'https://firestore.googleapis.com/v1/projects/karive-catalogo/databases/(default)/documents/catalog/products/items';
+  const CAMPOS_PROD = ['name', 'price', 'priceOffer', 'detail', 'category', 'code', 'stock', 'cantidad', 'order', 'foco', 'focoMovil', 'igFoco'];
+  function fsValor(v) {
+    if (!v) return null;
+    if ('stringValue' in v) return v.stringValue;
+    if ('integerValue' in v) return parseInt(v.integerValue, 10);
+    if ('doubleValue' in v) return v.doubleValue;
+    if ('booleanValue' in v) return v.booleanValue;
+    if ('nullValue' in v) return null;
+    if ('timestampValue' in v) return v.timestampValue;
+    if ('mapValue' in v) { const o = {}; const f = v.mapValue.fields || {}; Object.keys(f).forEach(k => { o[k] = fsValor(f[k]); }); return o; }
+    if ('arrayValue' in v) return (v.arrayValue.values || []).map(fsValor);
+    return null;
+  }
+  async function cargarProductosRapido() {
+    const mask = CAMPOS_PROD.map(c => 'mask.fieldPaths=' + c).join('&');
+    const leerDocs = async () => {
+      let out = [], tok = '';
+      do {
+        const url = FS_REST + '?pageSize=300&' + mask + (tok ? '&pageToken=' + encodeURIComponent(tok) : '');
+        // un corte de red momentáneo no debe mandar a la clienta a la carga pesada: se reintenta una vez
+        const r = await fetch(url).catch(() => new Promise(ok => setTimeout(ok, 1200)).then(() => fetch(url)));
+        if (!r.ok) throw new Error('REST ' + r.status);
+        const d = await r.json();
+        out = out.concat(d.documents || []);
+        tok = d.nextPageToken || '';
+      } while (tok);
+      return out;
+    };
+    const [indice, docs] = await Promise.all([
+      fetch('productos-fotos.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+      leerDocs()
+    ]);
+    if (!docs.length) throw new Error('sin productos');
+    const fotos = (indice && indice.fotos) || {};
+    const faltan = [];
+    const lista = docs.map(doc => {
+      const p = { id: doc.name.split('/').pop() };
+      const f = doc.fields || {};
+      Object.keys(f).forEach(k => { p[k] = fsValor(f[k]); });
+      const guardada = fotos[p.id];
+      if (guardada && doc.updateTime && guardada[1] && doc.updateTime <= guardada[1]) { p.photo = guardada[0]; if (guardada[2]) p.photoMini = guardada[2]; }
+      else faltan.push(p);
+      return p;
+    }).sort((a, b) => (a.order || 0) - (b.order || 0));
+    products = lista;
     llegoProductos = true;
-    products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     rebuild();
-  }, (err) => console.error('Error leyendo el catálogo:', err));
+    if (!faltan.length) return;
+    // productos nuevos o cambiados hoy: su foto se trae de la base (de a uno, en paralelo)
+    await Promise.all(faltan.map(p => fetch(FS_REST + '/' + p.id + '?mask.fieldPaths=photo')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { const ph = d && d.fields && d.fields.photo && d.fields.photo.stringValue; if (ph) p.photo = ph; })
+      .catch(() => {})));
+    rebuild();
+  }
+  function cargarProductosClasico() {
+    kvDb.collection('catalog').doc('products').collection('items').orderBy('order').onSnapshot((snap) => {
+      llegoProductos = true;
+      products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      rebuild();
+    }, (err) => console.error('Error leyendo el catálogo:', err));
+  }
+  cargarProductosRapido().catch(err => { console.warn('Carga rápida no disponible, uso la normal:', err); cargarProductosClasico(); });
 
   kvDb.collection('catalog').doc('settings').onSnapshot((doc) => {
     llegoSettings = true;

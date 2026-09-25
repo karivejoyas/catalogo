@@ -270,9 +270,12 @@ function kvFotoInner(p, modo) {
   if (!p || !p.photo) return '';
   if (modo === 'pc') return kvCapaFoto(p.photo, kvFoco(p), 'kv-fbg-solo');
   if (modo === 'movil') return kvCapaFoto(p.photo, kvFocoMovil(p), 'kv-fbg-solo');
-  // las dos capas: el CSS muestra la que corresponde a la pantalla
-  return kvCapaFoto(p.photo, kvFoco(p), 'kv-fbg-pc') +
-         kvCapaFoto(p.photo, kvFocoMovil(p), 'kv-fbg-mov');
+  // las dos capas: el CSS muestra la que corresponde a la pantalla.
+  // En las tarjetas se usa la versión liviana (WebP) si existe; la foto
+  // completa se baja recién al abrir el producto.
+  const url = p.photoMini || p.photo;
+  return kvCapaFoto(url, kvFoco(p), 'kv-fbg-pc') +
+         kvCapaFoto(url, kvFocoMovil(p), 'kv-fbg-mov');
 }
 
 /* foto para la vista ampliada: la joya SIEMPRE completa y centrada,

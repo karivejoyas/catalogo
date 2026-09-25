@@ -1251,3 +1251,7 @@ select.kv-cart-inp option{color:#2A1245;background:#fff;}
 .ed-btn-enlace{background:rgba(201,162,75,0.12);border:1px solid rgba(201,162,75,0.45);color:var(--kv-dorado-cl);border-radius:8px;padding:0 10px;font-size:12px;font-family:inherit;cursor:pointer;white-space:nowrap;height:34px;flex:0 0 auto;}
 .ed-btn-enlace:hover{background:rgba(201,162,75,0.22);}
 .ed-btn-enlace.copiado{background:rgba(120,190,120,0.18);border-color:rgba(120,190,120,0.55);color:#BFE6BF;}
+
+/* Título y resumen de la marca para Google, las IA y lectores de pantalla
+   (el catálogo es visual; esto le da a la portada su encabezado H1 real). */
+.kv-sr{position:absolute !important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}

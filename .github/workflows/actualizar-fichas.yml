@@ -34,7 +34,10 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Generar las fichas, el feed de Google y el sitemap
+      - name: Instalar Pillow (fotos WebP livianas)
+        run: pip install --quiet pillow
+
+      - name: Generar fichas, colecciones, feed de Google, sitemap, llms.txt y fotos livianas
         run: python3 herramientas/paginas-producto.py
 
       - name: Generar el feed de Meta

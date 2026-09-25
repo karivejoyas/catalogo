@@ -2,6 +2,7 @@
  "chat": "7582208962",
  "productos": {
   "0UaS5Ap1R8uoHfrmgFOS": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-016",
    "creado": "2026-07-18T02:41:26.194984Z",
@@ -11,6 +12,7 @@
    "stock": true
   },
   "1HmAJDgoYN9qJ5ZsRVTN": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-008",
    "creado": "2026-09-15T03:18:56.820959Z",
@@ -20,6 +22,7 @@
    "stock": true
   },
   "1Nxv4JJSmC5kWwJNtSgx": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-005",
    "creado": "2026-08-16T22:31:05.706591Z",
@@ -29,6 +32,7 @@
    "stock": true
   },
   "1dlhyh48QEExSrO3KrMn": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-006",
    "creado": "2026-07-06T00:12:32.042909Z",
@@ -38,6 +42,7 @@
    "stock": false
   },
   "4yq16Rs9aieTfBdBMwPD": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-013",
    "creado": "2026-07-18T19:59:56.539922Z",
@@ -47,6 +52,7 @@
    "stock": true
   },
   "6PfuLgJyd5m17cayQ3v3": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-022",
    "creado": "2026-07-17T03:09:14.376201Z",
@@ -56,6 +62,7 @@
    "stock": true
   },
   "6uYJTaTIgcSI5u6uylPb": {
+   "cantidad": null,
    "category": "otros",
    "code": "OT-008",
    "creado": "2026-08-16T22:28:28.584802Z",
@@ -65,6 +72,7 @@
    "stock": true
   },
   "79pUgrkzTOMThTxfEYIa": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-024",
    "creado": "2026-07-11T21:41:35.533696Z",
@@ -74,6 +82,7 @@
    "stock": true
   },
   "8hZwO3mCTwpjBnJJKt4m": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-027",
    "creado": "2026-07-11T21:41:36.026852Z",
@@ -83,6 +92,7 @@
    "stock": true
   },
   "95flXOymk7CZ7QT7CydG": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-010",
    "creado": "2026-08-16T22:31:08.456992Z",
@@ -92,6 +102,7 @@
    "stock": true
   },
   "9awW4hasZomKx68pJ9r7": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-008",
    "creado": "2026-07-04T02:31:17.284337Z",
@@ -101,6 +112,7 @@
    "stock": false
   },
   "9eo3PWQnWgEpa0qZCsGd": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-012",
    "creado": "2026-07-18T02:41:25.070889Z",
@@ -110,6 +122,7 @@
    "stock": true
   },
   "9gWv6JgKlQHQ5ave4FiH": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-013",
    "creado": "2026-07-17T03:23:43.961995Z",
@@ -119,6 +132,7 @@
    "stock": true
   },
   "A58cdrNjeK9v0AegT0MA": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-007",
    "creado": "2026-08-16T22:31:06.364769Z",
@@ -128,6 +142,7 @@
    "stock": true
   },
   "ANFNANmVtxAtwgRhQoBg": {
+   "cantidad": null,
    "category": "otros",
    "code": "OT-005",
    "creado": "2026-07-18T19:59:55.440967Z",
@@ -137,6 +152,7 @@
    "stock": true
   },
   "Ah1BxUVZ5QWl6cuwwP9Q": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-004",
    "creado": "2026-08-16T22:31:04.301671Z",
@@ -146,6 +162,7 @@
    "stock": true
   },
   "BNzMoFiDJsFmHXSnUAEg": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-023",
    "creado": "2026-07-11T21:41:35.180659Z",
@@ -155,6 +172,7 @@
    "stock": true
   },
   "C8QcbjLEMuIiIxCqdAU3": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-004",
    "creado": "2026-09-15T03:17:47.790275Z",
@@ -164,6 +182,7 @@
    "stock": true
   },
   "DqNY806UkCCQ6FdWtCLJ": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-009",
    "creado": "2026-08-16T22:31:07.772842Z",
@@ -173,6 +192,7 @@
    "stock": true
   },
   "EFvdba2WILcqEpp0jzL9": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-021",
    "creado": "2026-07-17T03:09:13.903116Z",
@@ -182,6 +202,7 @@
    "stock": true
   },
   "EKElE2gxwqXgoyfngoQk": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-010",
    "creado": "2026-07-18T02:41:25.007205Z",
@@ -191,6 +212,7 @@
    "stock": true
   },
   "EQjh1rJFk6h1jsVkqSH0": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-011",
    "creado": "2026-07-18T02:41:25.025250Z",
@@ -200,6 +222,7 @@
    "stock": true
   },
   "Ex7UPwtKZ0GfNyG8wgRZ": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-005",
    "creado": "2026-07-04T02:16:13.224049Z",
@@ -209,6 +232,7 @@
    "stock": false
   },
   "FEwWzsZjYKtjECJ9X9Tz": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-010",
    "creado": "2026-09-15T03:18:58.521561Z",
@@ -218,6 +242,7 @@
    "stock": true
   },
   "FdCEgKXi1CQyOxoApNQ4": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-019",
    "creado": "2026-07-17T03:09:07.703516Z",
@@ -227,6 +252,7 @@
    "stock": true
   },
   "GPowdJ1vGNFli8sjRvhq": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-014",
    "creado": "2026-07-18T02:41:25.651267Z",
@@ -236,6 +262,7 @@
    "stock": true
   },
   "IO1jIirYjEhGk3P56Rg2": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-007",
    "creado": "2026-07-18T02:41:24.936867Z",
@@ -245,6 +272,7 @@
    "stock": true
   },
   "JsbyL5CjXg6jQOT83cGE": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-012",
    "creado": "2026-08-16T22:31:09.878448Z",
@@ -254,6 +282,7 @@
    "stock": true
   },
   "KX2CvfcXVSdcRlSKm5vI": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-025",
    "creado": "2026-07-11T21:41:35.716806Z",
@@ -263,6 +292,7 @@
    "stock": true
   },
   "L0CpTlkfzpOrJE1spv4A": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-017",
    "creado": "2026-07-18T02:41:26.441975Z",
@@ -272,6 +302,7 @@
    "stock": true
   },
   "M9ghC93SkxKyGP1Q5xph": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-014",
    "creado": "2026-09-06T00:09:06.220117Z",
@@ -281,6 +312,7 @@
    "stock": true
   },
   "NQ5kOymDedSnKDnuiUwz": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-004",
    "creado": "2026-07-05T23:09:33.840985Z",
@@ -290,6 +322,7 @@
    "stock": false
   },
   "P7rbmm9E7hvpGmHUZYyh": {
+   "cantidad": null,
    "category": "otros",
    "code": "OT-011",
    "creado": "2026-09-06T00:13:54.893676Z",
@@ -299,6 +332,7 @@
    "stock": true
   },
   "QYWEBa3HhbQiL2vNaDFD": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-005",
    "creado": "2026-09-15T03:17:48.628031Z",
@@ -308,6 +342,7 @@
    "stock": true
   },
   "QkhjQ0HljVrvVny9F5kd": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-019",
    "creado": "2026-07-05T23:41:00.080726Z",
@@ -317,6 +352,7 @@
    "stock": false
   },
   "RGAHH15iAun1sYykDx64": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-016",
    "creado": "2026-09-06T00:13:52.691311Z",
@@ -326,6 +362,7 @@
    "stock": true
   },
   "RJWGk7uqDrxqfrMqkKPh": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-015",
    "creado": "2026-08-16T22:24:24.932310Z",
@@ -335,6 +372,7 @@
    "stock": true
   },
   "SbkHcuLmQlEXEGCuiLfb": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-015",
    "creado": "2026-07-18T02:41:25.948990Z",
@@ -344,6 +382,7 @@
    "stock": true
   },
   "TZtFkZTCA5MvJwHNt4Pp": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-017",
    "creado": "2026-07-03T23:36:19.618920Z",
@@ -353,6 +392,7 @@
    "stock": false
   },
   "TnYc7uJDfkdWUtbGukLF": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-010",
    "creado": "2026-07-17T03:23:22.882870Z",
@@ -362,6 +402,7 @@
    "stock": true
   },
   "U9l0rHFPneywSdppW4UP": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-026",
    "creado": "2026-07-11T21:41:35.869756Z",
@@ -371,6 +412,7 @@
    "stock": true
   },
   "UH8IpFG44CIGfH9AKdUF": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-013",
    "creado": "2026-07-18T02:41:25.377193Z",
@@ -380,6 +422,7 @@
    "stock": true
   },
   "UYPE4zbuMW1mmL5wBdZ9": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-019",
    "creado": "2026-08-16T22:25:51.783257Z",
@@ -389,6 +432,7 @@
    "stock": true
   },
   "VTQRCNaFCfJZC1ex2EVo": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-009",
    "creado": "2026-09-15T03:18:57.717546Z",
@@ -398,6 +442,7 @@
    "stock": true
   },
   "VxESyrf7KyRbOmi3fbKi": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-028",
    "creado": "2026-08-16T21:51:30.130765Z",
@@ -407,6 +452,7 @@
    "stock": true
   },
   "WUTNdL1u6KqG3HsbeDZt": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-009",
    "creado": "2026-07-11T21:44:04.143068Z",
@@ -416,6 +462,7 @@
    "stock": true
   },
   "Wwf5vV6FKz4IV7aH6XGQ": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-007",
    "creado": "2026-09-15T03:17:53.860624Z",
@@ -425,6 +472,7 @@
    "stock": true
   },
   "XMQW30jo3lVlVleScigf": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-009",
    "creado": "2026-07-18T02:41:24.967274Z",
@@ -434,6 +482,7 @@
    "stock": true
   },
   "XVTTusyidQqGuadxmJ46": {
+   "cantidad": null,
    "category": "otros",
    "code": "OT-007",
    "creado": "2026-08-16T22:22:13.093730Z",
@@ -443,6 +492,7 @@
    "stock": true
   },
   "Yuu1IuzbyXpioWHUgU6j": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-002",
    "creado": "2026-07-05T23:10:03.255936Z",
@@ -452,6 +502,7 @@
    "stock": false
   },
   "ZPvuQpjxWMIPdBFvet4Z": {
+   "cantidad": null,
    "category": "otros",
    "code": "OT-009",
    "creado": "2026-08-16T22:28:35.734352Z",
@@ -461,6 +512,7 @@
    "stock": true
   },
   "aqtL1fdmAUzs10VC08c8": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-020",
    "creado": "2026-07-05T23:52:12.803621Z",
@@ -470,6 +522,7 @@
    "stock": false
   },
   "bEbhObrExYgpYsYxj3C0": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-018",
    "creado": "2026-07-18T02:41:26.461844Z",
@@ -479,6 +532,7 @@
    "stock": true
   },
   "bWtd00vHwKzFkjaeffC4": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-003",
    "creado": "2026-08-16T22:31:03.628998Z",
@@ -488,6 +542,7 @@
    "stock": true
   },
   "bgCVhUhPgczWBYprkTdS": {
+   "cantidad": null,
    "category": "otros",
    "code": "OT-006",
    "creado": "2026-07-18T19:59:55.999911Z",
@@ -497,6 +552,7 @@
    "stock": true
   },
   "bqiwVLvogJJAZsBWMGFW": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-014",
    "creado": "2026-07-18T03:58:47.463025Z",
@@ -506,6 +562,7 @@
    "stock": true
   },
   "bs8YouuflyB7nEA4IN26": {
+   "cantidad": null,
    "category": "otros",
    "code": "OT-010",
    "creado": "2026-09-06T00:13:53.981169Z",
@@ -515,6 +572,7 @@
    "stock": true
   },
   "cMvYS3VdQgEmnOzPSnyK": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-003",
    "creado": "2026-09-15T03:17:49.654517Z",
@@ -524,6 +582,7 @@
    "stock": true
   },
   "cfkBEAn5wM935esC98g3": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-027",
    "creado": "2026-08-16T21:40:54.396441Z",
@@ -533,6 +592,7 @@
    "stock": true
   },
   "czY4NwAXTUJ877Oat8m5": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-002",
    "creado": "2026-08-16T22:31:02.989004Z",
@@ -542,6 +602,7 @@
    "stock": true
   },
   "dG1pOR8MK6VryATvT8PW": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-001",
    "creado": "2026-09-15T03:17:45.067754Z",
@@ -551,6 +612,7 @@
    "stock": true
   },
   "f4rDeuDZ395P6W98bqG5": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-011",
    "creado": "2026-07-17T03:23:23.513543Z",
@@ -560,6 +622,7 @@
    "stock": true
   },
   "fAciTFSs5cjRT9TGayQF": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-006",
    "creado": "2026-08-16T22:31:04.988055Z",
@@ -569,6 +632,7 @@
    "stock": true
   },
   "fRvlrdSnGv8vYBoPkVtY": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-012",
    "creado": "2026-09-15T03:19:02.260863Z",
@@ -578,6 +642,7 @@
    "stock": true
   },
   "fTXb1p4C1kNZVIOCoHff": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-008",
    "creado": "2026-08-16T22:31:07.071498Z",
@@ -587,6 +652,7 @@
    "stock": true
   },
   "i9XCpno3gUZ7KFRueAHj": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-022",
    "creado": "2026-07-11T21:41:34.654902Z",
@@ -596,6 +662,7 @@
    "stock": true
   },
   "jUchUx1iqK0Qlc6IAE28": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-011",
    "creado": "2026-09-15T03:18:59.560368Z",
@@ -605,6 +672,7 @@
    "stock": true
   },
   "js97jINJMWJpvjBTfgNJ": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-020",
    "creado": "2026-08-16T22:26:43.475844Z",
@@ -614,6 +682,7 @@
    "stock": true
   },
   "luT8vKxj055lmu2YfcIq": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-024",
    "creado": "2026-08-16T21:40:52.126657Z",
@@ -623,6 +692,7 @@
    "stock": true
   },
   "luhwY417xreYR8q4lXYC": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-006",
    "creado": "2026-09-15T03:17:53.103259Z",
@@ -632,6 +702,7 @@
    "stock": true
   },
   "matZVMjEKsGMLsM06O2k": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-012",
    "creado": "2026-07-05T23:40:46.955579Z",
@@ -641,6 +712,7 @@
    "stock": false
   },
   "mmM6tXaM5Pa9ReGk092x": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-023",
    "creado": "2026-08-16T21:37:25.632703Z",
@@ -650,6 +722,7 @@
    "stock": true
   },
   "ncZcf4k0rc0ILiUyjDzP": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-014",
    "creado": "2026-07-03T23:35:28.348636Z",
@@ -658,7 +731,18 @@
    "price": 8990,
    "stock": false
   },
+  "ngCEQlTlX1t3Kbh3Uygk": {
+   "cantidad": 10,
+   "category": "cmu236iia",
+   "code": "FS-016",
+   "creado": "2026-09-24T16:45:12.334524Z",
+   "name": "Argollas Sol Dorado",
+   "offer": 0,
+   "price": 5990,
+   "stock": true
+  },
   "oNBsDvFnYa2a3qEe4QpF": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-016",
    "creado": "2026-07-03T23:35:36.359497Z",
@@ -668,6 +752,7 @@
    "stock": false
   },
   "ou8mVeD4EJmmhGnrkag9": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-021",
    "creado": "2026-07-11T21:41:33.635501Z",
@@ -677,6 +762,7 @@
    "stock": true
   },
   "p001": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-001",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -686,6 +772,7 @@
    "stock": true
   },
   "p002": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-002",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -695,6 +782,7 @@
    "stock": true
   },
   "p003": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-003",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -704,6 +792,7 @@
    "stock": true
   },
   "p004": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-004",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -713,6 +802,7 @@
    "stock": true
   },
   "p005": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-005",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -722,6 +812,7 @@
    "stock": true
   },
   "p006": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-006",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -731,6 +822,7 @@
    "stock": true
   },
   "p007": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-007",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -740,6 +832,7 @@
    "stock": true
   },
   "p008": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-008",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -749,6 +842,7 @@
    "stock": true
   },
   "p009": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-001",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -758,6 +852,7 @@
    "stock": true
   },
   "p010": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-009",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -767,6 +862,7 @@
    "stock": true
   },
   "p011": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-010",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -776,6 +872,7 @@
    "stock": true
   },
   "p012": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-011",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -785,6 +882,7 @@
    "stock": true
   },
   "p013": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-012",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -794,6 +892,7 @@
    "stock": true
   },
   "p014": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-003",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -803,6 +902,7 @@
    "stock": true
   },
   "p016": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-013",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -812,6 +912,7 @@
    "stock": true
   },
   "p017": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-014",
    "creado": "2026-08-12T20:06:55.132299Z",
@@ -821,6 +922,7 @@
    "stock": true
   },
   "p019": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-015",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -830,6 +932,7 @@
    "stock": true
   },
   "p020": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-016",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -839,6 +942,7 @@
    "stock": true
   },
   "p021": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-017",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -848,6 +952,7 @@
    "stock": true
   },
   "p022": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-018",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -857,6 +962,7 @@
    "stock": true
   },
   "p023": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-005",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -866,6 +972,7 @@
    "stock": true
   },
   "p025": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-006",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -875,6 +982,7 @@
    "stock": true
   },
   "p026": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-007",
    "creado": "2026-08-12T20:06:55.132299Z",
@@ -884,6 +992,7 @@
    "stock": true
   },
   "p027": {
+   "cantidad": null,
    "category": "otros",
    "code": "OT-001",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -893,6 +1002,7 @@
    "stock": true
   },
   "p028": {
+   "cantidad": null,
    "category": "otros",
    "code": "OT-002",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -902,6 +1012,7 @@
    "stock": true
   },
   "p029": {
+   "cantidad": null,
    "category": "otros",
    "code": "OT-003",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -911,6 +1022,7 @@
    "stock": true
   },
   "p030": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-001",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -920,6 +1032,7 @@
    "stock": true
   },
   "p032": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-002",
    "creado": "2026-08-12T20:06:55.132299Z",
@@ -929,6 +1042,7 @@
    "stock": true
   },
   "p034": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-003",
    "creado": "2026-08-12T20:06:55.132299Z",
@@ -938,6 +1052,7 @@
    "stock": true
   },
   "p035": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-004",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -947,6 +1062,7 @@
    "stock": true
   },
   "p036": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-005",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -956,6 +1072,7 @@
    "stock": true
   },
   "p038": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-006",
    "creado": "2026-08-12T20:06:55.132299Z",
@@ -965,6 +1082,7 @@
    "stock": true
   },
   "p039": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-007",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -974,6 +1092,7 @@
    "stock": true
   },
   "p040": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-008",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -983,6 +1102,7 @@
    "stock": true
   },
   "p041": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-009",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -992,6 +1112,7 @@
    "stock": true
   },
   "p042": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-010",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -1001,6 +1122,7 @@
    "stock": true
   },
   "p044": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-011",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -1010,6 +1132,7 @@
    "stock": true
   },
   "p045": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-013",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -1019,6 +1142,7 @@
    "stock": true
   },
   "p046": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-015",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -1028,6 +1152,7 @@
    "stock": true
   },
   "p047": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-001",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -1037,6 +1162,7 @@
    "stock": true
   },
   "p048": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-002",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -1046,6 +1172,7 @@
    "stock": true
   },
   "p049": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-003",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -1055,6 +1182,7 @@
    "stock": true
   },
   "p8BnEPgDtZKS3VkmZ4WU": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-004",
    "creado": "2026-07-04T02:15:58.596243Z",
@@ -1064,6 +1192,7 @@
    "stock": false
   },
   "pobiIxcqcVS5UbzWJ76f": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-001",
    "creado": "2026-08-16T22:31:02.264820Z",
@@ -1073,6 +1202,7 @@
    "stock": true
   },
   "qQbwRgxuvOyassqbwr7x": {
+   "cantidad": null,
    "category": "argollas",
    "code": "AG-018",
    "creado": "2026-07-03T23:35:36.542559Z",
@@ -1082,6 +1212,7 @@
    "stock": false
   },
   "ryCEqbZozTaAVQW5mIpD": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-013",
    "creado": "2026-09-15T03:19:43.908613Z",
@@ -1091,6 +1222,7 @@
    "stock": true
   },
   "t00s2RivR5Kx7u28ZV3l": {
+   "cantidad": null,
    "category": "otros",
    "code": "OT-004",
    "creado": "2026-07-18T19:59:55.264888Z",
@@ -1100,6 +1232,7 @@
    "stock": true
   },
   "tPSSGN0Bni3RXZSmLefx": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-002",
    "creado": "2026-09-15T03:17:46.840936Z",
@@ -1109,6 +1242,7 @@
    "stock": true
   },
   "uZmeUK8436mJ1uCNpcG9": {
+   "cantidad": null,
    "category": "topos",
    "code": "TP-008",
    "creado": "2026-07-18T02:41:24.950950Z",
@@ -1118,6 +1252,7 @@
    "stock": true
   },
   "umZJxRASFIqpGQ1BUWFi": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-025",
    "creado": "2026-08-16T21:40:52.705783Z",
@@ -1127,6 +1262,7 @@
    "stock": true
   },
   "vZKIu82RDN7ySfwRz3pq": {
+   "cantidad": null,
    "category": "charms",
    "code": "CH-012",
    "creado": "2026-07-17T03:23:42.249592Z",
@@ -1136,6 +1272,7 @@
    "stock": true
   },
   "wsGfbLVwAvlx2MuvLofY": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-026",
    "creado": "2026-08-16T21:40:53.508311Z",
@@ -1145,6 +1282,7 @@
    "stock": true
   },
   "xmKIxGcm8iaM7liwNqXj": {
+   "cantidad": null,
    "category": "flores",
    "code": "FL-020",
    "creado": "2026-07-17T03:09:13.447955Z",
@@ -1154,6 +1292,7 @@
    "stock": true
   },
   "ygyPNAGolLM75m2J65MC": {
+   "cantidad": null,
    "category": "cmu236iia",
    "code": "FS-015",
    "creado": "2026-09-06T00:09:06.767313Z",
@@ -1163,6 +1302,7 @@
    "stock": true
   },
   "zod71DHxmroHB7WA4BrJ": {
+   "cantidad": null,
    "category": "marina",
    "code": "MA-011",
    "creado": "2026-08-16T22:31:09.170293Z",

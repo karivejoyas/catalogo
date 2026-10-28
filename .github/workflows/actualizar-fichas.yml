@@ -13,6 +13,10 @@ on:
     # 09:00 UTC = 05:00 o 06:00 en Chile según horario de verano
     - cron: '0 9 * * *'
   workflow_dispatch:
+  # al cambiar las herramientas o este workflow (por ejemplo, el paso a karivejoyas.cl)
+  push:
+    branches: [main]
+    paths: ['herramientas/**', '.github/workflows/**']
 
 # Evita que dos ejecuciones se pisen si una tarda más de la cuenta
 concurrency:
@@ -43,6 +47,9 @@ jobs:
       - name: Generar el feed de Meta
         run: python3 herramientas/feed-meta.py
 
+      - name: Mandar las páginas a la tienda nueva (si karivejoyas.cl ya está en línea)
+        run: python3 herramientas/redirigir.py
+
       - name: Revisar que el resultado tenga sentido
         run: |
           fichas=$(ls p/*.html 2>/dev/null | wc -l)
@@ -57,6 +64,7 @@ jobs:
       - name: Resumen diario por Telegram
         # Si Telegram falla, las fichas se publican igual
         continue-on-error: true
+        if: github.event_name != 'push'
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN || vars.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || vars.TELEGRAM_CHAT_ID }}

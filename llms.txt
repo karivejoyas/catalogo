@@ -22,7 +22,6 @@
 
 ## Productos disponibles
 
-- [Aros Media Flor Roja](https://karivejoyas.github.io/catalogo/p/FL-001.html) (FL-001): $6.990, Aprox. 5cm de diámetro
 - [Aros Media Flor Morada](https://karivejoyas.github.io/catalogo/p/FL-002.html) (FL-002): $8.990, Aprox. 5cm de diámetro
 - [Aros Media Flor Petróleo](https://karivejoyas.github.io/catalogo/p/FL-003.html) (FL-003): $8.990, Aprox. 5cm de diámetro
 - [Aros Media Flor Naranja](https://karivejoyas.github.io/catalogo/p/FL-004.html) (FL-004): $8.990, Aprox. 5cm de diámetro
@@ -49,6 +48,14 @@
 - [Aros Argolla Flor Roja](https://karivejoyas.github.io/catalogo/p/FL-026.html) (FL-026): $5.990, Aprox. 5 cm de alto(con argolla) y 3 de ancho
 - [Aros Media-Flor Argolla Margarita](https://karivejoyas.github.io/catalogo/p/FL-027.html) (FL-027): $5.990, Aprox. 5 cm de alto(con argolla) y 2.5 de ancho
 - [Aros Flor Roja](https://karivejoyas.github.io/catalogo/p/FL-028.html) (FL-028): $5.990, Aprox. 4 cm de alto(con argolla) y 3 de ancho
+- [Aros Media Flor Roja](https://karivejoyas.github.io/catalogo/p/FL-029.html) (FL-029): $6.990, 4 cm de alto y 2.5 cm de ancho aprox.
+- [Aros Mini Girasol](https://karivejoyas.github.io/catalogo/p/FL-030.html) (FL-030): $4.990, 2 cm de diámetro aprox
+- [Aros Flor Grande Azul](https://karivejoyas.github.io/catalogo/p/FL-031.html) (FL-031): $7.990, 4.5 cm de diámetro aprox
+- [Aros Girasol Mediano](https://karivejoyas.github.io/catalogo/p/FL-032.html) (FL-032): $7.990, 3.5 cm de diámetro (Solo La Flor)
+- [Aros Girasol Grande](https://karivejoyas.github.io/catalogo/p/FL-033.html) (FL-033): $9.990, 5 cm de diámetro aprox (Solo la Flor)
+- [Aros Flor Verde Olivo](https://karivejoyas.github.io/catalogo/p/FL-034.html) (FL-034): $8.990, 3.5 cm de diámetro
+- [Argollas Flores Blancas Brillos](https://karivejoyas.github.io/catalogo/p/FL-035.html) (FL-035): $9.990, Aprox. 3.5cm de diámetro
+- [Aros Flor Negro con Puntos](https://karivejoyas.github.io/catalogo/p/FL-036.html) (FL-036): $7.990, 3.5 cm de diámetro aprox
 - [Aros Charm Flor Plateada](https://karivejoyas.github.io/catalogo/p/CH-001.html) (CH-001): $6.990, Aprox. 4cm de diámetro
 - [Aros Charm Flor Dorada](https://karivejoyas.github.io/catalogo/p/CH-003.html) (CH-003): $6.990, Aprox. 3cm de diámetro
 - [Charm Flor Celeste Dorado](https://karivejoyas.github.io/catalogo/p/CH-005.html) (CH-005): $6.990, Aprox. 2cm
@@ -82,15 +89,17 @@
 - [Argollas Cristal Jade Verde](https://karivejoyas.github.io/catalogo/p/AG-025.html) (AG-025): $5.990, Aprox. 3cm
 - [Argollas Cristal Lila](https://karivejoyas.github.io/catalogo/p/AG-026.html) (AG-026): $5.990, Aprox. 3cm
 - [Argollas Cristal Gris Humo](https://karivejoyas.github.io/catalogo/p/AG-027.html) (AG-027): $4.990, Aprox. 2.5cm
+- [Argollas de Cristal Azul](https://karivejoyas.github.io/catalogo/p/AG-028.html) (AG-028): $10.990, 4 cm de alto y 3 cm de ancho aprox
+- [Argollas de Mandala Estrella](https://karivejoyas.github.io/catalogo/p/AG-029.html) (AG-029): $10.990, 4 cm de alto y 3 cm de ancho
 - [Aros Corazón Dorado](https://karivejoyas.github.io/catalogo/p/TP-001.html) (TP-001): $6.990, Aprox. 2cm
 - [Topos Corazón Celeste](https://karivejoyas.github.io/catalogo/p/TP-002.html) (TP-002): $6.990, Aprox. 2cm
 - [Topos Botón Celeste](https://karivejoyas.github.io/catalogo/p/TP-003.html) (TP-003): $6.990, Aprox. 1.2cm
-- [Aros Corazón Verde Lima](https://karivejoyas.github.io/catalogo/p/TP-007.html) (TP-007): $3.000, Aprox. 2cm
+- [Aros Corazón Verde Lima](https://karivejoyas.github.io/catalogo/p/TP-007.html) (TP-007): $2.990, Aprox. 2cm
 - [Aros Corazón Animal Print](https://karivejoyas.github.io/catalogo/p/TP-008.html) (TP-008): $6.990, Aprox. 4cm
-- [Aros Corazón Animal Print](https://karivejoyas.github.io/catalogo/p/TP-009.html) (TP-009): $3.000, Aprox. 2cm
-- [Aros Corazón Celeste Glitter](https://karivejoyas.github.io/catalogo/p/TP-010.html) (TP-010): $3.000, Aprox. 2cm
-- [Aros Corazón Blanco Perla](https://karivejoyas.github.io/catalogo/p/TP-011.html) (TP-011): $3.000, Aprox. 2cm
-- [Aros Corazón Negro](https://karivejoyas.github.io/catalogo/p/TP-012.html) (TP-012): $3.000, Aprox. 2cm
+- [Aros Corazón Animal Print](https://karivejoyas.github.io/catalogo/p/TP-009.html) (TP-009): $2.990, Aprox. 2cm
+- [Aros Corazón Celeste Glitter](https://karivejoyas.github.io/catalogo/p/TP-010.html) (TP-010): $2.990, Aprox. 2cm
+- [Aros Corazón Blanco Perla](https://karivejoyas.github.io/catalogo/p/TP-011.html) (TP-011): $2.990, Aprox. 2cm
+- [Aros Corazón Negro](https://karivejoyas.github.io/catalogo/p/TP-012.html) (TP-012): $2.990, Aprox. 2cm
 - [Aros Corazón Mármol Azul](https://karivejoyas.github.io/catalogo/p/TP-013.html) (TP-013): $5.990, Aprox. 3 cm
 - [Aros Corazón Celeste Glitter](https://karivejoyas.github.io/catalogo/p/TP-014.html) (TP-014): $5.990, Aprox. 3 cm
 - [Aros Corazón Animal Print](https://karivejoyas.github.io/catalogo/p/TP-015.html) (TP-015): $5.990, Aprox. 3 cm
@@ -99,6 +108,22 @@
 - [Aros Corazón Negro](https://karivejoyas.github.io/catalogo/p/TP-018.html) (TP-018): $5.990, Aprox. 3 cm
 - [Aros Tres Corazones Rosa Brillante](https://karivejoyas.github.io/catalogo/p/TP-019.html) (TP-019): $7.990, Aprox. 5cm
 - [Aros Corazones Rosa Brillante](https://karivejoyas.github.io/catalogo/p/TP-020.html) (TP-020): $5.990, Aprox. 5cm(Con Argolla)
+- [Aros Flor Corazón Puntos](https://karivejoyas.github.io/catalogo/p/TP-021.html) (TP-021): $6.990, 4 cm de alto y 2 cm de ancho aprox
+- [Aros Rosa Corazón](https://karivejoyas.github.io/catalogo/p/TP-022.html) (TP-022): $6.990, 4 cm de alto y 2 cm de ancho aprox
+- [Aros Flor Corazón Rosa Rayas](https://karivejoyas.github.io/catalogo/p/TP-023.html) (TP-023): $6.990, 4 cm de alto y 2 cm de ancho aprox
+- [Aros Flor Corazón Lila](https://karivejoyas.github.io/catalogo/p/TP-024.html) (TP-024): $6.990, 4 cm de alto y 2 cm de ancho aprox
+- [Aros Flor Corazón Margarita](https://karivejoyas.github.io/catalogo/p/TP-025.html) (TP-025): $3.990, 3.5 cm de alto y 2cm de ancho aprox
+- [Aros Corazón Negro Animal Print](https://karivejoyas.github.io/catalogo/p/TP-026.html) (TP-026): $5.990, 3 cm de alto y 2.5 de ancho aprox
+- [Aros Corazón Beige Animal Print](https://karivejoyas.github.io/catalogo/p/TP-027.html) (TP-027): $2.990, 2cm aprox
+- [Aros Corazón Negro Puntos](https://karivejoyas.github.io/catalogo/p/TP-028.html) (TP-028): $5.990, Aprox. 3 cm
+- [Aros Corazón Blanco Puntos](https://karivejoyas.github.io/catalogo/p/TP-029.html) (TP-029): $6.990, 3 cm de alto aprox
+- [Aros Corazón Beige Animal Print](https://karivejoyas.github.io/catalogo/p/TP-030.html) (TP-030): $5.990, 3 cm de alto aprox
+- [Aros Mini Corazón Rojo](https://karivejoyas.github.io/catalogo/p/TP-031.html) (TP-031): $2.990, 2 cm de alto aprox
+- [Aros Rosa Corazón Lila](https://karivejoyas.github.io/catalogo/p/TP-032.html) (TP-032): $6.990, 4 cm de alto y 2 cm de ancho aprox
+- [Aros Rosa Corazón Blanco Perla](https://karivejoyas.github.io/catalogo/p/TP-033.html) (TP-033): $6.990, 4 cm de alto y 2 cm de ancho aprox
+- [Aros Rosa Corazón Rojo](https://karivejoyas.github.io/catalogo/p/TP-034.html) (TP-034): $6.990, 4 cm de alto y 2 cm de ancho aprox
+- [Aros Flor Corazón Lila Rayas](https://karivejoyas.github.io/catalogo/p/TP-035.html) (TP-035): $6.990, Medida: 4 cm de alto y 2 cm de ancho aprox
+- [Aros Corazón Rojo](https://karivejoyas.github.io/catalogo/p/TP-036.html) (TP-036): $5.990, 5 cm aprox con Argolla
 - [Aros Concha Arena Plateado](https://karivejoyas.github.io/catalogo/p/MA-001.html) (MA-001): $6.990, Aprox. 3.5cm(Con Argolla)
 - [Aros Concha Blanca Dorado](https://karivejoyas.github.io/catalogo/p/MA-002.html) (MA-002): $6.990, Aprox. 3.5cm(Con Argolla)
 - [Aros Estrella de Mar Arena Plateado](https://karivejoyas.github.io/catalogo/p/MA-003.html) (MA-003): $6.990, Aprox. 3.5cm(Con Argolla)
@@ -139,3 +164,4 @@
 - [Aros Hojitas Brillos](https://karivejoyas.github.io/catalogo/p/OT-009.html) (OT-009): $8.990, Aprox. 6cm
 - [Aros Azul Rayas](https://karivejoyas.github.io/catalogo/p/OT-010.html) (OT-010): $6.990, Aprox. 4cm
 - [Aros Verde Lima Rayas](https://karivejoyas.github.io/catalogo/p/OT-011.html) (OT-011): $6.990, Aprox. 5cm
+- [Aros Aros Hojitas Beige Animal Print](https://karivejoyas.github.io/catalogo/p/OT-012.html) (OT-012): $8.990, Aprox. 6cm

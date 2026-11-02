@@ -41,6 +41,26 @@
    "price": 4990,
    "stock": false
   },
+  "3b6tawHZDM9nJ9QOwyqa": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-022",
+   "creado": "2026-11-01T19:34:59.761758Z",
+   "name": "Aros Rosa Corazón",
+   "offer": 0,
+   "price": 6990,
+   "stock": true
+  },
+  "4vJoOrS2gveb6GHe3TSa": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-031",
+   "creado": "2026-11-01T20:12:23.553945Z",
+   "name": "Aros Mini Corazón Rojo",
+   "offer": 0,
+   "price": 2990,
+   "stock": true
+  },
   "4yq16Rs9aieTfBdBMwPD": {
    "cantidad": null,
    "category": "marina",
@@ -61,12 +81,32 @@
    "price": 9990,
    "stock": true
   },
+  "6Yxeo0QWRnUDwbpiOOT9": {
+   "cantidad": 3,
+   "category": "topos",
+   "code": "TP-032",
+   "creado": "2026-11-01T20:15:22.821894Z",
+   "name": "Aros Rosa Corazón Lila",
+   "offer": 0,
+   "price": 6990,
+   "stock": true
+  },
   "6uYJTaTIgcSI5u6uylPb": {
    "cantidad": null,
    "category": "otros",
    "code": "OT-008",
    "creado": "2026-08-16T22:28:28.584802Z",
    "name": "Aros Figuras Brillos",
+   "offer": 0,
+   "price": 8990,
+   "stock": true
+  },
+  "70V54dnehxRa4TYwwwE3": {
+   "cantidad": null,
+   "category": "otros",
+   "code": "OT-012",
+   "creado": "2026-11-01T19:52:14.382830Z",
+   "name": "Aros Aros Hojitas Beige Animal Print",
    "offer": 0,
    "price": 8990,
    "stock": true
@@ -118,7 +158,7 @@
    "creado": "2026-07-18T02:41:25.070889Z",
    "name": "Aros Corazón Negro",
    "offer": 0,
-   "price": 3000,
+   "price": 2990,
    "stock": true
   },
   "9gWv6JgKlQHQ5ave4FiH": {
@@ -208,7 +248,7 @@
    "creado": "2026-07-18T02:41:25.007205Z",
    "name": "Aros Corazón Celeste Glitter",
    "offer": 0,
-   "price": 3000,
+   "price": 2990,
    "stock": true
   },
   "EQjh1rJFk6h1jsVkqSH0": {
@@ -218,7 +258,7 @@
    "creado": "2026-07-18T02:41:25.025250Z",
    "name": "Aros Corazón Blanco Perla",
    "offer": 0,
-   "price": 3000,
+   "price": 2990,
    "stock": true
   },
   "Ex7UPwtKZ0GfNyG8wgRZ": {
@@ -251,6 +291,16 @@
    "price": 9990,
    "stock": true
   },
+  "G0V2u4eMmd4HGvv1JJ9J": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-023",
+   "creado": "2026-11-01T19:36:55.869370Z",
+   "name": "Aros Flor Corazón Rosa Rayas",
+   "offer": 0,
+   "price": 6990,
+   "stock": true
+  },
   "GPowdJ1vGNFli8sjRvhq": {
    "cantidad": null,
    "category": "topos",
@@ -261,6 +311,16 @@
    "price": 5990,
    "stock": true
   },
+  "Hrc4CgPFn08btYAmRdUK": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-021",
+   "creado": "2026-11-01T19:09:22.952549Z",
+   "name": "Aros Flor Corazón Puntos",
+   "offer": 0,
+   "price": 6990,
+   "stock": true
+  },
   "IO1jIirYjEhGk3P56Rg2": {
    "cantidad": null,
    "category": "topos",
@@ -268,7 +328,17 @@
    "creado": "2026-07-18T02:41:24.936867Z",
    "name": "Aros Corazón Verde Lima",
    "offer": 0,
-   "price": 3000,
+   "price": 2990,
+   "stock": true
+  },
+  "JGNDICpNLU3vJzEieiDw": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-026",
+   "creado": "2026-11-01T19:45:02.909744Z",
+   "name": "Aros Corazón Negro Animal Print",
+   "offer": 0,
+   "price": 5990,
    "stock": true
   },
   "JsbyL5CjXg6jQOT83cGE": {
@@ -321,6 +391,16 @@
    "price": 6990,
    "stock": false
   },
+  "O9EQrl9AAZruXxZIFAoX": {
+   "cantidad": 3,
+   "category": "flores",
+   "code": "FL-035",
+   "creado": "2026-11-01T20:24:53.936981Z",
+   "name": "Argollas Flores Blancas Brillos",
+   "offer": 0,
+   "price": 9990,
+   "stock": true
+  },
   "P7rbmm9E7hvpGmHUZYyh": {
    "cantidad": null,
    "category": "otros",
@@ -329,6 +409,46 @@
    "name": "Aros Verde Lima Rayas",
    "offer": 0,
    "price": 6990,
+   "stock": true
+  },
+  "PYiMy5tNVMriph3OdIye": {
+   "cantidad": null,
+   "category": "flores",
+   "code": "FL-036",
+   "creado": "2026-11-01T20:29:47.521428Z",
+   "name": "Aros Flor Negro con Puntos",
+   "offer": 0,
+   "price": 7990,
+   "stock": true
+  },
+  "PYsMGXhYvCVj3aGXNUJB": {
+   "cantidad": null,
+   "category": "flores",
+   "code": "FL-030",
+   "creado": "2026-11-01T19:15:31.289454Z",
+   "name": "Aros Mini Girasol",
+   "offer": 0,
+   "price": 4990,
+   "stock": true
+  },
+  "PqAIjsmV2LeH17stxd8N": {
+   "cantidad": 1,
+   "category": "argollas",
+   "code": "AG-029",
+   "creado": "2026-11-01T19:58:33.645997Z",
+   "name": "Argollas de Mandala Estrella",
+   "offer": 0,
+   "price": 10990,
+   "stock": true
+  },
+  "Q9yxVez5XrSH1ZMdwfgg": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-036",
+   "creado": "2026-11-01T20:38:30.587757Z",
+   "name": "Aros Corazón Rojo",
+   "offer": 0,
+   "price": 5990,
    "stock": true
   },
   "QYWEBa3HhbQiL2vNaDFD": {
@@ -350,6 +470,16 @@
    "offer": 0,
    "price": 5990,
    "stock": false
+  },
+  "REeEYjUMpEPaniVuiD3L": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-024",
+   "creado": "2026-11-01T19:38:05.094786Z",
+   "name": "Aros Flor Corazón Lila",
+   "offer": 0,
+   "price": 6990,
+   "stock": true
   },
   "RGAHH15iAun1sYykDx64": {
    "cantidad": null,
@@ -411,6 +541,16 @@
    "price": 5990,
    "stock": true
   },
+  "UACvQf5x5xOJuE1zKChp": {
+   "cantidad": null,
+   "category": "flores",
+   "code": "FL-032",
+   "creado": "2026-11-01T19:21:16.063945Z",
+   "name": "Aros Girasol Mediano",
+   "offer": 0,
+   "price": 7990,
+   "stock": true
+  },
   "UH8IpFG44CIGfH9AKdUF": {
    "cantidad": null,
    "category": "topos",
@@ -451,6 +591,16 @@
    "price": 5990,
    "stock": true
   },
+  "WJYvPqUOrVy3vdClbufo": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-030",
+   "creado": "2026-11-01T20:06:40.664831Z",
+   "name": "Aros Corazón Beige Animal Print",
+   "offer": 0,
+   "price": 5990,
+   "stock": true
+  },
   "WUTNdL1u6KqG3HsbeDZt": {
    "cantidad": null,
    "category": "charms",
@@ -471,6 +621,16 @@
    "price": 6000,
    "stock": true
   },
+  "XKGAf2NHSiE515Lgupka": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-025",
+   "creado": "2026-11-01T19:41:41.439475Z",
+   "name": "Aros Flor Corazón Margarita",
+   "offer": 0,
+   "price": 3990,
+   "stock": true
+  },
   "XMQW30jo3lVlVleScigf": {
    "cantidad": null,
    "category": "topos",
@@ -478,7 +638,7 @@
    "creado": "2026-07-18T02:41:24.967274Z",
    "name": "Aros Corazón Animal Print",
    "offer": 0,
-   "price": 3000,
+   "price": 2990,
    "stock": true
   },
   "XVTTusyidQqGuadxmJ46": {
@@ -571,6 +731,26 @@
    "price": 6990,
    "stock": true
   },
+  "bwxbxVpD6aDybCyaNGzU": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-028",
+   "creado": "2026-11-01T19:50:46.394661Z",
+   "name": "Aros Corazón Negro Puntos",
+   "offer": 0,
+   "price": 5990,
+   "stock": true
+  },
+  "c8lGsxtkmA1fqCwn5DY4": {
+   "cantidad": null,
+   "category": "flores",
+   "code": "FL-033",
+   "creado": "2026-11-01T19:26:42.801598Z",
+   "name": "Aros Girasol Grande",
+   "offer": 0,
+   "price": 9990,
+   "stock": true
+  },
   "cMvYS3VdQgEmnOzPSnyK": {
    "cantidad": null,
    "category": "cmu236iia",
@@ -651,6 +831,16 @@
    "price": 6990,
    "stock": true
   },
+  "i0yiVRInORoIfWWEA7Nh": {
+   "cantidad": 3,
+   "category": "flores",
+   "code": "FL-034",
+   "creado": "2026-11-01T20:23:34.301712Z",
+   "name": "Aros Flor Verde Olivo",
+   "offer": 0,
+   "price": 8990,
+   "stock": true
+  },
   "i9XCpno3gUZ7KFRueAHj": {
    "cantidad": null,
    "category": "argollas",
@@ -679,6 +869,26 @@
    "name": "Aros Corazones Rosa Brillante",
    "offer": 0,
    "price": 5990,
+   "stock": true
+  },
+  "ky3dec3SkC2A37kyDWfv": {
+   "cantidad": 3,
+   "category": "topos",
+   "code": "TP-034",
+   "creado": "2026-11-01T20:20:27.370798Z",
+   "name": "Aros Rosa Corazón Rojo",
+   "offer": 0,
+   "price": 6990,
+   "stock": true
+  },
+  "lbyKAypLlEqN4wzOCxwe": {
+   "cantidad": 3,
+   "category": "topos",
+   "code": "TP-035",
+   "creado": "2026-11-01T20:26:10.801909Z",
+   "name": "Aros Flor Corazón Lila Rayas",
+   "offer": 0,
+   "price": 6990,
    "stock": true
   },
   "luT8vKxj055lmu2YfcIq": {
@@ -759,16 +969,6 @@
    "name": "Argollas Cristal Verde",
    "offer": 0,
    "price": 4990,
-   "stock": true
-  },
-  "p001": {
-   "cantidad": null,
-   "category": "flores",
-   "code": "FL-001",
-   "creado": "2026-07-03T16:22:47.414030Z",
-   "name": "Aros Media Flor Roja",
-   "offer": 0,
-   "price": 6990,
    "stock": true
   },
   "p002": {
@@ -1122,7 +1322,7 @@
    "stock": true
   },
   "p045": {
-   "cantidad": null,
+   "cantidad": 0,
    "category": "argollas",
    "code": "AG-013",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -1132,7 +1332,7 @@
    "stock": true
   },
   "p046": {
-   "cantidad": null,
+   "cantidad": 1,
    "category": "argollas",
    "code": "AG-015",
    "creado": "2026-07-03T16:22:47.414030Z",
@@ -1201,6 +1401,26 @@
    "price": 8990,
    "stock": false
   },
+  "qsVI90dzQUnp97zj8VUu": {
+   "cantidad": null,
+   "category": "flores",
+   "code": "FL-029",
+   "creado": "2026-11-01T19:13:06.090322Z",
+   "name": "Aros Media Flor Roja",
+   "offer": 0,
+   "price": 6990,
+   "stock": true
+  },
+  "radGRa6BXhobbRAdGQlU": {
+   "cantidad": null,
+   "category": "argollas",
+   "code": "AG-028",
+   "creado": "2026-11-01T19:55:41.845560Z",
+   "name": "Argollas de Cristal Azul",
+   "offer": 0,
+   "price": 10990,
+   "stock": true
+  },
   "ryCEqbZozTaAVQW5mIpD": {
    "cantidad": null,
    "category": "cmu236iia",
@@ -1219,6 +1439,16 @@
    "name": "Aros Corazón Rombo Mármol Azul",
    "offer": 0,
    "price": 6990,
+   "stock": true
+  },
+  "tA1tzpk3yEgpuKAjBqUq": {
+   "cantidad": null,
+   "category": "flores",
+   "code": "FL-031",
+   "creado": "2026-11-01T19:18:53.082066Z",
+   "name": "Aros Flor Grande Azul",
+   "offer": 0,
+   "price": 7990,
    "stock": true
   },
   "tPSSGN0Bni3RXZSmLefx": {
@@ -1251,12 +1481,32 @@
    "price": 5990,
    "stock": true
   },
+  "v2YVH5npVwzJrAErnEJf": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-027",
+   "creado": "2026-11-01T19:49:23.113272Z",
+   "name": "Aros Corazón Beige Animal Print",
+   "offer": 0,
+   "price": 2990,
+   "stock": true
+  },
   "vZKIu82RDN7ySfwRz3pq": {
    "cantidad": null,
    "category": "charms",
    "code": "CH-012",
    "creado": "2026-07-17T03:23:42.249592Z",
    "name": "Aros Charms Flor Cobre",
+   "offer": 0,
+   "price": 6990,
+   "stock": true
+  },
+  "vdMoTTkvbRYMz6KHwgG6": {
+   "cantidad": 3,
+   "category": "topos",
+   "code": "TP-033",
+   "creado": "2026-11-01T20:18:14.579555Z",
+   "name": "Aros Rosa Corazón Blanco Perla",
    "offer": 0,
    "price": 6990,
    "stock": true
@@ -1289,6 +1539,16 @@
    "name": "Aros Fiestas Patrias Cristales",
    "offer": 0,
    "price": 6000,
+   "stock": true
+  },
+  "zG3yMWBbaRcdrCPPuS5D": {
+   "cantidad": null,
+   "category": "topos",
+   "code": "TP-029",
+   "creado": "2026-11-01T20:04:43.014809Z",
+   "name": "Aros Corazón Blanco Puntos",
+   "offer": 0,
+   "price": 6990,
    "stock": true
   },
   "zod71DHxmroHB7WA4BrJ": {

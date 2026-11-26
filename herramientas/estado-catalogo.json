@@ -2,14 +2,14 @@
  "chat": "7582208962",
  "productos": {
   "0Pg5EegNN0DmFKnoxO9n": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-023",
    "creado": "2026-11-24T13:26:17.110655Z",
-   "name": "Aros Moño Negro Lunares Dorado",
+   "name": "Aros Cinta Negra Lunares Dorado",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 4990,
+   "stock": true
   },
   "0UaS5Ap1R8uoHfrmgFOS": {
    "cantidad": null,
@@ -20,6 +20,16 @@
    "offer": 0,
    "price": 5990,
    "stock": true
+  },
+  "13V6qSg3U1nVyDPmhxVY": {
+   "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-030",
+   "creado": "2026-11-26T12:07:45.578845Z",
+   "name": "Aros Botón Copo de Nieve",
+   "offer": 0,
+   "price": 0,
+   "stock": false
   },
   "1HmAJDgoYN9qJ5ZsRVTN": {
    "cantidad": null,
@@ -82,43 +92,43 @@
    "stock": true
   },
   "58DwROHraRoaX0BavVSf": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-014",
    "creado": "2026-11-24T13:25:52.308160Z",
-   "name": "Aros Serpiente Negra Translúcida Dorado",
+   "name": "Aros Serpiente Negra con Dorado",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 6990,
+   "stock": true
   },
   "5CUi2HzlK1VUPOkItaCM": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-032",
    "creado": "2026-11-24T13:26:41.684855Z",
-   "name": "Aros Arco Negro Lunares Flor Blanca",
+   "name": "Aros Arco Flor Lunares",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 6990,
+   "stock": true
   },
   "5nFEl0Knld0GRmrmOwDv": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-028",
    "creado": "2026-11-24T13:26:30.850036Z",
-   "name": "Aros Corazón Negro Lunares Margarita",
+   "name": "Aros Corazón Lunares Margarita",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 6990,
+   "stock": true
   },
   "6PfuLgJyd5m17cayQ3v3": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "flores",
    "code": "FL-022",
    "creado": "2026-07-17T03:09:14.376201Z",
    "name": "Aros Flor Argolla Mostaza Brillos",
    "offer": 0,
-   "price": 9990,
+   "price": 8990,
    "stock": true
   },
   "6Yxeo0QWRnUDwbpiOOT9": {
@@ -162,14 +172,14 @@
    "stock": true
   },
   "8g9WIpxyPWptvJpyfoyh": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-016",
    "creado": "2026-11-24T13:25:58.528253Z",
    "name": "Aros Serpiente Flores Rojas",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 6990,
+   "stock": true
   },
   "8hZwO3mCTwpjBnJJKt4m": {
    "cantidad": null,
@@ -191,15 +201,25 @@
    "price": 6990,
    "stock": true
   },
-  "9awW4hasZomKx68pJ9r7": {
+  "9MJUcBlNak0jznEZYG0i": {
    "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-031",
+   "creado": "2026-11-26T12:07:47.623145Z",
+   "name": "Aros Copo de Nieve Argolla",
+   "offer": 0,
+   "price": 0,
+   "stock": false
+  },
+  "9awW4hasZomKx68pJ9r7": {
+   "cantidad": 1,
    "category": "charms",
    "code": "CH-008",
    "creado": "2026-07-04T02:31:17.284337Z",
    "name": "Aros Charm Donut Dorado",
    "offer": 0,
-   "price": 6990,
-   "stock": false
+   "price": 5990,
+   "stock": true
   },
   "9eo3PWQnWgEpa0qZCsGd": {
    "cantidad": null,
@@ -231,15 +251,25 @@
    "price": 6990,
    "stock": true
   },
-  "AKRztH0tfGMDCLcNRhk4": {
+  "A8SPOV5LN8ihTHkgC8jg": {
    "cantidad": null,
-   "category": "otros",
-   "code": "OT-033",
-   "creado": "2026-11-24T13:26:44.093940Z",
-   "name": "Aros Margaritas",
+   "category": "cmu236iia",
+   "code": "FS-020",
+   "creado": "2026-11-26T12:07:26.577990Z",
+   "name": "Aros Reno Nariz Roja",
    "offer": 0,
    "price": 0,
    "stock": false
+  },
+  "AKRztH0tfGMDCLcNRhk4": {
+   "cantidad": 3,
+   "category": "otros",
+   "code": "OT-033",
+   "creado": "2026-11-24T13:26:44.093940Z",
+   "name": "Aros Margaritas Doble",
+   "offer": 0,
+   "price": 7990,
+   "stock": true
   },
   "ANFNANmVtxAtwgRhQoBg": {
    "cantidad": null,
@@ -292,24 +322,24 @@
    "stock": true
   },
   "DyZPnpQANk2goAqp0ycA": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-015",
    "creado": "2026-11-24T13:25:55.521797Z",
    "name": "Aros Serpiente Gris Humo Dorado",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 6990,
+   "stock": true
   },
   "EFvdba2WILcqEpp0jzL9": {
-   "cantidad": null,
+   "cantidad": 1,
    "category": "flores",
    "code": "FL-021",
    "creado": "2026-07-17T03:09:13.903116Z",
    "name": "Aros Flor Argolla Azul",
-   "offer": 0,
-   "price": 9990,
-   "stock": true
+   "offer": 6990,
+   "price": 8990,
+   "stock": false
   },
   "EKElE2gxwqXgoyfngoQk": {
    "cantidad": null,
@@ -341,6 +371,16 @@
    "price": 4990,
    "stock": false
   },
+  "F82ukmDIG7wBot2dq43J": {
+   "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-022",
+   "creado": "2026-11-26T12:07:30.307293Z",
+   "name": "Aros Reno Flor Roja",
+   "offer": 0,
+   "price": 0,
+   "stock": false
+  },
   "FEwWzsZjYKtjECJ9X9Tz": {
    "cantidad": null,
    "category": "cmu236iia",
@@ -352,13 +392,13 @@
    "stock": true
   },
   "FdCEgKXi1CQyOxoApNQ4": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "flores",
    "code": "FL-019",
    "creado": "2026-07-17T03:09:07.703516Z",
    "name": "Aros Flor Argolla Celeste Brillos",
-   "offer": 0,
-   "price": 9990,
+   "offer": 6990,
+   "price": 8990,
    "stock": true
   },
   "G0V2u4eMmd4HGvv1JJ9J": {
@@ -382,14 +422,14 @@
    "stock": true
   },
   "HhpvlTY6GbLGDakaF2SQ": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-030",
    "creado": "2026-11-24T13:26:36.657495Z",
-   "name": "Aros Gota Negra Lunares",
+   "name": "Aros Gota Lunares",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 5990,
+   "stock": true
   },
   "Hrc4CgPFn08btYAmRdUK": {
    "cantidad": null,
@@ -451,6 +491,16 @@
    "price": 5990,
    "stock": true
   },
+  "L5Uu7BfeWrgpE7K8KDKv": {
+   "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-024",
+   "creado": "2026-11-26T12:07:34.061281Z",
+   "name": "Aros Árbol Verde Estrella Plateada",
+   "offer": 0,
+   "price": 0,
+   "stock": false
+  },
   "M9ghC93SkxKyGP1Q5xph": {
    "cantidad": null,
    "category": "cmu236iia",
@@ -462,21 +512,31 @@
    "stock": true
   },
   "NQ5kOymDedSnKDnuiUwz": {
-   "cantidad": null,
+   "cantidad": 2,
    "category": "charms",
    "code": "CH-004",
    "creado": "2026-07-05T23:09:33.840985Z",
    "name": "Aros Charm Flor Celeste",
    "offer": 0,
-   "price": 6990,
-   "stock": false
+   "price": 4990,
+   "stock": true
   },
   "Nx1ynhJV82KCaaFnutCR": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-026",
    "creado": "2026-11-24T13:26:25.737773Z",
-   "name": "Aros Moño Blanco Lunares Plateado",
+   "name": "Aros Cinta Blanca Lunares Plateado",
+   "offer": 0,
+   "price": 4990,
+   "stock": true
+  },
+  "O0jSvwes5ygjFFdIOP2q": {
+   "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-023",
+   "creado": "2026-11-26T12:07:32.275151Z",
+   "name": "Aros Árbol de Navidad Moño Dorado",
    "offer": 0,
    "price": 0,
    "stock": false
@@ -488,8 +548,28 @@
    "creado": "2026-11-01T20:24:53.936981Z",
    "name": "Argollas Flores Blancas Brillos",
    "offer": 0,
-   "price": 9990,
+   "price": 8990,
    "stock": true
+  },
+  "Oax0eN8Qdd0W4J6vhddz": {
+   "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-027",
+   "creado": "2026-11-26T12:07:40.027664Z",
+   "name": "Aros Corona Navideña",
+   "offer": 0,
+   "price": 0,
+   "stock": false
+  },
+  "OimCNM4l8aaGlee42bhQ": {
+   "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-025",
+   "creado": "2026-11-26T12:07:35.923658Z",
+   "name": "Aros Árbol Blanco Plateado",
+   "offer": 0,
+   "price": 0,
+   "stock": false
   },
   "P7rbmm9E7hvpGmHUZYyh": {
    "cantidad": null,
@@ -502,13 +582,13 @@
    "stock": true
   },
   "PYiMy5tNVMriph3OdIye": {
-   "cantidad": null,
+   "cantidad": 5,
    "category": "flores",
    "code": "FL-036",
    "creado": "2026-11-01T20:29:47.521428Z",
    "name": "Aros Flor Negro con Puntos",
    "offer": 0,
-   "price": 7990,
+   "price": 6990,
    "stock": true
   },
   "PYsMGXhYvCVj3aGXNUJB": {
@@ -531,6 +611,16 @@
    "price": 10990,
    "stock": true
   },
+  "Q8FLsuh7dgLKRNKrKgCN": {
+   "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-018",
+   "creado": "2026-11-26T12:07:22.780170Z",
+   "name": "Aros Galleta de Jengibre Moño Rosa",
+   "offer": 0,
+   "price": 0,
+   "stock": false
+  },
   "Q9yxVez5XrSH1ZMdwfgg": {
    "cantidad": null,
    "category": "topos",
@@ -552,14 +642,14 @@
    "stock": true
   },
   "QkhjQ0HljVrvVny9F5kd": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "argollas",
    "code": "AG-019",
    "creado": "2026-07-05T23:41:00.080726Z",
    "name": "Argollas Cristal Rosa",
    "offer": 0,
    "price": 5990,
-   "stock": false
+   "stock": true
   },
   "REeEYjUMpEPaniVuiD3L": {
    "cantidad": null,
@@ -672,14 +762,14 @@
    "stock": true
   },
   "VlfV7aLPlu0sEtinIe72": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-024",
    "creado": "2026-11-24T13:26:20.239004Z",
-   "name": "Aros Moño Negro Lunares Plateado",
+   "name": "Aros Cinta Negra Lunares",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 4990,
+   "stock": true
   },
   "VxESyrf7KyRbOmi3fbKi": {
    "cantidad": null,
@@ -752,14 +842,14 @@
    "stock": true
   },
   "Yuu1IuzbyXpioWHUgU6j": {
-   "cantidad": null,
+   "cantidad": 1,
    "category": "charms",
    "code": "CH-002",
    "creado": "2026-07-05T23:10:03.255936Z",
    "name": "Aros Charm Corazón Celeste",
    "offer": 0,
    "price": 6990,
-   "stock": false
+   "stock": true
   },
   "ZPvuQpjxWMIPdBFvet4Z": {
    "cantidad": null,
@@ -771,15 +861,25 @@
    "price": 8990,
    "stock": true
   },
-  "aqtL1fdmAUzs10VC08c8": {
+  "ZWIObaCSGWiP0LEAPyQb": {
    "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-021",
+   "creado": "2026-11-26T12:07:28.369519Z",
+   "name": "Aros Reno Corbatita",
+   "offer": 0,
+   "price": 0,
+   "stock": false
+  },
+  "aqtL1fdmAUzs10VC08c8": {
+   "cantidad": 1,
    "category": "argollas",
    "code": "AG-020",
    "creado": "2026-07-05T23:52:12.803621Z",
    "name": "Argollas Mandala Estrella",
    "offer": 0,
    "price": 10990,
-   "stock": false
+   "stock": true
   },
   "bEbhObrExYgpYsYxj3C0": {
    "cantidad": null,
@@ -790,6 +890,16 @@
    "offer": 0,
    "price": 5990,
    "stock": true
+  },
+  "bO8rOQSu6sWqyuEW0i4K": {
+   "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-017",
+   "creado": "2026-11-26T12:07:20.920494Z",
+   "name": "Aros Galleta de Jengibre",
+   "offer": 0,
+   "price": 0,
+   "stock": false
   },
   "bWtd00vHwKzFkjaeffC4": {
    "cantidad": null,
@@ -830,6 +940,16 @@
    "offer": 0,
    "price": 6990,
    "stock": true
+  },
+  "btaSa8eXjzNqxzGQxUGY": {
+   "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-026",
+   "creado": "2026-11-26T12:07:37.940776Z",
+   "name": "Aros Árbol Blanco Argolla",
+   "offer": 0,
+   "price": 0,
+   "stock": false
   },
   "bwxbxVpD6aDybCyaNGzU": {
    "cantidad": null,
@@ -892,14 +1012,14 @@
    "stock": true
   },
   "dGnd3QWFOXI7JQ5ejg1g": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-020",
    "creado": "2026-11-24T13:26:08.301551Z",
    "name": "Aros Gato Negro Texturizado Dorado",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 7990,
+   "stock": true
   },
   "f4rDeuDZ395P6W98bqG5": {
    "cantidad": null,
@@ -942,14 +1062,14 @@
    "stock": true
   },
   "gXxT2FDSkFRhdcXlC1jj": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-021",
    "creado": "2026-11-24T13:26:11.785639Z",
-   "name": "Aros Gatito Negro Texturizado Plateado",
+   "name": "Aros Gatito Texturizado Negro",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 6990,
+   "stock": true
   },
   "i0yiVRInORoIfWWEA7Nh": {
    "cantidad": 3,
@@ -958,7 +1078,7 @@
    "creado": "2026-11-01T20:23:34.301712Z",
    "name": "Aros Flor Verde Olivo",
    "offer": 0,
-   "price": 8990,
+   "price": 7990,
    "stock": true
   },
   "i9XCpno3gUZ7KFRueAHj": {
@@ -1032,14 +1152,14 @@
    "stock": true
   },
   "matZVMjEKsGMLsM06O2k": {
-   "cantidad": null,
+   "cantidad": 5,
    "category": "argollas",
    "code": "AG-012",
    "creado": "2026-07-05T23:40:46.955579Z",
    "name": "Argollas Cristal Turquesa",
    "offer": 0,
    "price": 5990,
-   "stock": false
+   "stock": true
   },
   "mmM6tXaM5Pa9ReGk092x": {
    "cantidad": null,
@@ -1052,14 +1172,14 @@
    "stock": true
   },
   "ncZcf4k0rc0ILiUyjDzP": {
-   "cantidad": null,
+   "cantidad": 2,
    "category": "argollas",
    "code": "AG-014",
    "creado": "2026-07-03T23:35:28.348636Z",
    "name": "Argolla Cristal Aurora Azul",
    "offer": 0,
-   "price": 8990,
-   "stock": false
+   "price": 7990,
+   "stock": true
   },
   "ngCEQlTlX1t3Kbh3Uygk": {
    "cantidad": 10,
@@ -1072,23 +1192,33 @@
    "stock": true
   },
   "o6CJycocL4C5v34rE1Y5": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-018",
    "creado": "2026-11-24T13:26:03.564132Z",
    "name": "Aros Gato Negro Flor Roja",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 7990,
+   "stock": true
   },
   "oNBsDvFnYa2a3qEe4QpF": {
-   "cantidad": null,
+   "cantidad": 1,
    "category": "argollas",
    "code": "AG-016",
    "creado": "2026-07-03T23:35:36.359497Z",
    "name": "Argolla Cristal Aurora Blanco",
    "offer": 0,
-   "price": 8990,
+   "price": 7990,
+   "stock": true
+  },
+  "oopD6Es20zGdP1sj5es4": {
+   "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-019",
+   "creado": "2026-11-26T12:07:24.670875Z",
+   "name": "Aros Muñeco de Nieve",
+   "offer": 0,
+   "price": 0,
    "stock": false
   },
   "ou8mVeD4EJmmhGnrkag9": {
@@ -1172,13 +1302,13 @@
    "stock": true
   },
   "p010": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "flores",
    "code": "FL-009",
    "creado": "2026-07-03T16:22:47.414030Z",
    "name": "Argollas Flores Plateadas",
-   "offer": 0,
-   "price": 9990,
+   "offer": 6990,
+   "price": 8990,
    "stock": true
   },
   "p011": {
@@ -1208,7 +1338,7 @@
    "creado": "2026-07-03T16:22:47.414030Z",
    "name": "Argollas Flores Doradas",
    "offer": 0,
-   "price": 9990,
+   "price": 8990,
    "stock": true
   },
   "p014": {
@@ -1479,26 +1609,26 @@
    "name": "Aros Corazón Dorado",
    "offer": 0,
    "price": 6990,
-   "stock": true
+   "stock": false
   },
   "p048": {
    "cantidad": null,
    "category": "topos",
-   "code": "TP-002",
+   "code": "TP-037",
    "creado": "2026-07-03T16:22:47.414030Z",
    "name": "Topos Corazón Celeste",
    "offer": 0,
-   "price": 6990,
+   "price": 5990,
    "stock": true
   },
   "p049": {
-   "cantidad": null,
-   "category": "topos",
-   "code": "TP-003",
+   "cantidad": 1,
+   "category": "otros",
+   "code": "OT-034",
    "creado": "2026-07-03T16:22:47.414030Z",
    "name": "Topos Botón Celeste",
    "offer": 0,
-   "price": 6990,
+   "price": 5990,
    "stock": true
   },
   "p8BnEPgDtZKS3VkmZ4WU": {
@@ -1512,24 +1642,24 @@
    "stock": false
   },
   "pHiJIacxOmDbfxMooNCf": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-019",
    "creado": "2026-11-24T13:26:05.691481Z",
    "name": "Aros Gato Negro Brillante",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 7990,
+   "stock": true
   },
   "pQ5ghHEthxVGpYIF0ExZ": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-027",
    "creado": "2026-11-24T13:26:28.165935Z",
-   "name": "Aros Moño Rojo",
+   "name": "Aros Cinta Roja",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 4990,
+   "stock": true
   },
   "pobiIxcqcVS5UbzWJ76f": {
    "cantidad": null,
@@ -1542,24 +1672,24 @@
    "stock": true
   },
   "qJjjwpNRzy3NwDey32Nt": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-022",
    "creado": "2026-11-24T13:26:14.663715Z",
-   "name": "Aros Moño Negro",
+   "name": "Aros Cinta Negra",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 4990,
+   "stock": true
   },
   "qQbwRgxuvOyassqbwr7x": {
-   "cantidad": null,
+   "cantidad": 2,
    "category": "argollas",
    "code": "AG-018",
    "creado": "2026-07-03T23:35:36.542559Z",
    "name": "Argolla Cristal Aurora Rosa",
    "offer": 0,
-   "price": 8990,
-   "stock": false
+   "price": 7990,
+   "stock": true
   },
   "qsVI90dzQUnp97zj8VUu": {
    "cantidad": null,
@@ -1592,14 +1722,14 @@
    "stock": true
   },
   "ssPhDQCyeGN611tW880e": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-025",
    "creado": "2026-11-24T13:26:22.888708Z",
-   "name": "Aros Moño Blanco Lunares Dorado",
+   "name": "Aros Cinta Blanca Lunares Dorado",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 4990,
+   "stock": true
   },
   "t00s2RivR5Kx7u28ZV3l": {
    "cantidad": null,
@@ -1632,14 +1762,14 @@
    "stock": true
   },
   "u9VmHfVUrqmLKbBIYtP0": {
-   "cantidad": null,
+   "cantidad": 3,
    "category": "otros",
    "code": "OT-029",
    "creado": "2026-11-24T13:26:33.829225Z",
-   "name": "Aros Corazón Doble Negro Lunares",
+   "name": "Aros Corazón Doble Negro",
    "offer": 0,
-   "price": 0,
-   "stock": false
+   "price": 6990,
+   "stock": true
   },
   "uZmeUK8436mJ1uCNpcG9": {
    "cantidad": null,
@@ -1691,15 +1821,25 @@
    "price": 6990,
    "stock": true
   },
-  "wHzO7nssf7AULMxoKBAj": {
+  "vp0MZhd4eTWYJv0mj60m": {
    "cantidad": null,
-   "category": "otros",
-   "code": "OT-017",
-   "creado": "2026-11-24T13:26:01.490072Z",
-   "name": "Aros Gato Negro Collar de Flores",
+   "category": "cmu236iia",
+   "code": "FS-028",
+   "creado": "2026-11-26T12:07:41.860029Z",
+   "name": "Aros Campana Copo de Nieve",
    "offer": 0,
    "price": 0,
    "stock": false
+  },
+  "wHzO7nssf7AULMxoKBAj": {
+   "cantidad": 3,
+   "category": "otros",
+   "code": "OT-017",
+   "creado": "2026-11-24T13:26:01.490072Z",
+   "name": "Aros Gato Negro Collar de Flor",
+   "offer": 0,
+   "price": 7990,
+   "stock": true
   },
   "wsGfbLVwAvlx2MuvLofY": {
    "cantidad": null,
@@ -1712,13 +1852,13 @@
    "stock": true
   },
   "xmKIxGcm8iaM7liwNqXj": {
-   "cantidad": null,
+   "cantidad": 1,
    "category": "flores",
    "code": "FL-020",
    "creado": "2026-07-17T03:09:13.447955Z",
    "name": "Aros Flor Argolla Cobre",
    "offer": 0,
-   "price": 9990,
+   "price": 8990,
    "stock": true
   },
   "ygyPNAGolLM75m2J65MC": {
@@ -1751,6 +1891,16 @@
    "price": 0,
    "stock": false
   },
+  "za0msnMZSKmwGkplc37Z": {
+   "cantidad": null,
+   "category": "cmu236iia",
+   "code": "FS-029",
+   "creado": "2026-11-26T12:07:43.748498Z",
+   "name": "Aros Círculo Copo de Nieve",
+   "offer": 0,
+   "price": 0,
+   "stock": false
+  },
   "zod71DHxmroHB7WA4BrJ": {
    "cantidad": null,
    "category": "marina",
@@ -1760,16 +1910,6 @@
    "offer": 0,
    "price": 6990,
    "stock": true
-  },
-  "ztKWvfHWi7iPUqGILOOo": {
-   "cantidad": null,
-   "category": "otros",
-   "code": "OT-013",
-   "creado": "2026-11-24T13:25:49.675873Z",
-   "name": "Aros Serpiente Negra Dorado",
-   "offer": 0,
-   "price": 0,
-   "stock": false
   }
  }
 }
